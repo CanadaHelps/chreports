@@ -140,8 +140,9 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
       $var['civicrm_contribution']['group_bys']['contribution_page_id'] = ['title' => ts('Campaign')];
       $var['civicrm_contribution']['order_bys']['contribution_page_id'] = ['title' => ts('Campaign'), 'dbAlias' => 'cp.title'];
 
-      $var['civicrm_contribution']['group_bys']['campaign_id'] = ['title' => ts('Campaign Group')];
-      $var['civicrm_contribution']['order_bys']['campaign_name'] = ['title' => ts('Campaign Group'), 'dbAlias' => 'campaign.title'];
+      $var['civicrm_contribution']['fields']['campaign_id'] = ['title' => ts('Campaign')];
+      $var['civicrm_contribution']['group_bys']['campaign_id'] = ['title' => ts('Campaign')];
+      $var['civicrm_contribution']['order_bys']['campaign_name'] = ['title' => ts('Campaign'), 'dbAlias' => 'campaign.title'];
     }
     if ($varType == 'sql') {
       $from = $var->getVar('_from');
