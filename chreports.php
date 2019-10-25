@@ -134,6 +134,74 @@ function chreports_civicrm_entityTypes(&$entityTypes) {
   _chreports_civix_civicrm_entityTypes($entityTypes);
 }
 
+function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
+  if ($object instanceof CRM_Report_Form_Contribute_Detail) {
+    if ($varType == 'columns') {
+      $var['civicrm_contribution']['group_bys']['contribution_page_id'] = ['title' => ts('Campaign')];
+      $var['civicrm_contribution']['order_bys']['contribution_page_id'] = ['title' => ts('Campaign'), 'dbAlias' => 'cp.title'];
+
+      $var['civicrm_contribution']['group_bys']['campaign_id'] = ['title' => ts('Campaign Group')];
+      $var['civicrm_contribution']['order_bys']['campaign_name'] = ['title' => ts('Campaign Group'), 'dbAlias' => 'campaign.title'];
+    }
+    if ($varType == 'sql') {
+      $from = $var->getVar('_from');
+      $from .= "
+      LEFT JOIN civicrm_contribution_page cp ON cp.id = contribution_civireport.contribution_page_id
+      LEFT JOIN civicrm_campaign campaign ON campaign.id = contribution_civireport.campaign_id
+
+       ";
+      $var->setVar('_from', $from);
+    }
+  }
+  elseif ($object instanceof CRM_Report_Form_Contribute_Summary) {
+    if ($varType == 'columns') {
+      $var['civicrm_contact']['fields']['financial_account'] = ['title' => ts('Financial Account'), 'dbAlias' => 'fa.name'];
+      $var['civicrm_contact']['group_bys']['financial_account'] = ['title' => ts('Financial Account'), 'dbAlias' => 'fa.id'];
+    }
+    if ($varType == 'sql') {
+      $from = $var->getVar('_from');
+      $from .= "
+      LEFT JOIN civicrm_line_item li ON li.contribution_id = contribution_civireport.id
+      LEFT JOIN civicrm_financial_item fi ON fi.entity_id = li.id AND fi.entity_table = 'civicrm_line_item'
+      LEFT JOIN civicrm_financial_account fa ON fa.id = fi.financial_account_id
+       ";
+       $var->setVar('_from', $from);
+    }
+    if ($varType == 'rows') {
+      foreach (['civicrm_financial_type_financial_type', 'civicrm_contribution_campaign_id', 'civicrm_contribution_contribution_page_id'] as $column) {
+        if (!empty($var[0]) && array_key_exists($column, $var[0])) {
+          $missingTypes = [];
+          if ($column == 'civicrm_financial_type_financial_type') {
+            $entityTypes = CRM_Financial_BAO_FinancialType::getAvailableFinancialTypes();
+          }
+          elseif ($column == 'civicrm_contribution_campaign_id') {
+            $entityTypes = CRM_Campaign_BAO_Campaign::getPermissionedCampaigns(NULL, NULL, FALSE, FALSE, TRUE)['campaigns'];
+          }
+          elseif ($column == 'civicrm_contribution_contribution_page_id') {
+            $entityTypes = CRM_Contribute_PseudoConstant::contributionPage();
+          }
+          $missingTypes = array_diff($entityTypes,
+            array_flip(array_flip(array_filter(CRM_Utils_Array::collect($column, $var))))
+          );
+          $keys = array_keys($var[0]);
+          foreach ($missingTypes as $missingType) {
+            $row = [];
+            foreach ($keys as $key) {
+              $row[$key] = NULL;
+              if (in_array($key, ['civicrm_contribution_total_amount_count', 'civicrm_contribution_total_amount_sum', 'civicrm_contribution_total_amount_avg'])) {
+                $row[$key] = 0.00;
+              }
+              $row[$column] = $missingType;
+              $row['civicrm_contribution_currency'] = $var[0]['civicrm_contribution_currency'];
+            }
+            $var[] = $row;
+          }
+        }
+      }
+    }
+  }
+}
+
 // --- Functions below this ship commented out. Uncomment as required. ---
 
 /**

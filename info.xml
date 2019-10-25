@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<extension key="chreports" type="module">
+<extension key="biz.jmaconsulting.chreports" type="module">
   <file>chreports</file>
   <name>CH Report Customisation</name>
   <description>FIXME</description>
