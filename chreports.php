@@ -137,8 +137,8 @@ function chreports_civicrm_entityTypes(&$entityTypes) {
 function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
   if ($object instanceof CRM_Report_Form_Contribute_Detail) {
     if ($varType == 'columns') {
-      $var['civicrm_contribution']['group_bys']['contribution_page_id'] = ['title' => ts('Campaign')];
-      $var['civicrm_contribution']['order_bys']['contribution_page_id'] = ['title' => ts('Campaign'), 'dbAlias' => 'cp.title'];
+      $var['civicrm_contribution']['group_bys']['contribution_page_id'] = ['title' => ts('Contribution Page')];
+      $var['civicrm_contribution']['order_bys']['contribution_page_id'] = ['title' => ts('Contribution Page'), 'dbAlias' => 'cp.title'];
 
       $var['civicrm_contribution']['fields']['campaign_id'] = ['title' => ts('Campaign')];
       $var['civicrm_contribution']['group_bys']['campaign_id'] = ['title' => ts('Campaign')];
