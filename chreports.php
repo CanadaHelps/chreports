@@ -158,6 +158,7 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
     if ($varType == 'columns') {
       $var['civicrm_contact']['fields']['financial_account'] = ['title' => ts('Financial Account'), 'dbAlias' => 'fa.name'];
       $var['civicrm_contact']['group_bys']['financial_account'] = ['title' => ts('Financial Account'), 'dbAlias' => 'fa.id'];
+      $var['civicrm_contact']['group_bys']['financial_account'] = ['title' => ts('Financial Account'), 'dbAlias' => 'fa.id'];
     }
     if ($varType == 'sql') {
       $from = $var->getVar('_from');
@@ -181,7 +182,7 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
           elseif ($column == 'civicrm_contribution_contribution_page_id') {
             $entityTypes = CRM_Contribute_PseudoConstant::contributionPage();
             foreach ($var as $rowNum => $row) {
-              $var[$row]['civicrm_contribution_contribution_page_id'] = CRM_Utils_Array::value($row['civicrm_contribution_contribution_page_id'], $entityTypes);
+              $var[$rowNum]['civicrm_contribution_contribution_page_id'] = CRM_Utils_Array::value($row['civicrm_contribution_contribution_page_id'], $entityTypes);
             }
           }
           $missingTypes = array_diff($entityTypes,
