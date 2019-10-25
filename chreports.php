@@ -158,6 +158,7 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
     if ($varType == 'columns') {
       $var['civicrm_contact']['fields']['financial_account'] = ['title' => ts('Financial Account'), 'dbAlias' => 'fa.name'];
       $var['civicrm_contact']['group_bys']['financial_account'] = ['title' => ts('Financial Account'), 'dbAlias' => 'fa.id'];
+      $var['civicrm_contact']['group_bys']['contribution_page_id'] = ['title' => ts('Contribution Page'), 'dbAlias' => 'contribution_civireport.contribution_page_id'];
     }
     if ($varType == 'sql') {
       $from = $var->getVar('_from');
