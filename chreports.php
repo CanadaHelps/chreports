@@ -143,6 +143,18 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
       $var['civicrm_contribution']['fields']['campaign_id'] = ['title' => ts('Campaign')];
       $var['civicrm_contribution']['group_bys']['campaign_id'] = ['title' => ts('Campaign')];
       $var['civicrm_contribution']['order_bys']['campaign_name'] = ['title' => ts('Campaign'), 'dbAlias' => 'campaign.title'];
+
+      $var['civicrm_value_contribution__15']['fields']['receipt_type'] = [
+        'title' => ts('Receipt Type'),
+        'type' => CRM_Utils_Type::T_STRING,
+        'dbAlias' => '
+          CASE
+            WHEN value_contribution__15_civireport.is_receipted__24 = 1 AND contribution_civireport.source LIKE \'%CanadaHelps%\' THEN \'CanadaHelps\'
+            WHEN value_contribution__15_civireport.is_receipted__24 = 1 AND contribution_civireport.source NOT LIKE \'%CanadaHelps%\'  THEN \'Charity Issued\'
+            ELSE NULL
+          END AS civicrm_value_contribution__15_receipt_type
+        ',
+      ];
     }
     if ($varType == 'sql') {
       $from = $var->getVar('_from');
@@ -160,6 +172,7 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
       $var['civicrm_contact']['group_bys']['financial_account'] = ['title' => ts('Financial Account'), 'dbAlias' => 'fa.id'];
       $var['civicrm_contribution']['group_bys']['campaign_id'] = ['title' => ts('Campaign')];
       $var['civicrm_contribution']['fields']['campaign_id'] = ['title' => ts('Campaign')];
+      $var['civicrm_contribution']['group_bys']['payment_instrument_id'] = ['title' => ts('Payment Method')];
     }
     if ($varType == 'sql') {
       $from = $var->getVar('_from');
