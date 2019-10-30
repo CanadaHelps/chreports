@@ -189,7 +189,7 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
       $var['civicrm_contribution']['fields']['contribution_page_id']['type'] = CRM_Utils_Type::T_STRING;
       $object->campaigns = CRM_Campaign_BAO_Campaign::getPermissionedCampaigns(NULL, NULL, FALSE, FALSE)['campaigns'];
     }
-    if ($varType == 'sql' && $object instanceof CRM_Report_Form_Contribute_Summary) {
+    if ($varType == 'sql' && !($object instanceof CRM_Chreports_Form_Report_ExtendSummary)) {
       $from = $var->getVar('_from');
       $from .= "
       LEFT JOIN civicrm_line_item li ON li.contribution_id = contribution_civireport.id
