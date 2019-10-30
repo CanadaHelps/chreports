@@ -232,6 +232,7 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
         'title' => ts('Financial Account Name - Credit'),
         'name' => 'name',
         'alias' => 'financial_account_civireport_credit',
+        'dbAlias' => 'civicrm_financial_account_credit_name',
       ];
     }
   }
