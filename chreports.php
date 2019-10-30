@@ -180,6 +180,7 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
       $var['civicrm_contribution']['group_bys']['campaign_id'] = ['title' => ts('Campaign')];
       $var['civicrm_contribution']['fields']['campaign_id'] = ['title' => ts('Campaign')];
       $var['civicrm_contribution']['group_bys']['payment_instrument_id'] = ['title' => ts('Payment Method')];
+      $var['civicrm_contribution']['fields']['contribution_page_id']['type'] = CRM_Utils_Type::T_STRING;
       $object->campaigns = CRM_Campaign_BAO_Campaign::getPermissionedCampaigns(NULL, NULL, FALSE, FALSE)['campaigns'];
     }
     if ($varType == 'sql') {
@@ -189,7 +190,7 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
       LEFT JOIN civicrm_financial_item fi ON fi.entity_id = li.id AND fi.entity_table = 'civicrm_line_item'
       LEFT JOIN civicrm_financial_account fa ON fa.id = fi.financial_account_id
        ";
-       $var->setVar('_from', $from);
+      $var->setVar('_from', $from);
     }
     if ($varType == 'rows') {
       foreach (['civicrm_financial_type_financial_type', 'civicrm_contribution_campaign_id', 'civicrm_contribution_contribution_page_id'] as $column) {
