@@ -176,6 +176,13 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
     if ($varType == 'columns') {
       $var['civicrm_contact']['fields']['financial_account'] = ['title' => ts('Financial Account'), 'dbAlias' => 'fa.name'];
       $var['civicrm_contact']['group_bys']['financial_account'] = ['title' => ts('Financial Account'), 'dbAlias' => 'fa.id'];
+      $var['civicrm_contact']['filters']['financial_account'] = [
+        'title' => ts('Financial Account'),
+        'type' => CRM_Utils_Type::T_STRING,
+        'operatorType' => CRM_Report_Form::OP_MULTISELECT,
+        'options' => CRM_Contribute_PseudoConstant::financialAccount(),
+        'dbAlias' => 'fa.id',
+      ];
       $var['civicrm_contribution']['group_bys']['campaign_id'] = ['title' => ts('Campaign')];
       $var['civicrm_contribution']['fields']['campaign_id'] = ['title' => ts('Campaign')];
       $var['civicrm_contribution']['group_bys']['payment_instrument_id'] = ['title' => ts('Payment Method')];
@@ -192,6 +199,11 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
       $var->setVar('_from', $from);
     }
     if ($varType == 'rows') {
+      // if financial account is chosen in column then don't show contribution avg.
+      if (!empty($object->_columnHeaders['civicrm_contact_financial_account'])) {
+        unset($object->_columnHeaders['civicrm_contribution_total_amount_avg']);
+      }
+
       foreach (['civicrm_financial_type_financial_type', 'civicrm_contribution_campaign_id', 'civicrm_contribution_contribution_page_id'] as $column) {
         if (!empty($var[0]) && array_key_exists($column, $var[0])) {
           $missingTypes = [];
