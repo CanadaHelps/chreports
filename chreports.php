@@ -180,6 +180,7 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
       $var['civicrm_contribution']['group_bys']['campaign_id'] = ['title' => ts('Campaign')];
       $var['civicrm_contribution']['fields']['campaign_id'] = ['title' => ts('Campaign')];
       $var['civicrm_contribution']['group_bys']['payment_instrument_id'] = ['title' => ts('Payment Method')];
+      $object->campaigns = CRM_Campaign_BAO_Campaign::getPermissionedCampaigns(NULL, NULL, FALSE, FALSE)['campaigns'];
     }
     if ($varType == 'sql') {
       $from = $var->getVar('_from');
@@ -198,7 +199,7 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
             $entityTypes = CRM_Financial_BAO_FinancialType::getAvailableFinancialTypes();
           }
           elseif ($column == 'civicrm_contribution_campaign_id') {
-            $entityTypes = CRM_Campaign_BAO_Campaign::getPermissionedCampaigns(NULL, NULL, FALSE, FALSE, TRUE)['campaigns'];
+            $entityTypes = CRM_Campaign_BAO_Campaign::getPermissionedCampaigns(NULL, NULL, FALSE, FALSE)['campaigns'];
           }
           elseif ($column == 'civicrm_contribution_contribution_page_id') {
             $entityTypes = CRM_Contribute_PseudoConstant::contributionPage();
