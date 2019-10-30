@@ -8,6 +8,7 @@ return array (
   array (
     'name' => 'CRM_Chreports_Form_Report_ExtendSummary',
     'entity' => 'ReportTemplate',
+    'module' => 'biz.jmaconsulting.chreports',
     'params' =>
     array (
       'version' => 3,
