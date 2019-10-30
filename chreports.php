@@ -152,7 +152,7 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
             WHEN value_contribution__15_civireport.is_receipted__24 = 1 AND contribution_civireport.source LIKE \'%CanadaHelps%\' THEN \'CanadaHelps\'
             WHEN value_contribution__15_civireport.is_receipted__24 = 1 AND contribution_civireport.source NOT LIKE \'%CanadaHelps%\'  THEN \'Charity Issued\'
             ELSE NULL
-          END AS civicrm_value_contribution__15_receipt_type
+          END
         ',
       ];
     }
