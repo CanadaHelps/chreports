@@ -139,6 +139,7 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
     if ($varType == 'columns') {
       $var['civicrm_contribution']['group_bys']['contribution_page_id'] = ['title' => ts('Contribution Page')];
       $var['civicrm_contribution']['order_bys']['contribution_page_id'] = ['title' => ts('Contribution Page'), 'dbAlias' => 'cp.title'];
+      $var['civicrm_contact']['fields']['exposed_id']['title'] = ts('Donor ID');
 
       $var['civicrm_contribution']['fields']['campaign_id'] = ['title' => ts('Campaign')];
       $var['civicrm_contribution']['group_bys']['campaign_id'] = ['title' => ts('Campaign')];
@@ -164,6 +165,12 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
 
        ";
       $var->setVar('_from', $from);
+    }
+    if ($varType == 'rows') {
+      if (!empty($object->_columnHeaders['civicrm_value_contribution__15_custom_36'])) {
+        $column = ['civicrm_value_contribution__15_custom_36' => $object->_columnHeaders['civicrm_value_contribution__15_custom_36']];
+        $object->_columnHeaders = $column + $object->_columnHeaders;
+      }
     }
   }
   elseif ($object instanceof CRM_Report_Form_Contribute_Summary) {
