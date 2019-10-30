@@ -142,8 +142,7 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
       $var['civicrm_contact']['fields']['exposed_id']['title'] = ts('Donor ID');
 
       $var['civicrm_contribution']['fields']['campaign_id'] = ['title' => ts('Campaign')];
-      $var['civicrm_contribution']['group_bys']['campaign_id'] = ['title' => ts('Campaign')];
-      $var['civicrm_contribution']['order_bys']['campaign_name'] = ['title' => ts('Campaign'), 'dbAlias' => 'campaign.title'];
+      $var['civicrm_contribution']['order_bys']['campaign_id'] = ['title' => ts('Campaign'), 'dbAlias' => 'campaign.title'];
 
       $var['civicrm_value_contribution__15']['fields']['receipt_type'] = [
         'title' => ts('Receipt Type'),
