@@ -226,6 +226,15 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
       }
     }
   }
+  elseif ($object instanceof CRM_Report_Form_Contribute_Bookkeeping) {
+    if ($varType == 'columns') {
+      $var['civicrm_financial_account']['order_bys']['credit_name'] = [
+        'title' => ts('Financial Account Name - Credit'),
+        'name' => 'name',
+        'alias' => 'financial_account_civireport_credit',
+      ];
+    }
+  }
 }
 
 // --- Functions below this ship commented out. Uncomment as required. ---
