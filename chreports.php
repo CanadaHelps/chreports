@@ -134,8 +134,35 @@ function chreports_civicrm_entityTypes(&$entityTypes) {
   _chreports_civix_civicrm_entityTypes($entityTypes);
 }
 
+function _getTableNameByName($name) {
+   $values = civicrm_api3('CustomGroup', 'get', [
+     'name' => 'Contribution_Details',
+     'sequential' => 1,
+     'return' => ['table_name'],
+   ])['values'];
+   if (!empty($values[0])) {
+     return CRM_Utils_Array::value('table_name', $values[0]);
+   }
+
+   return NULL;
+}
+
+function _getColumnNameByLabel($label) {
+   $values = civicrm_api3('CustomField', 'get', [
+     'label' => $label,
+     'sequential' => 1,
+     'return' => ['column_name'],
+   ])['values'];
+   if (!empty($values[0])) {
+     return CRM_Utils_Array::value('column_name', $values[0]);
+   }
+
+   return NULL;
+}
+
 function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
   if ($object instanceof CRM_Report_Form_Contribute_Detail) {
+    $tablename = _getTableNameByName('Contribution_Details');
     if ($varType == 'columns') {
       $var['civicrm_contribution']['group_bys']['contribution_page_id'] = ['title' => ts('Contribution Page')];
       $var['civicrm_contribution']['order_bys']['contribution_page_id'] = ['title' => ts('Contribution Page'), 'dbAlias' => 'cp.title'];
@@ -145,17 +172,21 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
       $var['civicrm_contribution']['fields']['campaign_id'] = ['title' => ts('Campaign')];
       $var['civicrm_contribution']['order_bys']['campaign_id'] = ['title' => ts('Campaign'), 'dbAlias' => 'campaign.title'];
 
-      $var['civicrm_value_contribution__15']['fields']['receipt_type'] = [
-        'title' => ts('Receipt Type'),
-        'type' => CRM_Utils_Type::T_STRING,
-        'dbAlias' => '
-          CASE
-            WHEN value_contribution__15_civireport.is_receipted__24 = 1 AND contribution_civireport.source LIKE \'%CanadaHelps%\' THEN \'CanadaHelps\'
-            WHEN value_contribution__15_civireport.is_receipted__24 = 1 AND contribution_civireport.source NOT LIKE \'%CanadaHelps%\'  THEN \'Charity Issued\'
-            ELSE NULL
-          END
-        ',
-      ];
+      if ($tableName) {
+        if ($columnName = _getColumnNameByLabel('Is Receipted?')) {
+          $var[$tableName]['fields']['receipt_type'] = [
+            'title' => ts('Receipt Type'),
+            'type' => CRM_Utils_Type::T_STRING,
+            'dbAlias' => "
+              CASE
+                WHEN {$tablename}.{$columnName} = 1 AND contribution_civireport.source LIKE \'%CanadaHelps%\' THEN \'CanadaHelps\'
+                WHEN {$tablename}.{$columnName} = 1 AND contribution_civireport.source NOT LIKE \'%CanadaHelps%\'  THEN \'Charity Issued\'
+                ELSE NULL
+              END
+            ",
+          ];
+        }
+      }
     }
     if ($varType == 'sql') {
       $from = $var->getVar('_from');
@@ -167,8 +198,9 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
       $var->setVar('_from', $from);
     }
     if ($varType == 'rows') {
-      if (!empty($object->_columnHeaders['civicrm_value_contribution__15_custom_36'])) {
-        $column = ['civicrm_value_contribution__15_custom_36' => $object->_columnHeaders['civicrm_value_contribution__15_custom_36']];
+      $key = $tableName . 'custom_' . CRM_Utils_Array::value('id', civicrm_api3('CustomField', 'get', ['sequential' => 1, 'name' => 'Receipt_Number'])['values'][0], '');
+      if (!empty($object->_columnHeaders[$key])) {
+        $column = [$key => $object->_columnHeaders[$key]];
         $object->_columnHeaders = $column + $object->_columnHeaders;
       }
     }
