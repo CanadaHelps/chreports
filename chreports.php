@@ -233,6 +233,7 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
       $var->setVar('_from', $from);
     }
     if ($varType == 'rows') {
+      $grandTotalKey = count($var) - 1;
       // if financial account is chosen in column then don't show contribution avg.
       if (!empty($object->_columnHeaders['civicrm_contact_financial_account'])) {
         unset($object->_columnHeaders['civicrm_contribution_total_amount_avg']);
@@ -275,6 +276,10 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
             }
             $var[] = $row;
           }
+        }
+        if (array_key_exists($grandTotalKey, $var)) {
+          $var[] = $var[$grandTotalKey];
+          unset($var[$grandTotalKey]);
         }
       }
     }
