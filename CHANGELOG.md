@@ -1,7 +1,7 @@
 
- #### 2019-12-03 19:04:11 +0530 [Add changelog shell script](https://github.com/CanadaHelps/chfunds/commit/58430a534b0c7cad87201903eca5e8b3a9707149) Author: Monish Deb Committer: Monish Deb <br><br>
+ #### 2019-12-03 22:00:10 +0530 [CH-66 : Drop Contribution Avg column from extended Contribution Summary Report](https://github.com/CanadaHelps/chfunds/commit/d330bda02aa2a71541f64ca7522c4e1cfb298cb4) Author: Monish Deb Committer: Monish Deb <br><br>
 
- #### 2019-11-28 18:27:09 +0530 [Add Changelog file](https://github.com/CanadaHelps/chfunds/commit/5a8929f9f333e27613e9d0ea6ce4c2f7df2a2c74) Author: Monish Deb Committer: Monish Deb <br><br>
+ #### 2019-12-03 17:43:35 +0530 [CH-66: Donation history by fund (Summary) report issue, fix grand total](https://github.com/CanadaHelps/chfunds/commit/000041c9e84dcd1d2c1649b41aa04478bca8921d) Author: Monish Deb Committer: Monish Deb <br><br>
 
  #### 2019-11-27 23:48:15 +0530 [Remove hardcoded custom column and table name](https://github.com/CanadaHelps/chfunds/commit/13644ba7cb2217a35d0463e08bf6a8cd6a4648c3) Author: Monish Deb Committer: Monish Deb <br><br>
 
