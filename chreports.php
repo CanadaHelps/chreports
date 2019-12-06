@@ -210,6 +210,7 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
       if ($object instanceof CRM_Chreports_Form_Report_ExtendSummary) {
         unset($var['civicrm_contribution']['fields']['total_amount']['statistics']['avg']);
       }
+      $var['civicrm_contribution']['fields']['total_amount']['statistics'] =  ['count' => ts('Number of Contributions'), 'sum' => ts('Total Amount')];
       $var['civicrm_contribution']['fields']['payment_instrument_id'] = ['title' => 'Payment Method'];
       $var['civicrm_contact']['fields']['financial_account'] = ['title' => ts('Financial Account'), 'dbAlias' => 'fa.name'];
       $var['civicrm_contact']['group_bys']['financial_account'] = ['title' => ts('Financial Account'), 'dbAlias' => 'fa.id'];
