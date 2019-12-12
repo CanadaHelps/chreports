@@ -250,23 +250,47 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
       }
 
       foreach (['civicrm_financial_type_financial_type', 'civicrm_contribution_campaign_id', 'civicrm_contribution_contribution_page_id'] as $column) {
+        $params = $object->getVar('_params');
         if (!empty($var[0]) && array_key_exists($column, $var[0])) {
           $missingTypes = [];
+          $entity = NULL;
           if ($column == 'civicrm_financial_type_financial_type') {
             $entityTypes = CRM_Financial_BAO_FinancialType::getAvailableFinancialTypes();
+            $entity = 'financial_type_id';
           }
           elseif ($column == 'civicrm_contribution_campaign_id') {
             $entityTypes = CRM_Campaign_BAO_Campaign::getPermissionedCampaigns(NULL, NULL, FALSE, FALSE)['campaigns'];
+            $entity = 'campaign_id';
           }
           elseif ($column == 'civicrm_contribution_contribution_page_id') {
             $entityTypes = CRM_Contribute_PseudoConstant::contributionPage();
+            $entity = 'contribution_page_id';
             foreach ($var as $rowNum => $row) {
               $var[$rowNum]['civicrm_contribution_contribution_page_id'] = CRM_Utils_Array::value($row['civicrm_contribution_contribution_page_id'], $entityTypes);
             }
           }
-          $missingTypes = array_diff($entityTypes,
-            array_flip(array_flip(array_filter(CRM_Utils_Array::collect($column, $var))))
-          );
+
+          $allTypes = array_flip(array_flip(array_filter(CRM_Utils_Array::collect($column, $var))));
+
+          if (!empty($params["{$entity}_value"]) && !in_array($params["{$entity}_op"] , ['nll', 'nnll'])) {
+            foreach ($entityTypes as $id => $dontCare) {
+              if ($params["{$entity}_op"] == 'in') {
+                if (!in_array($id, $params["{$entity}_value"])) {
+                  unset($entityTypes[$id]);
+                }
+              }
+              elseif ($params["{$entity}_op"] == 'notin') {
+                if (in_array($id, $params["{$entity}_value"])) {
+                  unset($entityTypes[$id]);
+                }
+              }
+            }
+          }
+          elseif (CRM_Utils_Array::value("{$entity}_op", $params) == 'nnll') {
+            $entityTypes = [];
+          }
+
+          $missingTypes = array_diff($entityTypes, $allTypes);
           $keys = array_keys($var[0]);
           foreach ($missingTypes as $missingType) {
             $row = [];
