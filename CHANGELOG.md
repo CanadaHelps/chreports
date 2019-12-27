@@ -1,9 +1,19 @@
 
- #### 2019-12-12 18:30:25 +0530 [CH-67: Report filter is not working on extended summary report with newly added columns](https://github.com/CanadaHelps/chfunds/commit/8c911e8d124cf644e736e264ef54e849cbd0ea4a) Author: Monish Deb Committer: Monish Deb <br><br>
+ #### 2019-12-27 08:34:26 +0530 [Add upgrader](https://github.com/CanadaHelps/chfunds/commit/6f683fd7fd2702f22cdfebe857c8285319677ef3) Author: Monish Deb Committer: Monish Deb <br><br>
+
+ #### 2019-12-23 16:22:21 -0500 [updated DonationHxBySource mgd file](https://github.com/CanadaHelps/chfunds/commit/1474dff140ea7770ccf6b41822e83748422523f0) Author: Irfan Haque Committer: Irfan Haque <br><br>
+
+ #### 2019-12-23 11:55:23 -0500 [Added DonationHxByCHFund Report Instance](https://github.com/CanadaHelps/chfunds/commit/ea6c92b16383ac3b84fd65834c4e5fc914bb6ffc) Author: Irfan Haque Committer: Irfan Haque <br><br>
+
+ #### 2019-12-12 18:30:25 +0530 [CH-67: Report filter is not working on extended summary report with newly added columns](https://github.com/CanadaHelps/chfunds/commit/dbfdbecdf7c697a0f01d82789f19dbcb43868101) Author: Monish Deb Committer: Monish Deb <br><br>
+
+ #### 2019-12-06 10:41:24 -0500 [Minor Fix : Column Header Label change](https://github.com/CanadaHelps/chfunds/commit/4436ccd015585077f6e4db6c82269279250c1447) Author: Irfan Haque Committer: Irfan Haque <br><br>
+
+ #### 2019-12-03 22:00:10 +0530 [CH-66 : Drop Contribution Avg column from extended Contribution Summary Report](https://github.com/CanadaHelps/chfunds/commit/34e3378ff1a48ed76a6cfe8289318044d254c634) Author: Monish Deb Committer: Monish Deb <br><br>
 
  #### 2019-12-03 19:04:11 +0530 [Add changelog shell script](https://github.com/CanadaHelps/chfunds/commit/4d482fe1eab619550aacaf62d707b44f879a0888) Author: Monish Deb Committer: Monish Deb <br><br>
 
- #### 2019-12-03 17:43:35 +0530 [CH-66: Donation history by fund (Summary) report issue, fix grand total](https://github.com/CanadaHelps/chfunds/commit/000041c9e84dcd1d2c1649b41aa04478bca8921d) Author: Monish Deb Committer: Monish Deb <br><br>
+ #### 2019-11-28 18:27:09 +0530 [Add Changelog file](https://github.com/CanadaHelps/chfunds/commit/5a8929f9f333e27613e9d0ea6ce4c2f7df2a2c74) Author: Monish Deb Committer: Monish Deb <br><br>
 
  #### 2019-12-03 17:43:35 +0530 [CH-66: Donation history by fund (Summary) report issue, fix grand total](https://github.com/CanadaHelps/chfunds/commit/000041c9e84dcd1d2c1649b41aa04478bca8921d) Author: Monish Deb Committer: Monish Deb <br><br>
 
