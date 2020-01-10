@@ -212,14 +212,14 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
       }
       $var['civicrm_contribution']['fields']['total_amount']['statistics'] =  ['count' => ts('Number of Contributions'), 'sum' => ts('Total Amount')];
       $var['civicrm_contribution']['fields']['payment_instrument_id'] = ['title' => 'Payment Method'];
-      $var['civicrm_contact']['fields']['financial_account'] = ['title' => ts('Financial Account'), 'dbAlias' => 'fa.name'];
-      $var['civicrm_contact']['group_bys']['financial_account'] = ['title' => ts('Financial Account'), 'dbAlias' => 'fa.id'];
+      $var['civicrm_contact']['fields']['financial_account'] = ['title' => ts('Financial Account'), 'dbAlias' => 'temp.financial_account_name'];
+      $var['civicrm_contact']['group_bys']['financial_account'] = ['title' => ts('Financial Account'), 'dbAlias' => 'temp.financial_account_name'];
       $var['civicrm_contact']['filters']['financial_account'] = [
         'title' => ts('Financial Account'),
         'type' => CRM_Utils_Type::T_STRING,
         'operatorType' => CRM_Report_Form::OP_MULTISELECT,
         'options' => CRM_Contribute_PseudoConstant::financialAccount(),
-        'dbAlias' => 'fa.id',
+        'dbAlias' => 'temp.fa_id',
       ];
       $var['civicrm_contribution']['group_bys']['campaign_id'] = ['title' => ts('Campaign')];
       $var['civicrm_contribution']['fields']['campaign_id'] = ['title' => ts('Campaign')];
@@ -229,10 +229,16 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
     }
     if ($varType == 'sql' && !($object instanceof CRM_Chreports_Form_Report_ExtendSummary)) {
       $from = $var->getVar('_from');
+
       $from .= "
-      LEFT JOIN civicrm_line_item li ON li.contribution_id = contribution_civireport.id
+      LEFT JOIN (SELECT MAX(fi.financial_account_id) as fa_id, fa.name as `financial_account_name`, li.contribution_id
+
+      FROM civicrm_line_item li
       LEFT JOIN civicrm_financial_item fi ON fi.entity_id = li.id AND fi.entity_table = 'civicrm_line_item'
       LEFT JOIN civicrm_financial_account fa ON fa.id = fi.financial_account_id
+      WHERE fi.financial_account_id IS NOT NULL AND fa.name IS NOT NULL
+      GROUP BY li.id
+      ) temp ON temp.contribution_id = contribution_civireport.id
        ";
       $var->setVar('_from', $from);
     }
@@ -306,8 +312,14 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
           }
         }
         if (array_key_exists($grandTotalKey, $var)) {
-          $var[] = $var[$grandTotalKey];
+          $var['grandtotal'] = $var[$grandTotalKey];
           unset($var[$grandTotalKey]);
+        }
+
+        if (end($var) != 'grandtotal') {
+          $lastArray = $var['grandtotal'];
+          unset($var['grandtotal']);
+          $var['grandtotal'] = $lastArray;
         }
       }
     }
