@@ -2,14 +2,15 @@
 return array(
   array(
     'module' => 'biz.jmaconsulting.chreports',
-    'name' => 'Donation History By Source (Summary)',
+    'name' => 'Contribution History by Source (Summary)',
     'update' => 'never',
     'entity' => 'ReportInstance',
     'params' => array(
       'version' => 3,
       'report_id' => 'biz.jmaconsulting.chreports/extendsummary',
-      'title' => ts('Donation History By Source (Summary)'),
-      "description" => "Groups and totals contributions by criteria including contact, time period, financial type, contributor location, etc.",
+      'title' => ts('Contribution History by Source (Summary)'),
+      'name' => 'Contribution History by Source (Summary)',
+      "description" => "Overview of contributions by Source",
       'permission' => 'access CiviReport',
       'is_active' => 1,
       "grouprole" => [
