@@ -2,14 +2,14 @@
 return array(
   array(
     'module' => 'biz.jmaconsulting.chreports',
-    'name' => 'Receipt Contributions',
+    'name' => 'Receipts',
     'update' => 'never',
     'entity' => 'ReportInstance',
     'params' => array(
       'version' => 3,
       'report_id' => 'contribute/detail',
-      'title' => ts('Receipt Contributions'),
-      'name' => 'Receipt Contributions',
+      'title' => ts('Receipts'),
+      'name' => 'Receipts',
       "description" => "Overview of contributions with Receipt Number",
       'permission' => 'access CiviReport',
       'is_active' => 1,

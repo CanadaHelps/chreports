@@ -2,14 +2,14 @@ t<?php
 return array(
   array(
     'module' => 'biz.jmaconsulting.chreports',
-    'name' => 'In Honor of',
+    'name' => 'In Honour of',
     'update' => 'never',
     'entity' => 'ReportInstance',
     'params' => array(
       'version' => 3,
       'report_id' => 'contribute/detail',
-      'title' => ts('In Honor of'),
-      'name' => 'In Honor of',
+      'title' => ts('In Honour of'),
+      'name' => 'In Honour of',
       "description" => "All contributions made In Honour Of",
       'permission' => 'administer Reports',
       'is_active' => 1,
