@@ -161,6 +161,9 @@ function _getColumnNameByLabel($label) {
 }
 
 function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
+  if ($object instanceof CRM_Report_Form_Contribute_Lybunt) {
+    $object->setVar('_charts', []);
+  }
   if ($object instanceof CRM_Report_Form_Contribute_Detail) {
     $tablename = _getTableNameByName('Contribution_Details');
     if ($varType == 'columns') {
