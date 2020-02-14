@@ -4,19 +4,19 @@ class CRM_Chreports_Form_Report_ExtendLYBUNT extends CRM_Report_Form_Contribute_
   public function __construct() {
     parent::__construct();
     $this->_columns['civicrm_contribution']['fields']['last_four_year_total_amount'] = [
-      'title' => ts('Last 4 Years Total'),
+      'title' => ts('Last 4rth Year Total'),
       'default' => TRUE,
       'statistics' => ['sum' => ts('Last 4 Years total')],
       'type' => CRM_Utils_Type::T_MONEY,
     ];
     $this->_columns['civicrm_contribution']['fields']['last_three_year_total_amount'] = [
-      'title' => ts('Last 3 Years Total'),
+      'title' => ts('Last 3rd Year Total'),
       'default' => TRUE,
       'statistics' => ['sum' => ts('Last 3 Years total')],
       'type' => CRM_Utils_Type::T_MONEY,
     ];
     $this->_columns['civicrm_contribution']['fields']['last_two_year_total_amount'] = [
-      'title' => ts('Last 2 Years Total'),
+      'title' => ts('Last 2nd Year Total'),
       'default' => TRUE,
       'statistics' => ['sum' => ts('Last 2 Years total')],
       'type' => CRM_Utils_Type::T_MONEY,
@@ -144,6 +144,67 @@ class CRM_Chreports_Form_Report_ExtendLYBUNT extends CRM_Report_Form_Contribute_
     return $statistics;
   }
 
+  public function from() {
+    if (!empty($this->contactTempTable)) {
+      $this->_from = "
+        FROM  civicrm_contribution {$this->_aliases['civicrm_contribution']}
+        INNER JOIN $this->contactTempTable restricted_contacts
+          ON restricted_contacts.cid = {$this->_aliases['civicrm_contribution']}.contact_id
+          AND {$this->_aliases['civicrm_contribution']}.is_test = 0
+        INNER JOIN civicrm_contact {$this->_aliases['civicrm_contact']}
+          ON restricted_contacts.cid = {$this->_aliases['civicrm_contact']}.id";
+
+      $this->joinAddressFromContact();
+      $this->joinPhoneFromContact();
+      $this->joinEmailFromContact();
+    }
+    else {
+      $this->setFromBase('civicrm_contact');
+
+      $this->_from .= " INNER JOIN civicrm_contribution {$this->_aliases['civicrm_contribution']} ";
+      if (!$this->groupTempTable) {
+        // The received_date index is better than the contribution_status_id index (fairly substantially).
+        // But if we have already pre-filtered down to a group of contacts then we want that to be the
+        // primary filter and the index hint will block that.
+        $this->_from .= "USE index (received_date)";
+      }
+      $this->_from .= " ON {$this->_aliases['civicrm_contribution']}.contact_id = {$this->_aliases['civicrm_contact']}.id
+         AND {$this->_aliases['civicrm_contribution']}.is_test = 0
+         AND " . $this->whereClauseLast4Year("{$this->_aliases['civicrm_contribution']}.receive_date") . "
+       {$this->_aclFrom} ";
+      $this->selectivelyAddLocationTablesJoinsToFilterQuery();
+    }
+
+    // for credit card type
+    $this->addFinancialTrxnFromClause();
+  }
+
+  public function whereClauseLast4Year($fieldName) {
+    return "$fieldName BETWEEN '" . $this->getFirstDateOfPriorRangeNYears(4) . "' AND '" . $this->getLastDateOfPriorRange() . "'";
+  }
+
+
+  public function whereClause(&$field, $op, $value, $min, $max) {
+    if ($field['name'] == 'receive_date') {
+      $clause = 1;
+      if (empty($this->contactTempTable)) {
+        $clause = "{$this->_aliases['civicrm_contribution']}.contact_id NOT IN (
+          SELECT cont_exclude.contact_id
+          FROM civicrm_contribution cont_exclude
+          WHERE " . $this->whereClauseThisYear('cont_exclude.receive_date')
+        . ")";
+      }
+    }
+    // Group filtering is already done so skip.
+    elseif (!empty($field['group']) && $this->contactTempTable) {
+      return 1;
+    }
+    else {
+      $clause = parent::whereClause($field, $op, $value, $min, $max);
+    }
+    return $clause;
+  }
+
   /**
    * Get the title for the last year column.
    */
@@ -182,7 +243,7 @@ class CRM_Chreports_Form_Report_ExtendLYBUNT extends CRM_Report_Form_Contribute_
    * @return string
    */
   public function getLastDateOfPriorRangeNYears($count) {
-    return date('YmdHis', strtotime("+ $count years - 1 second", strtotime($this->getFirstDateOfPriorRangeNYears($count))));
+    return date('YmdHis', strtotime("+ 1 years - 1 second", strtotime($this->getFirstDateOfPriorRangeNYears($count))));
   }
 
 
