@@ -19,6 +19,25 @@ class CRM_Chreports_Form_Report_ExtendSummary extends CRM_Report_Form_Contribute
       INNER JOIN civicrm_entity_financial_account efa ON efa.financial_account_id = temp.fa_id AND efa.entity_id = contribution_civireport.financial_type_id AND efa.entity_table = 'civicrm_financial_type'
       ";
     }
+    $tablename = _getTableNameByName('Campaign_Information');
+    if (!empty($tableName)) {
+      $from .= "
+      LEFT JOIN $tableName ct ON ct.entity_id = contribution_civireport.contribution_page_id
+      ";
+    }
+  }
+
+  function _getTableNameByName($name) {
+     $values = civicrm_api3('CustomGroup', 'get', [
+       'name' => $name,
+       'sequential' => 1,
+       'return' => ['table_name'],
+     ])['values'];
+     if (!empty($values[0])) {
+       return CRM_Utils_Array::value('table_name', $values[0]);
+     }
+
+     return NULL;
   }
 
 }
