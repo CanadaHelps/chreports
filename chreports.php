@@ -212,8 +212,8 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
       }
       $var['civicrm_contribution']['fields']['total_amount']['statistics'] =  ['count' => ts('Number of Contributions'), 'sum' => ts('Total Amount')];
       $var['civicrm_contribution']['fields']['payment_instrument_id'] = ['title' => 'Payment Method'];
-      $var['civicrm_contact']['fields']['financial_account'] = ['title' => ts('Financial Account'), 'dbAlias' => 'temp.financial_account_name'];
-      $var['civicrm_contact']['group_bys']['financial_account'] = ['title' => ts('Financial Account'), 'dbAlias' => 'temp.financial_account_name'];
+      $var['civicrm_contact']['fields']['financial_account'] = ['title' => ts('Financial Account'), 'dbAlias' => 'fa1.name'];
+      $var['civicrm_contact']['group_bys']['financial_account'] = ['title' => ts('Financial Account'), 'dbAlias' => 'fa1.name'];
       $var['civicrm_contact']['filters']['financial_account'] = [
         'title' => ts('Financial Account'),
         'type' => CRM_Utils_Type::T_STRING,
