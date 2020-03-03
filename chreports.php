@@ -310,13 +310,8 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
             $entity = 'campaign_id';
           }
           elseif ($column == 'civicrm_contribution_contribution_page_id') {
-            $entityTypes = CRM_Contribute_PseudoConstant::contributionPage();
+            $entityTypes = array_keys(CRM_Contribute_PseudoConstant::contributionPage());
             $entity = 'contribution_page_id';
-            foreach ($var as $rowNum => $row) {
-              if (!in_array($var[$rowNum]['civicrm_contribution_contribution_page_id'], $entityTypes)) {
-                $var[$rowNum]['civicrm_contribution_contribution_page_id'] = CRM_Utils_Array::value($row['civicrm_contribution_contribution_page_id'], $entityTypes);
-              }
-            }
           }
 
           $allTypes = array_flip(array_flip(array_filter(CRM_Utils_Array::collect($column, $var))));
@@ -352,6 +347,15 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
               $row['civicrm_contribution_currency'] = $var[0]['civicrm_contribution_currency'];
             }
             $var[] = $row;
+          }
+
+          if ($column == 'civicrm_contribution_contribution_page_id') {
+            $contributionPages = CRM_Contribute_PseudoConstant::contributionPage();
+            foreach ($var as $rowNum => $row) {
+              if (!in_array($var[$rowNum]['civicrm_contribution_contribution_page_id'], $entityTypes)) {
+                $var[$rowNum]['civicrm_contribution_contribution_page_id'] = CRM_Utils_Array::value($row['civicrm_contribution_contribution_page_id'], $contributionPages);
+              }
+            }
           }
         }
         if (array_key_exists($grandTotalKey, $var)) {
