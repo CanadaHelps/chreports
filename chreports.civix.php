@@ -75,6 +75,56 @@ class CRM_Chreports_ExtensionUtil {
     return self::CLASS_PREFIX . '_' . str_replace('\\', '_', $suffix);
   }
 
+  /**
+   * Get the column name of a CustomField on basis of name.
+   *
+   * @param string $name
+   *
+   * @return string
+   */
+  public static function getColumnNameByName($name) {
+     $values = civicrm_api3('CustomField', 'get', [
+       'name' => $name,
+       'sequential' => 1,
+       'return' => ['column_name'],
+     ])['values'];
+     if (!empty($values[0])) {
+       return CRM_Utils_Array::value('column_name', $values[0]);
+     }
+
+     return NULL;
+  }
+
+  /**
+   * Get the column name of a CustomField on basis of name.
+   *
+   * @param string $name
+   *
+   * @return string
+   */
+  public static function getTableNameByName($name) {
+     $values = civicrm_api3('CustomGroup', 'get', [
+       'name' => $name,
+       'sequential' => 1,
+       'return' => ['table_name'],
+     ])['values'];
+     if (!empty($values[0])) {
+       return CRM_Utils_Array::value('table_name', $values[0]);
+     }
+
+     return NULL;
+  }
+
+
+public static function getOptionGroupNameByColumnName($columnName) {
+  return CRM_Core_DAO::singlevalueQuery("
+    SELECT g.name
+     FROM civicrm_option_group g
+      INNER JOIN civicrm_custom_field cf ON cf.option_group_id = g.id
+     WHERE cf.column_name = '$columnName'
+  ");
+}
+
 }
 
 use CRM_Chreports_ExtensionUtil as E;

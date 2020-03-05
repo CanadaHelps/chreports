@@ -8,8 +8,12 @@ class CRM_Chreports_Form_Report_RecurSummary extends CRM_Report_Form {
   protected $_emailField = FALSE;
 
   protected $_customGroupExtends = ['Contribute'];
-  protected $_customGroupGroupBy = FALSE; 
+  protected $_customGroupGroupBy = FALSE;
   public function __construct() {
+    $thisMonthFirstDay = date('Ymd000000', strtotime("first day of this month"));
+    $thisMonthLastDay = date('Ymd235959', strtotime("last day of this month"));
+    $lastMonthFirstDay = date('Ymd000000', strtotime("first day of last month"));
+    $lastMonthLastDay = date('Ymd235959', strtotime("last day of last month"));
     $this->_columns = [
       'civicrm_contact' => [
         'dao' => 'CRM_Contact_DAO_Contact',
@@ -66,24 +70,28 @@ class CRM_Chreports_Form_Report_RecurSummary extends CRM_Report_Form {
       'civicrm_contribution' => [
         'dao' => 'CRM_Contribute_BAO_Contribution',
         'fields' => [
-          'total_amount' => ['title' => E::ts('This Month Amount')],
+          'total_amount' => [
+            'title' => E::ts('This Month Amount'),
+            'dbAlias' => "SUM(IF(contribution_civireport.receive_date >= '$thisMonthFirstDay' AND contribution_civireport.receive_date <= '$thisMonthLastDay', contribution_civireport.total_amount, 0))",
+          ],
           'source' => ['title' => E::ts('Contribution Source')],
           'completed_contributions' => [
             'title' => E::ts('Completed Contributions'),
-            'dbAlias' => 'COUNT(DISTINCT contribution_summary.id)',
+            'dbAlias' => 'COUNT(DISTINCT contribution_civireport.id)',
           ],
           'start_date' => [
             'title' => E::ts('Start Date/First Contribution'),
-            'dbAlias' => 'MIN(contribution_summary.receive_date)',
+            'dbAlias' => 'MIN(contribution_civireport.receive_date)',
           ],
           'last_month_amount' => [
             'title' => E::ts('Last Month Amount'),
-            'dbAlias' => 'contribution_last_month.total_amount',
+            'dbAlias' => "SUM(IF(contribution_civireport.receive_date >= '$lastMonthFirstDay' AND contribution_civireport.receive_date <= '$lastMonthLastDay', contribution_civireport.total_amount, 0))",
           ],
         ],
         'filters' => [
           'receive_date' => [
             'title' => E::ts('Receive Date'),
+            'default' => 'this.month',
             'operatorType' => CRM_Report_form::OP_DATETIME,
             'type' => CRM_Utils_TYPE::T_DATE + CRM_Utils_Type::T_TIME,
           ],
@@ -103,80 +111,32 @@ class CRM_Chreports_Form_Report_RecurSummary extends CRM_Report_Form {
     parent::__construct();
   }
 
-  function preProcess() {
-    $this->assign('reportTitle', E::ts('Contribution Recur Summary'));
-    parent::preProcess();
-  }
-
   function from() {
-    $this->_from = NULL;
+    $tablename = E::getTableNameByName('Contribution_Details');
 
     $this->_from = "
          FROM  civicrm_contact {$this->_aliases['civicrm_contact']} {$this->_aclFrom}
                INNER JOIN civicrm_contribution {$this->_aliases['civicrm_contribution']}
                           ON {$this->_aliases['civicrm_contact']}.id =
-                             {$this->_aliases['civicrm_contribution']}.contact_id AND {$this->_aliases['civicrm_contribution']}.is_test = 0 
-               LEFT JOIN civicrm_value_contribution__15 cd ON cd.entity_id = {$this->_aliases['civicrm_contribution']}.id
-               INNER JOIN civicrm_contribution contribution_summary ON contribution_summary.contact_id = {$this->_aliases['civicrm_contribution']}.contact_id
-                 AND contribution_summary.is_test = 0
-               LEFT JOIN civicrm_value_contribution__15 csummary ON csummary.entity_id = {$this->_aliases['civicrm_contribution']}.id
-               INNER JOIN civicrm_contribution contribution_last_month ON contribution_last_month.contact_id = {$this->_aliases['civicrm_contribution']}.contact_id
-                 AND contribution_last_month.is_test = 0
-               LEFT JOIN civicrm_value_contribution__15 clastMonth ON clastMonth.entity_id = {$this->_aliases['civicrm_contribution']}.id";
-
+                             {$this->_aliases['civicrm_contribution']}.contact_id AND {$this->_aliases['civicrm_contribution']}.is_test = 0
+               LEFT JOIN {$tablename} cd ON cd.entity_id = {$this->_aliases['civicrm_contribution']}.id
+      ";
 
     $this->joinAddressFromContact();
     $this->joinEmailFromContact();
   }
 
-  /**
-   * Add field specific select alterations.
-   *
-   * @param string $tableName
-   * @param string $tableKey
-   * @param string $fieldName
-   * @param array $field
-   *
-   * @return string
-   */
-  function selectClause(&$tableName, $tableKey, &$fieldName, &$field) {
-    return parent::selectClause($tableName, $tableKey, $fieldName, $field);
-  }
-
-  /**
-   * Add field specific where alterations.
-   *
-   * This can be overridden in reports for special treatment of a field
-   *
-   * @param array $field Field specifications
-   * @param string $op Query operator (not an exact match to sql)
-   * @param mixed $value
-   * @param float $min
-   * @param float $max
-   *
-   * @return null|string
-   */
-  public function whereClause(&$field, $op, $value, $min, $max) {
-    return parent::whereClause($field, $op, $value, $min, $max);
-  }
 
   /**
    * Build where clause.
    */
   public function where() {
     $this->storeWhereHavingClauseArray();
+    $columnName = E::getColumnNameByName('SG_Flag');
 
-    $this->_whereClauses[] = $this->dateClause('contribution_last_month.receive_date', 'previous.month', NULL, NULL, CRM_Utils_Type::T_DATE + CRM_Utils_Type::T_TIME, NULL, NULL);
-    $this->_whereClauses[] = '( contribution_civireport.contribution_recur_id <> 0 OR cd.sg_flag_38 <> 0 )';
-    $this->_whereClauses[] = '( contribution_last_month.contribution_recur_id <> 0 OR csummary.sg_flag_38 <> 0 )';
-    $this->_whereClauses[] = '( contribution_summary.contribution_recur_id <> 0 OR clastMonth.sg_flag_38 <> 0 )';
-    if (empty($this->_whereClauses)) {
-      $this->_where = "WHERE ( 1 ) ";
-      $this->_having = "";
-    }
-    else {
-      $this->_where = "WHERE " . implode(' AND ', $this->_whereClauses);
-    }
+    $this->_whereClauses[] = "( contribution_civireport.contribution_recur_id <> 0 OR cd.$columnName <> 0 )";
+
+    $this->_where = "WHERE " . implode(' AND ', $this->_whereClauses);
 
     if ($this->_aclWhere) {
       $this->_where .= " AND {$this->_aclWhere} ";

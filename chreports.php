@@ -134,47 +134,12 @@ function chreports_civicrm_entityTypes(&$entityTypes) {
   _chreports_civix_civicrm_entityTypes($entityTypes);
 }
 
-function _getTableNameByName($name) {
-   $values = civicrm_api3('CustomGroup', 'get', [
-     'name' => $name,
-     'sequential' => 1,
-     'return' => ['table_name'],
-   ])['values'];
-   if (!empty($values[0])) {
-     return CRM_Utils_Array::value('table_name', $values[0]);
-   }
-
-   return NULL;
-}
-
-function _getColumnNameByLabel($label) {
-   $values = civicrm_api3('CustomField', 'get', [
-     'label' => $label,
-     'sequential' => 1,
-     'return' => ['column_name'],
-   ])['values'];
-   if (!empty($values[0])) {
-     return CRM_Utils_Array::value('column_name', $values[0]);
-   }
-
-   return NULL;
-}
-
-function _getOptionGroupNameByColumnName($columnName) {
-  return CRM_Core_DAO::singlevalueQuery("
-    SELECT g.name
-     FROM civicrm_option_group g
-      INNER JOIN civicrm_custom_field cf ON cf.option_group_id = g.id
-     WHERE cf.column_name = '$columnName'
-  ");
-}
-
 function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
   if ($object instanceof CRM_Report_Form_Contribute_Lybunt) {
     $object->setVar('_charts', []);
   }
   if ($object instanceof CRM_Report_Form_Contribute_Detail) {
-    $tablename = _getTableNameByName('Contribution_Details');
+    $tablename = E::getTableNameByName('Contribution_Details');
     if ($varType == 'columns') {
       $var['civicrm_contribution']['group_bys']['contribution_page_id'] = ['title' => ts('Contribution Page')];
       $var['civicrm_contribution']['order_bys']['contribution_page_id'] = ['title' => ts('Contribution Page'), 'dbAlias' => 'cp.title'];
@@ -185,7 +150,7 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
       $var['civicrm_contribution']['order_bys']['campaign_id'] = ['title' => ts('Campaign'), 'dbAlias' => 'campaign.title'];
 
       if ($tableName) {
-        if ($columnName = _getColumnNameByLabel('Is Receipted?')) {
+        if ($columnName = E::getColumnNameByName('Is_Receipted_')) {
           $var[$tableName]['fields']['receipt_type'] = [
             'title' => ts('Receipt Type'),
             'type' => CRM_Utils_Type::T_STRING,
@@ -241,8 +206,8 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
         'dbAlias' => 'temp.fa_id',
       ];
       if (!empty($tablename)) {
-        if ($columnName = _getColumnNameByLabel('CAMPAIGN TYPE')) {
-          $optionGroupName = _getOptionGroupNameByColumnName($columnName);
+        if ($columnName = E::getColumnNameByName('Campaign_Type')) {
+          $optionGroupName = E::getOptionGroupNameByColumnName($columnName);
           $var['civicrm_contribution']['filters']['campaign_type'] = [
             'title' => ts('Contribution Page Type'),
             'type' => CRM_Utils_Type::T_STRING,
