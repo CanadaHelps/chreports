@@ -18,31 +18,23 @@ class CRM_Chreports_Form_Report_RecurSummary extends CRM_Report_Form {
       'civicrm_contact' => [
         'dao' => 'CRM_Contact_DAO_Contact',
         'fields' => [
+          'id' => [
+            'no_display' => TRUE,
+            'required' => TRUE,
+          ],
           'sort_name' => [
             'title' => E::ts('Contact Name'),
             'required' => TRUE,
             'default' => TRUE,
             'no_repeat' => TRUE,
           ],
-          'id' => [
-            'no_display' => TRUE,
-            'required' => TRUE,
-          ],
           'first_name' => [
             'title' => E::ts('First Name'),
             'no_repeat' => TRUE,
           ],
-          'id' => [
-            'no_display' => TRUE,
-            'required' => TRUE,
-          ],
           'last_name' => [
             'title' => E::ts('Last Name'),
             'no_repeat' => TRUE,
-          ],
-          'id' => [
-            'no_display' => TRUE,
-            'required' => TRUE,
           ],
         ],
         'filters' => [
@@ -59,12 +51,22 @@ class CRM_Chreports_Form_Report_RecurSummary extends CRM_Report_Form {
       'civicrm_address' => [
         'dao' => 'CRM_Core_DAO_Address',
         'fields' => [
-          'street_address' => NULL,
+          'street_address' => ['title' => E::ts('Address - Primary')],
           'city' => NULL,
           'postal_code' => NULL,
           'state_province_id' => ['title' => E::ts('State/Province')],
           'country_id' => ['title' => E::ts('Country')],
         ],
+        'grouping' => 'contact-fields',
+      ],
+      'civicrm_phone' => [
+        'dao' => 'CRM_Core_DAO_Phone',
+        'fields' => ['phone' => NULL],
+        'grouping' => 'contact-fields',
+      ],
+      'civicrm_email' => [
+        'dao' => 'CRM_Core_DAO_Email',
+        'fields' => ['email' => NULL],
         'grouping' => 'contact-fields',
       ],
       'civicrm_contribution' => [
@@ -81,10 +83,12 @@ class CRM_Chreports_Form_Report_RecurSummary extends CRM_Report_Form {
           ],
           'start_date' => [
             'title' => E::ts('Start Date/First Contribution'),
+            'type' => CRM_Utils_Type::T_DATE + CRM_Utils_Type::T_TIME,
             'dbAlias' => 'MIN(contribution_civireport.receive_date)',
           ],
           'last_month_amount' => [
             'title' => E::ts('Last Month Amount'),
+            'type' => CRM_Utils_TYPE::T_MONEY,
             'dbAlias' => "SUM(IF(contribution_civireport.receive_date >= '$lastMonthFirstDay' AND contribution_civireport.receive_date <= '$lastMonthLastDay', contribution_civireport.total_amount, 0))",
           ],
         ],
@@ -97,11 +101,6 @@ class CRM_Chreports_Form_Report_RecurSummary extends CRM_Report_Form {
           ],
         ],
         'grouping' => 'contribute-fields',
-      ],
-      'civicrm_email' => [
-        'dao' => 'CRM_Core_DAO_Email',
-        'fields' => ['email' => NULL],
-        'grouping' => 'contact-fields',
       ],
     ];
     $this->_groupFilter = TRUE;
@@ -124,6 +123,7 @@ class CRM_Chreports_Form_Report_RecurSummary extends CRM_Report_Form {
 
     $this->joinAddressFromContact();
     $this->joinEmailFromContact();
+    $this->joinPhoneFromContact();
   }
 
 
