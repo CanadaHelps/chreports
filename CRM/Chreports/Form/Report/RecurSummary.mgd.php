@@ -13,7 +13,7 @@ return array (
     array (
       'version' => 3,
       'label' => 'RecurSummary',
-      'description' => 'RecurSummary (biz.jmaconsulting.chreports)',
+      'description' => 'Recurring Contributions (Summary)',
       'class_name' => 'CRM_Chreports_Form_Report_RecurSummary',
       'report_url' => 'biz.jmaconsulting.chreports/recursummary',
       'component' => 'CiviContribute',
