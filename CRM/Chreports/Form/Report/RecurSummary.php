@@ -10,6 +10,7 @@ class CRM_Chreports_Form_Report_RecurSummary extends CRM_Report_Form {
   protected $_customGroupExtends = ['Contribute'];
   protected $_customGroupGroupBy = FALSE;
   public function __construct() {
+    $this->_rollup = 'WITH ROLLUP';
     $thisMonthFirstDay = date('Ymd000000', strtotime("first day of this month"));
     $thisMonthLastDay = date('Ymd235959', strtotime("last day of this month"));
     $lastMonthFirstDay = date('Ymd000000', strtotime("first day of last month"));
@@ -19,7 +20,7 @@ class CRM_Chreports_Form_Report_RecurSummary extends CRM_Report_Form {
         'dao' => 'CRM_Contact_DAO_Contact',
         'fields' => [
           'id' => [
-            'no_display' => TRUE,
+            'title' => E::ts('Contact ID'),
             'required' => TRUE,
           ],
           'sort_name' => [
@@ -103,6 +104,7 @@ class CRM_Chreports_Form_Report_RecurSummary extends CRM_Report_Form {
         'grouping' => 'contribute-fields',
       ],
     ];
+    $this->_statFields = ['civicrm_contribution_total_amount', 'civicrm_contribution_last_month_amount'];
     $this->_groupFilter = TRUE;
     $this->_tagFilter = TRUE;
     $this->addCampaignFields('civicrm_contribution', FALSE, TRUE);
@@ -146,6 +148,11 @@ class CRM_Chreports_Form_Report_RecurSummary extends CRM_Report_Form {
       // use this clause to construct group by clause.
       $this->_having = "HAVING " . implode(' AND ', $this->_havingClauses);
     }
+  }
+
+  public function groupBy() {
+    parent::groupBy();
+    $this->_groupBy .= ' ' . $this->_rollup;
   }
 
   public function alterDisplay(&$rows) {
