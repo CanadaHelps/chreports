@@ -134,47 +134,12 @@ function chreports_civicrm_entityTypes(&$entityTypes) {
   _chreports_civix_civicrm_entityTypes($entityTypes);
 }
 
-function _getTableNameByName($name) {
-   $values = civicrm_api3('CustomGroup', 'get', [
-     'name' => $name,
-     'sequential' => 1,
-     'return' => ['table_name'],
-   ])['values'];
-   if (!empty($values[0])) {
-     return CRM_Utils_Array::value('table_name', $values[0]);
-   }
-
-   return NULL;
-}
-
-function _getColumnNameByLabel($label) {
-   $values = civicrm_api3('CustomField', 'get', [
-     'label' => $label,
-     'sequential' => 1,
-     'return' => ['column_name'],
-   ])['values'];
-   if (!empty($values[0])) {
-     return CRM_Utils_Array::value('column_name', $values[0]);
-   }
-
-   return NULL;
-}
-
-function _getOptionGroupNameByColumnName($columnName) {
-  return CRM_Core_DAO::singlevalueQuery("
-    SELECT g.name
-     FROM civicrm_option_group g
-      INNER JOIN civicrm_custom_field cf ON cf.option_group_id = g.id
-     WHERE cf.column_name = '$columnName'
-  ");
-}
-
 function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
   if ($object instanceof CRM_Report_Form_Contribute_Lybunt) {
     $object->setVar('_charts', []);
   }
   if ($object instanceof CRM_Report_Form_Contribute_Detail) {
-    $tablename = _getTableNameByName('Contribution_Details');
+    $tablename = E::getTableNameByName('Contribution_Details');
     if ($varType == 'columns') {
       $var['civicrm_contribution']['group_bys']['contribution_page_id'] = ['title' => ts('Contribution Page')];
       $var['civicrm_contribution']['order_bys']['contribution_page_id'] = ['title' => ts('Contribution Page'), 'dbAlias' => 'cp.title'];
@@ -185,7 +150,7 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
       $var['civicrm_contribution']['order_bys']['campaign_id'] = ['title' => ts('Campaign'), 'dbAlias' => 'campaign.title'];
 
       if ($tableName) {
-        if ($columnName = _getColumnNameByLabel('Is Receipted?')) {
+        if ($columnName = E::getColumnNameByName('Is_Receipted_')) {
           $var[$tableName]['fields']['receipt_type'] = [
             'title' => ts('Receipt Type'),
             'type' => CRM_Utils_Type::T_STRING,
@@ -218,31 +183,33 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
     }
   }
   elseif ($object instanceof CRM_Report_Form_Contribute_Summary || $object instanceof CRM_Chreports_Form_Report_ExtendSummary) {
-    $tablename = _getTableNameByName('Campaign_Information');
+    $tablename = E::getTableNameByName('Campaign_Information');
     if ($varType == 'columns') {
       if ($object instanceof CRM_Chreports_Form_Report_ExtendSummary) {
         unset($var['civicrm_contribution']['fields']['total_amount']['statistics']['avg']);
+        // Add GL Account columns, groupBy and filter to only Extended Contribution Summary Report template
+        $var['civicrm_contact']['fields']['financial_account'] = ['title' => ts('Financial Account'), 'dbAlias' => 'fa.name'];
+        $var['civicrm_contact']['group_bys']['financial_account'] = ['title' => ts('Financial Account'), 'dbAlias' => 'fa.name'];
+        $var['civicrm_contact']['filters']['financial_account'] = [
+          'title' => ts('Financial Account'),
+          'type' => CRM_Utils_Type::T_STRING,
+          'operatorType' => CRM_Report_Form::OP_MULTISELECT,
+          'options' => CRM_Contribute_PseudoConstant::financialAccount(),
+          'dbAlias' => 'fa.id',
+        ];
       }
       $var['civicrm_contribution']['fields']['total_amount']['statistics'] =  ['count' => ts('Number of Contributions'), 'sum' => ts('Total Amount')];
       $var['civicrm_contribution']['fields']['payment_instrument_id'] = ['title' => 'Payment Method'];
-      $var['civicrm_contact']['fields']['financial_account'] = ['title' => ts('Financial Account'), 'dbAlias' => 'fa1.name'];
-      $var['civicrm_contact']['group_bys']['financial_account'] = ['title' => ts('Financial Account'), 'dbAlias' => 'fa1.name'];
+
       $var['civicrm_contribution']['filters']['payment_instrument_id'] = [
         'title' => ts('Payment Method'),
         'type' => CRM_Utils_Type::T_INT,
         'operatorType' => CRM_Report_Form::OP_MULTISELECT,
         'options' => CRM_Core_OptionGroup::values('payment_instrument'),
       ];
-      $var['civicrm_contact']['filters']['financial_account'] = [
-        'title' => ts('Financial Account'),
-        'type' => CRM_Utils_Type::T_STRING,
-        'operatorType' => CRM_Report_Form::OP_MULTISELECT,
-        'options' => CRM_Contribute_PseudoConstant::financialAccount(),
-        'dbAlias' => 'temp.fa_id',
-      ];
       if (!empty($tablename)) {
-        if ($columnName = _getColumnNameByLabel('CAMPAIGN TYPE')) {
-          $optionGroupName = _getOptionGroupNameByColumnName($columnName);
+        if ($columnName = E::getColumnNameByName('Campaign_Type')) {
+          $optionGroupName = E::getOptionGroupNameByColumnName($columnName);
           $var['civicrm_contribution']['filters']['campaign_type'] = [
             'title' => ts('Contribution Page Type'),
             'type' => CRM_Utils_Type::T_STRING,
@@ -261,21 +228,7 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
     }
     if ($varType == 'sql' && !($object instanceof CRM_Chreports_Form_Report_ExtendSummary)) {
       $from = $var->getVar('_from');
-
-      if (!strstr($from, 'civicrm_line_item li') && array_key_exists('financial_account', $var->getVar('_params')['group_bys'])) {
-        $from .= "
-          LEFT JOIN (SELECT MAX(fi.financial_account_id) as fa_id, fa.name as `financial_account_name`, li.contribution_id
-
-          FROM civicrm_line_item li
-          LEFT JOIN civicrm_financial_item fi ON fi.entity_id = li.id AND fi.entity_table = 'civicrm_line_item'
-          LEFT JOIN civicrm_financial_account fa ON fa.id = fi.financial_account_id
-          WHERE fi.financial_account_id IS NOT NULL AND fa.name IS NOT NULL
-          GROUP BY li.id
-          ) temp ON temp.contribution_id = contribution_civireport.id
-           ";
-       }
-
-      $tablename = _getTableNameByName('Campaign_Information');
+      $tablename = E::getTableNameByName('Campaign_Information');
       if (!empty($tableName)) {
         $from .= "
         LEFT JOIN $tableName ct ON ct.entity_id = contribution_civireport.contribution_page_id
