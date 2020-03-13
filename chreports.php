@@ -191,7 +191,7 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
         $var['civicrm_contact']['fields']['financial_account'] = ['title' => ts('Financial Account'), 'dbAlias' => 'fa.name'];
         $var['civicrm_contact']['group_bys']['financial_account'] = ['title' => ts('Financial Account'), 'dbAlias' => 'fa.name'];
         $var['civicrm_contact']['filters']['financial_account'] = [
-          'title' => ts('Financial Account'),
+          'title' => ts('GL Account'),
           'type' => CRM_Utils_Type::T_STRING,
           'operatorType' => CRM_Report_Form::OP_MULTISELECT,
           'options' => CRM_Contribute_PseudoConstant::financialAccount(),
@@ -317,7 +317,9 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
         if (end($var) != 'grandtotal') {
           $lastArray = $var['grandtotal'];
           unset($var['grandtotal']);
-          $var['grandtotal'] = $lastArray;
+          if (!empty($var)) {
+            $var['grandtotal'] = $lastArray;
+          }
         }
       }
     }
