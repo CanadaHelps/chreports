@@ -305,9 +305,7 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
           if ($column == 'civicrm_contribution_contribution_page_id') {
             $contributionPages = CRM_Contribute_PseudoConstant::contributionPage();
             foreach ($var as $rowNum => $row) {
-              if (!in_array($var[$rowNum]['civicrm_contribution_contribution_page_id'], $entityTypes)) {
-                $var[$rowNum]['civicrm_contribution_contribution_page_id'] = CRM_Utils_Array::value($row['civicrm_contribution_contribution_page_id'], $contributionPages);
-              }
+              $var[$rowNum]['civicrm_contribution_contribution_page_id'] = CRM_Utils_Array::value($row['civicrm_contribution_contribution_page_id'], $contributionPages, $row['civicrm_contribution_contribution_page_id']);
             }
           }
         }
