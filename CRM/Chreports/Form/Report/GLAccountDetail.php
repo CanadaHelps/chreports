@@ -15,11 +15,14 @@ class CRM_Chreports_Form_Report_GLAccountDetail extends CRM_Report_Form_Contribu
       'required' => TRUE,
       'dbAlias' => 'COUNT(DISTINCT contribution_civireport.contact_id)',
     ];
-    $this->_columns['civicrm_contribution']['fields']['contri_count'] = [
+    $this->_columns['civicrm_contribution']['fields']['id']['no_display'] = TRUE;
+    $this->_columns['civicrm_contribution']['fields']['id']['required'] = TRUE;
+    $this->_columns['civicrm_contribution']['fields']['contri_total'] = [
         'title' => ts('Total Contributions'),
         'no_display' => TRUE,
         'required' => TRUE,
-        'dbAlias' => 'COUNT(DISTINCT contribution_civireport.id)',
+        'type' => CRM_Utils_Type::T_MONEY,
+        'dbAlias' => 'SUM(entity_financial_trxn_civireport.amount)',
 
     ];
   }
@@ -36,7 +39,7 @@ class CRM_Chreports_Form_Report_GLAccountDetail extends CRM_Report_Form_Contribu
           ) {
             switch ($fieldName) {
               case 'amount':
-                $select[] = "SUM({$this->_aliases['civicrm_entity_financial_trxn']}.amount) AS civicrm_entity_financial_trxn_amount";
+                $select[] = "{$this->_aliases['civicrm_entity_financial_trxn']}.amount AS civicrm_entity_financial_trxn_amount";
                 break;
 
               default:
@@ -165,6 +168,10 @@ class CRM_Chreports_Form_Report_GLAccountDetail extends CRM_Report_Form_Contribu
     $contributionStatus = CRM_Contribute_PseudoConstant::contributionStatus(NULL, 'label');
     $creditCardTypes = CRM_Financial_DAO_FinancialTrxn::buildOptions('card_type_id');
     foreach ($rows as $rowNum => $row) {
+      if (!empty($row['civicrm_financial_trxn_payment_instrument_id']) && !empty($row['civicrm_financial_account_financial_account']) && empty($row['civicrm_contribution_id'])) {
+        unset($rows[$rowNum]);
+        continue;
+      }
       // convert display name to links
       if (array_key_exists('civicrm_contact_sort_name', $row) &&
         !empty($rows[$rowNum]['civicrm_contact_sort_name']) &&
@@ -215,12 +222,14 @@ class CRM_Chreports_Form_Report_GLAccountDetail extends CRM_Report_Form_Contribu
           if ($key == 'civicrm_contact_exposed_id') {
             $rows[$rowNum][$key] = $row['civicrm_contribution_contact_count'];
           }
-          elseif (!in_array($key, ['civicrm_entity_financial_trxn_amount', 'civicrm_financial_trxn_currency', 'civicrm_contribution_contri_count', 'civicrm_financial_trxn_payment_instrument_id'])) {
+          elseif($key == 'civicrm_entity_financial_trxn_amount') {
+            $rows[$rowNum][$key] = CRM_Utils_Money::format($row['civicrm_contribution_contri_total'], $rows[$rowNum]['civicrm_financial_trxn_currency']);
+          }
+          elseif (!in_array($key, ['civicrm_entity_financial_trxn_amount', 'civicrm_financial_trxn_currency', 'civicrm_financial_trxn_payment_instrument_id'])) {
             $rows[$rowNum][$key] = NULL;
           }
         }
       }
-
     }
   }
 
