@@ -6,16 +6,16 @@
 return array (
   0 =>
   array (
-    'name' => 'CRM_Chreports_Form_Report_ExtendLYBUNT',
+    'name' => 'CRM_Chreports_Form_Report_GLAccountDetail',
     'entity' => 'ReportTemplate',
     'module' => 'biz.jmaconsulting.chreports',
     'params' =>
     array (
       'version' => 3,
-      'label' => 'ExtendLYBUNT',
-      'description' => 'ExtendLYBUNT (biz.jmaconsulting.chreports)',
-      'class_name' => 'CRM_Chreports_Form_Report_ExtendLYBUNT',
-      'report_url' => 'biz.jmaconsulting.chreports/extendlybunt',
+      'label' => 'GLAccountDetail',
+      'description' => 'GLAccountDetail (biz.jmaconsulting.chreports)',
+      'class_name' => 'CRM_Chreports_Form_Report_GLAccountDetail',
+      'report_url' => 'biz.jmaconsulting.chreports/glaccountdetail',
       'component' => 'CiviContribute',
     ),
   ),
