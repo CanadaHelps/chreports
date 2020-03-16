@@ -8,7 +8,7 @@
  */
 class CRM_Chreports_ExtensionUtil {
   const SHORT_NAME = "chreports";
-  const LONG_NAME = "chreports";
+  const LONG_NAME = "biz.jmaconsulting.chreports";
   const CLASS_PREFIX = "CRM_Chreports";
 
   /**
