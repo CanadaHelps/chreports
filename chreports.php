@@ -191,7 +191,7 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
         $var['civicrm_contact']['fields']['financial_account'] = ['title' => ts('Financial Account'), 'dbAlias' => 'fa.name'];
         $var['civicrm_contact']['group_bys']['financial_account'] = ['title' => ts('Financial Account'), 'dbAlias' => 'fa.name'];
         $var['civicrm_contact']['filters']['financial_account'] = [
-          'title' => ts('Financial Account'),
+          'title' => ts('GL Account'),
           'type' => CRM_Utils_Type::T_STRING,
           'operatorType' => CRM_Report_Form::OP_MULTISELECT,
           'options' => CRM_Contribute_PseudoConstant::financialAccount(),
@@ -305,9 +305,7 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
           if ($column == 'civicrm_contribution_contribution_page_id') {
             $contributionPages = CRM_Contribute_PseudoConstant::contributionPage();
             foreach ($var as $rowNum => $row) {
-              if (!in_array($var[$rowNum]['civicrm_contribution_contribution_page_id'], $entityTypes)) {
-                $var[$rowNum]['civicrm_contribution_contribution_page_id'] = CRM_Utils_Array::value($row['civicrm_contribution_contribution_page_id'], $contributionPages);
-              }
+              $var[$rowNum]['civicrm_contribution_contribution_page_id'] = CRM_Utils_Array::value($row['civicrm_contribution_contribution_page_id'], $contributionPages, $row['civicrm_contribution_contribution_page_id']);
             }
           }
         }
@@ -319,7 +317,9 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
         if (end($var) != 'grandtotal') {
           $lastArray = $var['grandtotal'];
           unset($var['grandtotal']);
-          $var['grandtotal'] = $lastArray;
+          if (!empty($var)) {
+            $var['grandtotal'] = $lastArray;
+          }
         }
       }
     }
