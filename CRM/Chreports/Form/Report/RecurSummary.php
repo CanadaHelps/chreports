@@ -10,7 +10,6 @@ class CRM_Chreports_Form_Report_RecurSummary extends CRM_Report_Form {
   protected $_customGroupExtends = ['Contribute'];
   protected $_customGroupGroupBy = FALSE;
   public function __construct() {
-    $this->_rollup = 'WITH ROLLUP';
     $thisMonthFirstDay = date('Ymd000000', strtotime("first day of this month"));
     $thisMonthLastDay = date('Ymd235959', strtotime("last day of this month"));
     $lastMonthFirstDay = date('Ymd000000', strtotime("first day of last month"));
@@ -75,6 +74,7 @@ class CRM_Chreports_Form_Report_RecurSummary extends CRM_Report_Form {
         'fields' => [
           'total_amount' => [
             'title' => E::ts('This Month Amount'),
+            'required' => TRUE,
             'dbAlias' => "SUM(IF(contribution_civireport.receive_date >= '$thisMonthFirstDay' AND contribution_civireport.receive_date <= '$thisMonthLastDay', contribution_civireport.total_amount, 0))",
           ],
           'source' => ['title' => E::ts('Contribution Source')],
@@ -90,6 +90,7 @@ class CRM_Chreports_Form_Report_RecurSummary extends CRM_Report_Form {
           'last_month_amount' => [
             'title' => E::ts('Last Month Amount'),
             'type' => CRM_Utils_TYPE::T_MONEY,
+            'required' => TRUE,
             'dbAlias' => "SUM(IF(contribution_civireport.receive_date >= '$lastMonthFirstDay' AND contribution_civireport.receive_date <= '$lastMonthLastDay', contribution_civireport.total_amount, 0))",
           ],
         ],
@@ -104,7 +105,6 @@ class CRM_Chreports_Form_Report_RecurSummary extends CRM_Report_Form {
         'grouping' => 'contribute-fields',
       ],
     ];
-    $this->_statFields = ['civicrm_contribution_total_amount', 'civicrm_contribution_last_month_amount'];
     $this->_groupFilter = TRUE;
     $this->_tagFilter = TRUE;
     $this->addCampaignFields('civicrm_contribution', FALSE, TRUE);
@@ -128,6 +128,33 @@ class CRM_Chreports_Form_Report_RecurSummary extends CRM_Report_Form {
     $this->joinPhoneFromContact();
   }
 
+  public function statistics(&$rows) {
+    $selectColumns = [
+      $this->_columns['civicrm_contribution']['fields']['total_amount']['dbAlias'] . " as `civicrm_contribution_total_amount`",
+      $this->_columns['civicrm_contribution']['fields']['last_month_amount']['dbAlias'] . " as `civicrm_contribution_last_month_amount`",
+    ];
+
+    $sql = "SELECT " . implode(", ", $selectColumns) . " $this->_from $this->_where ";
+    $results = CRM_Core_DAO::executeQuery($sql)->fetchAll();
+
+    $statistics = [
+      'counts' => [
+        'civicrm_contribution_total_amount' => [
+          'title' => ts('This Month Total Amount'),
+          'value' => $results[0]['civicrm_contribution_total_amount'],
+          'type' => CRM_Utils_Type::T_MONEY,
+        ],
+        'civicrm_contribution_last_month_amount' => [
+          'title' => ts('Last Month Total Amount'),
+          'value' => $results[0]['civicrm_contribution_last_month_amount'],
+          'type' => CRM_Utils_Type::T_MONEY,
+        ],
+      ],
+    ];
+
+    return $statistics;
+  }
+
 
   /**
    * Build where clause.
@@ -148,11 +175,6 @@ class CRM_Chreports_Form_Report_RecurSummary extends CRM_Report_Form {
       // use this clause to construct group by clause.
       $this->_having = "HAVING " . implode(' AND ', $this->_havingClauses);
     }
-  }
-
-  public function groupBy() {
-    parent::groupBy();
-    $this->_groupBy .= ' ' . $this->_rollup;
   }
 
   public function alterDisplay(&$rows) {
