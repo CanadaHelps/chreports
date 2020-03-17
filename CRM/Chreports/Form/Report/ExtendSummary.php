@@ -3,6 +3,12 @@ use CRM_Chreports_ExtensionUtil as E;
 
 class CRM_Chreports_Form_Report_ExtendSummary extends CRM_Report_Form_Contribute_Summary {
 
+  public function groupBy() {
+    parent::groupBy();
+    $this->_groupBy = str_replace($this->_rollup, '', $this->_groupBy);
+    $this->_rollup = '';
+  }
+
   public function from($entity = NULL) {
     parent::from($entity);
     if (!strstr($this->_from, 'civicrm_line_item li') && array_key_exists('financial_account', $this->_params['group_bys'])) {
