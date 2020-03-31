@@ -140,6 +140,7 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
   }
   if ($object instanceof CRM_Report_Form_Contribute_Detail) {
     $tablename = E::getTableNameByName('Contribution_Details');
+    $cpTableName = E::getTableNameByName('Campaign_Information');
     if ($varType == 'columns') {
       $var['civicrm_contribution']['group_bys']['contribution_page_id'] = ['title' => ts('Contribution Page')];
       $var['civicrm_contribution']['order_bys']['contribution_page_id'] = ['title' => ts('Contribution Page'), 'dbAlias' => 'cp.title'];
@@ -164,13 +165,20 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
           ];
         }
       }
+      if ($cpTableName) {
+        $columnName = E::getColumnNameByName('Campaign_Type');
+        $var['civicrm_contribution']['fields']['campaign_type'] = [
+          'title' => ts('Contribution Page Type'),
+          'type' => CRM_Utils_Type::T_STRING,
+          'dbAlias' => "(SELECT $columnName FROM $cpTableName WHERE entity_id = contribution_civireport.contribution_page_id)",
+        ];
+      }
     }
     if ($varType == 'sql') {
       $from = $var->getVar('_from');
       $from .= "
       LEFT JOIN civicrm_contribution_page cp ON cp.id = contribution_civireport.contribution_page_id
       LEFT JOIN civicrm_campaign campaign ON campaign.id = contribution_civireport.campaign_id
-
        ";
       $var->setVar('_from', $from);
     }
@@ -179,6 +187,33 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
       if (!empty($object->_columnHeaders[$key])) {
         $column = [$key => $object->_columnHeaders[$key]];
         $object->_columnHeaders = $column + $object->_columnHeaders;
+      }
+
+      // reorder the columns
+      $columnHeaders = [];
+      foreach ([
+        'civicrm_contribution_campaign_id',
+        'civicrm_contact_exposed_id',
+        'civicrm_contact_sort_name',
+        'civicrm_contribution_receive_date',
+        'civicrm_contribution_total_amount',
+        'civicrm_contribution_financial_type_id',
+        'civicrm_contribution_campaign_type',
+        'civicrm_contribution_source',
+        'civicrm_contribution_payment_instrument_id',
+      ] as $name) {
+        if (array_key_exists($name, $object->_columnHeaders)) {
+          $columnHeaders[$name] = $object->_columnHeaders[$name];
+          unset($object->_columnHeaders[$name]);
+        }
+      }
+      $object->_columnHeaders = array_merge($object->_columnHeaders, $columnHeaders);
+
+      if (!empty($object->_columnHeaders['civicrm_contribution_campaign_type'])) {
+        $optionGr = CRM_Core_OptionGroup::values(E::getOptionGroupNameByColumnName(E::getColumnNameByName('Campaign_Type')));
+        foreach ($var as $rowNum => $row) {
+          $var[$rowNum]['civicrm_contribution_campaign_type'] = CRM_Utils_Array::value($row['civicrm_contribution_campaign_type'], $optionValues);
+        }
       }
     }
   }
