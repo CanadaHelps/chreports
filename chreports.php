@@ -297,6 +297,22 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
       $var->setVar('_from', $from);
     }
     if ($varType == 'rows') {
+      // reorder column headers for summary report
+      $columnHeaders = [];
+      foreach ([
+        'civicrm_contribution_campaign_id',
+        'civicrm_contribution_financial_type_id',
+        'civicrm_contribution_campaign_type',
+        'civicrm_contribution_source',
+        'civicrm_contribution_payment_instrument_id',
+      ] as $name) {
+        if (array_key_exists($name, $object->_columnHeaders)) {
+          $columnHeaders[$name] = $object->_columnHeaders[$name];
+          unset($object->_columnHeaders[$name]);
+        }
+      }
+      $object->_columnHeaders = array_merge($columnHeaders, $object->_columnHeaders);
+
       $grandTotalKey = count($var) - 1;
       // if financial account is chosen in column then don't show contribution avg.
       if (!empty($object->_columnHeaders['civicrm_contact_financial_account'])) {
