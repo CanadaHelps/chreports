@@ -172,6 +172,14 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
           'type' => CRM_Utils_Type::T_STRING,
           'dbAlias' => "(SELECT $columnName FROM $cpTableName WHERE entity_id = contribution_civireport.contribution_page_id)",
         ];
+        $var['civicrm_contribution']['filters']['campaign_type'] = [
+          'title' => ts('Contribution Page Type'),
+          'type' => CRM_Utils_Type::T_STRING,
+          'operatorType' => CRM_Report_Form::OP_MULTISELECT,
+          'options' => CRM_Core_OptionGroup::values(E::getOptionGroupNameByColumnName($columnName)),
+          'pseudofield' => TRUE,
+          'dbAlias' => "(1)",
+        ];
       }
     }
     if ($varType == 'sql') {
@@ -180,7 +188,24 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
       LEFT JOIN civicrm_contribution_page cp ON cp.id = contribution_civireport.contribution_page_id
       LEFT JOIN civicrm_campaign campaign ON campaign.id = contribution_civireport.campaign_id
        ";
-      $var->setVar('_from', $from);
+     if (!empty($cpTableName)) {
+       $filter = '';
+       $join = 'LEFT';
+       $params = $var->getVar('_params');
+       if (!empty($params['campaign_type_value']) || in_array($params['campaign_type_op'], ['nll', 'nnll'])) {
+         $join = 'INNER';
+         $field = [
+           'dbAlias' => 'ct.' . E::getColumnNameByName('Campaign_Type'),
+           'name' => 'campaign_type',
+         ];
+         $filter = "AND " . $var->whereClause($field, $params['campaign_type_op'], $params['campaign_type_value'], NULL, NULL);
+       }
+
+       $from .= "
+       $join JOIN $cpTableName ct ON ct.entity_id = contribution_civireport.contribution_page_id $filter
+       ";
+     }
+     $var->setVar('_from', $from);
     }
     if ($varType == 'rows') {
       $key = $tableName . 'custom_' . CRM_Utils_Array::value('id', civicrm_api3('CustomField', 'get', ['sequential' => 1, 'name' => 'Receipt_Number'])['values'][0], '');
@@ -210,7 +235,7 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
       $object->_columnHeaders = array_merge($object->_columnHeaders, $columnHeaders);
 
       if (!empty($object->_columnHeaders['civicrm_contribution_campaign_type'])) {
-        $optionGr = CRM_Core_OptionGroup::values(E::getOptionGroupNameByColumnName(E::getColumnNameByName('Campaign_Type')));
+        $optionValues = CRM_Core_OptionGroup::values(E::getOptionGroupNameByColumnName(E::getColumnNameByName('Campaign_Type')));
         foreach ($var as $rowNum => $row) {
           $var[$rowNum]['civicrm_contribution_campaign_type'] = CRM_Utils_Array::value($row['civicrm_contribution_campaign_type'], $optionValues);
         }
