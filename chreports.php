@@ -223,6 +223,7 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
         'civicrm_contribution_receive_date',
         'civicrm_contribution_total_amount',
         'civicrm_contribution_financial_type_id',
+        'civicrm_contribution_contribution_page_id',
         'civicrm_contribution_campaign_type',
         'civicrm_contribution_source',
         'civicrm_contribution_payment_instrument_id',
