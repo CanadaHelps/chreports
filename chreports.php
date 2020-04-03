@@ -268,7 +268,7 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
         'operatorType' => CRM_Report_Form::OP_MULTISELECT,
         'options' => CRM_Core_OptionGroup::values('payment_instrument'),
       ];
-      if (!empty($tablename)) {
+      if (!empty($tablename) && ($object instanceof CRM_Chreports_Form_Report_ExtendSummary)) {
         if ($columnName = E::getColumnNameByName('Campaign_Type')) {
           $optionGroupName = E::getOptionGroupNameByColumnName($columnName);
           $var['civicrm_contribution']['filters']['campaign_type'] = [
@@ -279,7 +279,6 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
             'dbAlias' => "ct.{$columnName}",
           ];
         }
-
       }
       $var['civicrm_contribution']['group_bys']['campaign_id'] = ['title' => ts('Campaign')];
       $var['civicrm_contribution']['fields']['campaign_id'] = ['title' => ts('Campaign')];
