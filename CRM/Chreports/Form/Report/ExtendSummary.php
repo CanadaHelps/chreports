@@ -24,9 +24,9 @@ class CRM_Chreports_Form_Report_ExtendSummary extends CRM_Report_Form_Contribute
       INNER JOIN civicrm_financial_account fa ON fi.financial_account_id = fa.id
       ";
     }
-    $tablename = E::getTableNameByName('Campaign_Information');
+    $tableName = E::getTableNameByName('Campaign_Information');
     if (!empty($tableName)) {
-      $from .= "
+      $this->_from .= "
       LEFT JOIN $tableName ct ON ct.entity_id = contribution_civireport.contribution_page_id
       ";
     }

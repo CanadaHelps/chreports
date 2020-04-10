@@ -140,6 +140,7 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
   }
   if ($object instanceof CRM_Report_Form_Contribute_Detail) {
     $tablename = E::getTableNameByName('Contribution_Details');
+    $cpTableName = E::getTableNameByName('Campaign_Information');
     if ($varType == 'columns') {
       $var['civicrm_contribution']['group_bys']['contribution_page_id'] = ['title' => ts('Contribution Page')];
       $var['civicrm_contribution']['order_bys']['contribution_page_id'] = ['title' => ts('Contribution Page'), 'dbAlias' => 'cp.title'];
@@ -164,21 +165,81 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
           ];
         }
       }
+      if ($cpTableName) {
+        $columnName = E::getColumnNameByName('Campaign_Type');
+        $var['civicrm_contribution']['fields']['campaign_type'] = [
+          'title' => ts('Contribution Page Type'),
+          'type' => CRM_Utils_Type::T_STRING,
+          'dbAlias' => "(SELECT $columnName FROM $cpTableName WHERE entity_id = contribution_civireport.contribution_page_id)",
+        ];
+        $var['civicrm_contribution']['filters']['campaign_type'] = [
+          'title' => ts('Contribution Page Type'),
+          'type' => CRM_Utils_Type::T_STRING,
+          'operatorType' => CRM_Report_Form::OP_MULTISELECT,
+          'options' => CRM_Core_OptionGroup::values(E::getOptionGroupNameByColumnName($columnName)),
+          'pseudofield' => TRUE,
+          'dbAlias' => "(1)",
+        ];
+      }
     }
     if ($varType == 'sql') {
       $from = $var->getVar('_from');
       $from .= "
       LEFT JOIN civicrm_contribution_page cp ON cp.id = contribution_civireport.contribution_page_id
       LEFT JOIN civicrm_campaign campaign ON campaign.id = contribution_civireport.campaign_id
-
        ";
-      $var->setVar('_from', $from);
+     if (!empty($cpTableName)) {
+       $filter = '';
+       $join = 'LEFT';
+       $params = $var->getVar('_params');
+       if (!empty($params['campaign_type_value']) || in_array($params['campaign_type_op'], ['nll', 'nnll'])) {
+         $join = 'INNER';
+         $field = [
+           'dbAlias' => 'ct.' . E::getColumnNameByName('Campaign_Type'),
+           'name' => 'campaign_type',
+         ];
+         $filter = "AND " . $var->whereClause($field, $params['campaign_type_op'], $params['campaign_type_value'], NULL, NULL);
+       }
+
+       $from .= "
+       $join JOIN $cpTableName ct ON ct.entity_id = contribution_civireport.contribution_page_id $filter
+       ";
+     }
+     $var->setVar('_from', $from);
     }
     if ($varType == 'rows') {
       $key = $tableName . 'custom_' . CRM_Utils_Array::value('id', civicrm_api3('CustomField', 'get', ['sequential' => 1, 'name' => 'Receipt_Number'])['values'][0], '');
       if (!empty($object->_columnHeaders[$key])) {
         $column = [$key => $object->_columnHeaders[$key]];
         $object->_columnHeaders = $column + $object->_columnHeaders;
+      }
+
+      // reorder the columns
+      $columnHeaders = [];
+      foreach ([
+        'civicrm_contribution_campaign_id',
+        'civicrm_contact_exposed_id',
+        'civicrm_contact_sort_name',
+        'civicrm_contribution_receive_date',
+        'civicrm_contribution_total_amount',
+        'civicrm_contribution_financial_type_id',
+        'civicrm_contribution_contribution_page_id',
+        'civicrm_contribution_campaign_type',
+        'civicrm_contribution_source',
+        'civicrm_contribution_payment_instrument_id',
+      ] as $name) {
+        if (array_key_exists($name, $object->_columnHeaders)) {
+          $columnHeaders[$name] = $object->_columnHeaders[$name];
+          unset($object->_columnHeaders[$name]);
+        }
+      }
+      $object->_columnHeaders = array_merge($object->_columnHeaders, $columnHeaders);
+
+      if (!empty($object->_columnHeaders['civicrm_contribution_campaign_type'])) {
+        $optionValues = CRM_Core_OptionGroup::values(E::getOptionGroupNameByColumnName(E::getColumnNameByName('Campaign_Type')));
+        foreach ($var as $rowNum => $row) {
+          $var[$rowNum]['civicrm_contribution_campaign_type'] = CRM_Utils_Array::value($row['civicrm_contribution_campaign_type'], $optionValues);
+        }
       }
     }
   }
@@ -207,7 +268,7 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
         'operatorType' => CRM_Report_Form::OP_MULTISELECT,
         'options' => CRM_Core_OptionGroup::values('payment_instrument'),
       ];
-      if (!empty($tablename)) {
+      if (!empty($tablename) && ($object instanceof CRM_Chreports_Form_Report_ExtendSummary)) {
         if ($columnName = E::getColumnNameByName('Campaign_Type')) {
           $optionGroupName = E::getOptionGroupNameByColumnName($columnName);
           $var['civicrm_contribution']['filters']['campaign_type'] = [
@@ -218,7 +279,6 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
             'dbAlias' => "ct.{$columnName}",
           ];
         }
-
       }
       $var['civicrm_contribution']['group_bys']['campaign_id'] = ['title' => ts('Campaign')];
       $var['civicrm_contribution']['fields']['campaign_id'] = ['title' => ts('Campaign')];
@@ -237,6 +297,22 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
       $var->setVar('_from', $from);
     }
     if ($varType == 'rows') {
+      // reorder column headers for summary report
+      $columnHeaders = [];
+      foreach ([
+        'civicrm_contribution_campaign_id',
+        'civicrm_contribution_financial_type_id',
+        'civicrm_contribution_campaign_type',
+        'civicrm_contribution_source',
+        'civicrm_contribution_payment_instrument_id',
+      ] as $name) {
+        if (array_key_exists($name, $object->_columnHeaders)) {
+          $columnHeaders[$name] = $object->_columnHeaders[$name];
+          unset($object->_columnHeaders[$name]);
+        }
+      }
+      $object->_columnHeaders = array_merge($columnHeaders, $object->_columnHeaders);
+
       $grandTotalKey = count($var) - 1;
       // if financial account is chosen in column then don't show contribution avg.
       if (!empty($object->_columnHeaders['civicrm_contact_financial_account'])) {
