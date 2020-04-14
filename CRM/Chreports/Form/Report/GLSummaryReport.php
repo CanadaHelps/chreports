@@ -43,6 +43,11 @@ class CRM_Chreports_Form_Report_GLSummaryReport extends CRM_Report_Form {
             'required' => TRUE,
             'dbAlias' => 'temp.civicrm_contact_financial_account',
           ],
+          'gl_account_code' => [
+            'title' => E::ts('Financial Account Code'),
+            'required' => TRUE,
+            'dbAlias' => 'temp.gl_account_code',
+          ],
           'count' => [
             'title' => E::ts('Number of Contributions'),
             'type' => CRM_Utils_TYPE::T_INT,
@@ -66,6 +71,25 @@ class CRM_Chreports_Form_Report_GLSummaryReport extends CRM_Report_Form {
             'operatorType' => CRM_Report_Form::OP_MULTISELECT,
             'options' => CRM_Contribute_BAO_Contribution::buildOptions('contribution_status_id', 'search'),
             'default' => [1],
+            'type' => CRM_Utils_Type::T_INT,
+          ],
+          'gl_account' => [
+            'title' => ts('Financial Account'),
+            'type' => CRM_Utils_Type::T_STRING,
+            'operatorType' => CRM_Report_Form::OP_MULTISELECT,
+            'options' => CRM_Contribute_PseudoConstant::financialAccount(),
+            'dbAlias' => 'temp.civicrm_contact_financial_account_id',
+          ],
+          'financial_type_id' => [
+            'title' => ts('Fund'),
+            'operatorType' => CRM_Report_Form::OP_MULTISELECT,
+            'options' => CRM_Financial_BAO_FinancialType::getAvailableFinancialTypes(),
+            'type' => CRM_Utils_Type::T_INT,
+          ],
+          'payment_instrument_id' => [
+            'title' => ts('Payment Method'),
+            'operatorType' => CRM_Report_Form::OP_MULTISELECT,
+            'options' => CRM_Contribute_PseudoConstant::paymentInstrument(),
             'type' => CRM_Utils_Type::T_INT,
           ],
         ],
@@ -104,11 +128,13 @@ class CRM_Chreports_Form_Report_GLSummaryReport extends CRM_Report_Form {
                              {$this->_aliases['civicrm_contribution']}.contact_id
                INNER JOIN (
                   SELECT fa.name as civicrm_contact_financial_account,
+                    fa.id as civicrm_contact_financial_account_id,
                     cc.id as contribution_id,
                     cc.currency as civicrm_contribution_currency,
                     SUM(fi.amount) as civicrm_contribution_amount_sum,
                     COUNT(DISTINCT fi.id) as fi_count,
-                    ft.payment_instrument_id
+                    ft.payment_instrument_id,
+                    fa.accounting_code as gl_account_code
                   FROM civicrm_contribution cc
                   INNER JOIN civicrm_entity_financial_trxn eft_c ON cc.id = eft_c.entity_id AND eft_c.entity_table = 'civicrm_contribution' AND cc.is_test  = 0
                   INNER JOIN civicrm_financial_trxn ft ON eft_c.financial_trxn_id = ft.id
