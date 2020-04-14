@@ -220,10 +220,6 @@ class CRM_Chreports_Form_Report_GLAccountDetail extends CRM_Report_Form {
     $contributionStatus = CRM_Contribute_PseudoConstant::contributionStatus(NULL, 'label');
     $creditCardTypes = CRM_Financial_DAO_FinancialTrxn::buildOptions('card_type_id');
     foreach ($rows as $rowNum => $row) {
-      if (!empty($row['civicrm_financial_trxn_payment_instrument_id']) && !empty($row['civicrm_contribution_gl_account']) && empty($row['civicrm_contribution_id'])) {
-        unset($rows[$rowNum]);
-        continue;
-      }
       // convert display name to links
       if (array_key_exists('civicrm_contact_sort_name', $row) &&
         !empty($rows[$rowNum]['civicrm_contact_sort_name']) &&
@@ -260,12 +256,15 @@ class CRM_Chreports_Form_Report_GLAccountDetail extends CRM_Report_Form {
         $rows[$rowNum]['civicrm_financial_trxn_card_type_id'] = CRM_Utils_Array::value($row['civicrm_financial_trxn_card_type_id'], $creditCardTypes);
       }
 
-      if (empty($row['civicrm_financial_trxn_payment_instrument_id'])) {
+      if (empty($row['civicrm_contribution_id'])) {
         if (empty($row['civicrm_contribution_gl_account'])) {
           $rows[$rowNum]['civicrm_financial_trxn_payment_instrument_id'] = sprintf("<strong>%s</strong>", ts("All Total"));
         }
-        else {
+        elseif (empty($row['civicrm_financial_trxn_payment_instrument_id'])) {
           $rows[$rowNum]['civicrm_financial_trxn_payment_instrument_id'] = sprintf("<strong>%s</strong>", ts("All Payment Methods Total"));
+        }
+        else {
+          $rows[$rowNum]['civicrm_financial_trxn_payment_instrument_id'] = sprintf("<strong>%s total </strong>", $rows[$rowNum]['civicrm_financial_trxn_payment_instrument_id']);
         }
         foreach ($row as $key => $value) {
           if ($key == 'civicrm_contact_sort_name') {
@@ -273,9 +272,12 @@ class CRM_Chreports_Form_Report_GLAccountDetail extends CRM_Report_Form {
             $rows[$rowNum]['civicrm_contact_sort_name_link'] = $rows[$rowNum]['civicrm_contact_sort_name_hover'] = NULL;
           }
           elseif($key == 'civicrm_contribution_gl_amount') {
-            $rows[$rowNum][$key] = sprintf("<strong>%s</strong>", $row['civicrm_contribution_gl_amount']);
+            $rows[$rowNum][$key] = sprintf("<strong>%s</strong>", CRM_Utils_Money::format($row['civicrm_contribution_gl_amount'], NULL, '%a'));
           }
           elseif (!in_array($key, ['civicrm_contribution_gl_amount', 'civicrm_financial_trxn_currency', 'civicrm_financial_trxn_payment_instrument_id'])) {
+            if ($key == 'civicrm_contribution_gl_account' && !empty($row['civicrm_financial_trxn_payment_instrument_id'])) {
+              continue;
+            }
             $rows[$rowNum][$key] = NULL;
           }
         }
