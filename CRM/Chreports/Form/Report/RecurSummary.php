@@ -154,6 +154,30 @@ class CRM_Chreports_Form_Report_RecurSummary extends CRM_Report_Form {
       ],
     ];
 
+    $columnHeaders = [];
+    foreach ([
+      'civicrm_contact_id', 
+      'civicrm_contact_sort_name',
+      'civicrm_address_street_address',
+      'civicrm_address_city',
+      'civicrm_address_state_province_id',
+      'civicrm_address_postal_code',
+      'civicrm_address_country_id',
+      'civicrm_email_email',
+      'civicrm_phone_phone',
+      'civicrm_contribution_source',
+      'civicrm_contribution_total_amount',
+      'civicrm_contribution_last_month_amount',
+      'civicrm_contribution_start_date',
+      'civicrm_contribution_completed_contributions',
+    ] as $name) {
+      if (array_key_exists($name, $this->_columnHeaders)) {
+        $columnHeaders[$name] = $this->_columnHeaders[$name];
+        unset($this->_columnHeaders[$name]);
+      }
+    }
+    $this->_columnHeaders = array_merge($columnHeaders, $this->_columnHeaders);
+
     return $statistics;
   }
 
