@@ -147,11 +147,12 @@ class CRM_Chreports_Form_Report_RecurSummary extends CRM_Report_Form {
 
   public function statistics(&$rows) {
     $selectColumns = [
-      $this->_columns['civicrm_contribution']['fields']['total_amount']['dbAlias'] . " as `civicrm_contribution_total_amount`",
-      $this->_columns['civicrm_contribution']['fields']['last_month_amount']['dbAlias'] . " as `civicrm_contribution_last_month_amount`",
+      "SUM(" . $this->_columns['civicrm_contribution']['fields']['total_amount']['dbAlias'] . ") as `civicrm_contribution_total_amount`",
+      "SUM(" . $this->_columns['civicrm_contribution']['fields']['last_month_amount']['dbAlias'] . ") as `civicrm_contribution_last_month_amount`",
     ];
 
     $sql = "SELECT " . implode(", ", $selectColumns) . " $this->_from $this->_where ";
+    $this->addToDeveloperTab($sql);
     $results = CRM_Core_DAO::executeQuery($sql)->fetchAll();
 
     $statistics = [
