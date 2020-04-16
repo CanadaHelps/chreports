@@ -10,10 +10,6 @@ class CRM_Chreports_Form_Report_RecurSummary extends CRM_Report_Form {
   protected $_customGroupExtends = ['Contribute'];
   protected $_customGroupGroupBy = FALSE;
   public function __construct() {
-    $thisMonthFirstDay = date('Ymd000000', strtotime("first day of this month"));
-    $thisMonthLastDay = date('Ymd235959', strtotime("last day of this month"));
-    $lastMonthFirstDay = date('Ymd000000', strtotime("first day of last month"));
-    $lastMonthLastDay = date('Ymd235959', strtotime("last day of last month"));
     $this->_columns = [
       'civicrm_contact' => [
         'dao' => 'CRM_Contact_DAO_Contact',
@@ -75,7 +71,7 @@ class CRM_Chreports_Form_Report_RecurSummary extends CRM_Report_Form {
           'total_amount' => [
             'title' => E::ts('This Month Amount'),
             'required' => TRUE,
-            'dbAlias' => "SUM(IF(contribution_civireport.receive_date >= '$thisMonthFirstDay' AND contribution_civireport.receive_date <= '$thisMonthLastDay', contribution_civireport.total_amount, 0))",
+            'dbAlias' => "temp.this_month_amount",
           ],
           'source' => ['title' => E::ts('Contribution Source')],
           'completed_contributions' => [
@@ -91,7 +87,7 @@ class CRM_Chreports_Form_Report_RecurSummary extends CRM_Report_Form {
             'title' => E::ts('Last Month Amount'),
             'type' => CRM_Utils_TYPE::T_MONEY,
             'required' => TRUE,
-            'dbAlias' => "SUM(IF(lastmonth.receive_date >= '$lastMonthFirstDay' AND lastmonth.receive_date <= '$lastMonthLastDay', lastmonth.total_amount, 0))",
+            'dbAlias' => "temp.last_month_amount",
           ],
         ],
         'filters' => [
@@ -113,16 +109,35 @@ class CRM_Chreports_Form_Report_RecurSummary extends CRM_Report_Form {
   }
 
   function from() {
+    $thisMonthFirstDay = date('Ymd000000', strtotime("first day of this month"));
+    $thisMonthLastDay = date('Ymd235959', strtotime("last day of this month"));
+    $lastMonthFirstDay = date('Ymd000000', strtotime("first day of last month"));
+    $lastMonthLastDay = date('Ymd235959', strtotime("last day of last month"));
     $tablename = E::getTableNameByName('Contribution_Details');
 
     $this->_from = "
          FROM  civicrm_contact {$this->_aliases['civicrm_contact']} {$this->_aclFrom}
-               INNER JOIN civicrm_contribution {$this->_aliases['civicrm_contribution']}
+               INNER JOIN
+               (
+	       SELECT contact_id, SUM(this_month_amount) as this_month_amount, SUM(last_month_amount) as last_month_amount
+	        FROM (
+               (SELECT cc.contact_id, SUM(cc.total_amount) as this_month_amount, 0 as last_month_amount
+                 FROM civicrm_contribution cc
+                      LEFT JOIN {$tablename} cd ON cd.entity_id = cc.id
+                  WHERE cc.contribution_status_id = 1 AND cc.receive_date >= {$thisMonthFirstDay} AND cc.receive_date <= {$thisMonthLastDay} AND (cc.contribution_recur_id <> 0 OR cd.sg_flag_38 <> 0)
+               GROUP BY cc.contact_id)
+                UNION
+               (SELECT cc.contact_id, 0 as this_month_amount, SUM(cc.total_amount) as last_month_amount
+                  FROM civicrm_contribution cc
+                    LEFT JOIN {$tablename} cd ON cd.entity_id = cc.id
+                  WHERE cc.contribution_status_id = 1 AND cc.receive_date >= {$lastMonthFirstDay} AND cc.receive_date <= {$lastMonthLastDay} AND (cc.contribution_recur_id <> 0 OR cd.sg_flag_38 <> 0)
+
+                  GROUP BY cc.contact_id)) temp1 GROUP BY contact_id
+               ) temp ON temp.contact_id = {$this->_aliases['civicrm_contact']}.id
+               LEFT JOIN civicrm_contribution {$this->_aliases['civicrm_contribution']}
                           ON {$this->_aliases['civicrm_contact']}.id =
                              {$this->_aliases['civicrm_contribution']}.contact_id AND {$this->_aliases['civicrm_contribution']}.is_test = 0
                LEFT JOIN {$tablename} cd ON cd.entity_id = {$this->_aliases['civicrm_contribution']}.id
-               INNER JOIN civicrm_contribution lastmonth ON lastmonth.contact_id = {$this->_aliases['civicrm_contact']}.id AND lastmonth.is_test = 0
-               LEFT JOIN {$tablename} lm ON lm.entity_id = lastmonth.id
       ";
 
     $this->joinAddressFromContact();
@@ -191,6 +206,7 @@ class CRM_Chreports_Form_Report_RecurSummary extends CRM_Report_Form {
 
     $this->_whereClauses[] = "( contribution_civireport.contribution_recur_id <> 0 OR cd.$columnName <> 0 )";
     $this->_whereClauses[] = "( lastmonth.contribution_recur_id <> 0 OR lm.$columnName <> 0 )";
+    $this->_whereClauses[] = "( contribution_civireport.contribution_status_id = 1 )";
 
     $this->_where = "WHERE " . implode(' AND ', $this->_whereClauses);
 
