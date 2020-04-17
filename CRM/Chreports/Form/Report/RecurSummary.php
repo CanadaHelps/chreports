@@ -73,15 +73,18 @@ class CRM_Chreports_Form_Report_RecurSummary extends CRM_Report_Form {
             'required' => TRUE,
             'dbAlias' => "temp.this_month_amount",
           ],
-          'source' => ['title' => E::ts('Contribution Source')],
+          'source' => [
+            'title' => E::ts('Contribution Source'),
+            'dbAlias' => 'GROUP_CONCAT(DISTINCT contribution_civireport.source)',
+          ],
           'completed_contributions' => [
             'title' => E::ts('Completed Contributions'),
-            'dbAlias' => 'COUNT(DISTINCT contribution_civireport.id)',
+            'dbAlias' => 'temp.completed_contributions',
           ],
           'start_date' => [
             'title' => E::ts('Start Date/First Contribution'),
             'type' => CRM_Utils_Type::T_DATE + CRM_Utils_Type::T_TIME,
-            'dbAlias' => 'MIN(contribution_civireport.receive_date)',
+            'dbAlias' => 'temp.first_date',
           ],
           'last_month_amount' => [
             'title' => E::ts('Last Month Amount'),
@@ -119,20 +122,28 @@ class CRM_Chreports_Form_Report_RecurSummary extends CRM_Report_Form {
          FROM  civicrm_contact {$this->_aliases['civicrm_contact']} {$this->_aclFrom}
                INNER JOIN
                (
-	       SELECT contact_id, SUM(this_month_amount) as this_month_amount, SUM(last_month_amount) as last_month_amount
+	       SELECT contact_id, SUM(this_month_amount) as this_month_amount, SUM(last_month_amount) as last_month_amount, MIN(first_date) as first_date, SUM(completed_contributions) as completed_contributions
 	        FROM (
-               (SELECT cc.contact_id, SUM(cc.total_amount) as this_month_amount, 0 as last_month_amount
+               (SELECT cc.contact_id, SUM(cc.total_amount) as this_month_amount, 0 as last_month_amount, MIN(cc.receive_date) as first_date, 0 as completed_contributions
                  FROM civicrm_contribution cc
                       LEFT JOIN {$tablename} cd ON cd.entity_id = cc.id
                   WHERE cc.contribution_status_id = 1 AND cc.receive_date >= {$thisMonthFirstDay} AND cc.receive_date <= {$thisMonthLastDay} AND (cc.contribution_recur_id <> 0 OR cd.sg_flag_38 <> 0)
                GROUP BY cc.contact_id)
                 UNION
-               (SELECT cc.contact_id, 0 as this_month_amount, SUM(cc.total_amount) as last_month_amount
+               (SELECT cc.contact_id, 0 as this_month_amount, SUM(cc.total_amount) as last_month_amount, MIN(cc.receive_date) as first_date, 0 as completed_contributions
                   FROM civicrm_contribution cc
                     LEFT JOIN {$tablename} cd ON cd.entity_id = cc.id
                   WHERE cc.contribution_status_id = 1 AND cc.receive_date >= {$lastMonthFirstDay} AND cc.receive_date <= {$lastMonthLastDay} AND (cc.contribution_recur_id <> 0 OR cd.sg_flag_38 <> 0)
 
-                  GROUP BY cc.contact_id)) temp1 GROUP BY contact_id
+                  GROUP BY cc.contact_id)
+                  UNION
+                 (SELECT cc.contact_id, 0 as this_month_amount, 0 as last_month_amount, MIN(cc.receive_date) as first_date, COUNT(DISTINCT cc.id)
+                    FROM civicrm_contribution cc
+                      LEFT JOIN {$tablename} cd ON cd.entity_id = cc.id
+                    WHERE cc.contribution_status_id = 1 AND (cc.contribution_recur_id <> 0 OR cd.sg_flag_38 <> 0)
+
+                    GROUP BY cc.contact_id)
+               ) temp1 GROUP BY contact_id
                ) temp ON temp.contact_id = {$this->_aliases['civicrm_contact']}.id
                LEFT JOIN civicrm_contribution {$this->_aliases['civicrm_contribution']}
                           ON {$this->_aliases['civicrm_contact']}.id =
@@ -206,7 +217,6 @@ class CRM_Chreports_Form_Report_RecurSummary extends CRM_Report_Form {
     $columnName = E::getColumnNameByName('SG_Flag');
 
     $this->_whereClauses[] = "( contribution_civireport.contribution_recur_id <> 0 OR cd.$columnName <> 0 )";
-    $this->_whereClauses[] = "( lastmonth.contribution_recur_id <> 0 OR lm.$columnName <> 0 )";
     $this->_whereClauses[] = "( contribution_civireport.contribution_status_id = 1 )";
 
     $this->_where = "WHERE " . implode(' AND ', $this->_whereClauses);
