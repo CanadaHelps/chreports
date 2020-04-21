@@ -10,10 +10,6 @@ class CRM_Chreports_Form_Report_RecurSummary extends CRM_Report_Form {
   protected $_customGroupExtends = ['Contribute'];
   protected $_customGroupGroupBy = FALSE;
   public function __construct() {
-    $thisMonthFirstDay = date('Ymd000000', strtotime("first day of this month"));
-    $thisMonthLastDay = date('Ymd235959', strtotime("last day of this month"));
-    $lastMonthFirstDay = date('Ymd000000', strtotime("first day of last month"));
-    $lastMonthLastDay = date('Ymd235959', strtotime("last day of last month"));
     $this->_columns = [
       'civicrm_contact' => [
         'dao' => 'CRM_Contact_DAO_Contact',
@@ -75,23 +71,26 @@ class CRM_Chreports_Form_Report_RecurSummary extends CRM_Report_Form {
           'total_amount' => [
             'title' => E::ts('This Month Amount'),
             'required' => TRUE,
-            'dbAlias' => "SUM(IF(contribution_civireport.receive_date >= '$thisMonthFirstDay' AND contribution_civireport.receive_date <= '$thisMonthLastDay', contribution_civireport.total_amount, 0))",
+            'dbAlias' => "temp.this_month_amount",
           ],
-          'source' => ['title' => E::ts('Contribution Source')],
+          'source' => [
+            'title' => E::ts('Contribution Source'),
+            'dbAlias' => 'GROUP_CONCAT(DISTINCT contribution_civireport.source)',
+          ],
           'completed_contributions' => [
             'title' => E::ts('Completed Contributions'),
-            'dbAlias' => 'COUNT(DISTINCT contribution_civireport.id)',
+            'dbAlias' => 'temp.completed_contributions',
           ],
           'start_date' => [
             'title' => E::ts('Start Date/First Contribution'),
             'type' => CRM_Utils_Type::T_DATE + CRM_Utils_Type::T_TIME,
-            'dbAlias' => 'MIN(contribution_civireport.receive_date)',
+            'dbAlias' => 'temp.first_date',
           ],
           'last_month_amount' => [
             'title' => E::ts('Last Month Amount'),
             'type' => CRM_Utils_TYPE::T_MONEY,
             'required' => TRUE,
-            'dbAlias' => "SUM(IF(contribution_civireport.receive_date >= '$lastMonthFirstDay' AND contribution_civireport.receive_date <= '$lastMonthLastDay', contribution_civireport.total_amount, 0))",
+            'dbAlias' => "temp.last_month_amount",
           ],
         ],
         'filters' => [
@@ -113,11 +112,40 @@ class CRM_Chreports_Form_Report_RecurSummary extends CRM_Report_Form {
   }
 
   function from() {
+    $thisMonthFirstDay = date('Ymd000000', strtotime("first day of this month"));
+    $thisMonthLastDay = date('Ymd235959', strtotime("last day of this month"));
+    $lastMonthFirstDay = date('Ymd000000', strtotime("first day of last month"));
+    $lastMonthLastDay = date('Ymd235959', strtotime("last day of last month"));
     $tablename = E::getTableNameByName('Contribution_Details');
 
     $this->_from = "
          FROM  civicrm_contact {$this->_aliases['civicrm_contact']} {$this->_aclFrom}
-               INNER JOIN civicrm_contribution {$this->_aliases['civicrm_contribution']}
+               INNER JOIN
+               (
+	       SELECT contact_id, SUM(this_month_amount) as this_month_amount, SUM(last_month_amount) as last_month_amount, MIN(first_date) as first_date, SUM(completed_contributions) as completed_contributions
+	        FROM (
+               (SELECT cc.contact_id, SUM(cc.total_amount) as this_month_amount, 0 as last_month_amount, MIN(cc.receive_date) as first_date, 0 as completed_contributions
+                 FROM civicrm_contribution cc
+                      LEFT JOIN {$tablename} cd ON cd.entity_id = cc.id
+                  WHERE cc.contribution_status_id = 1 AND cc.receive_date >= {$thisMonthFirstDay} AND cc.receive_date <= {$thisMonthLastDay} AND (cc.contribution_recur_id <> 0 OR cd.sg_flag_38 <> 0)
+               GROUP BY cc.contact_id)
+                UNION
+               (SELECT cc.contact_id, 0 as this_month_amount, SUM(cc.total_amount) as last_month_amount, MIN(cc.receive_date) as first_date, 0 as completed_contributions
+                  FROM civicrm_contribution cc
+                    LEFT JOIN {$tablename} cd ON cd.entity_id = cc.id
+                  WHERE cc.contribution_status_id = 1 AND cc.receive_date >= {$lastMonthFirstDay} AND cc.receive_date <= {$lastMonthLastDay} AND (cc.contribution_recur_id <> 0 OR cd.sg_flag_38 <> 0)
+
+                  GROUP BY cc.contact_id)
+                  UNION
+                 (SELECT cc.contact_id, 0 as this_month_amount, 0 as last_month_amount, MIN(cc.receive_date) as first_date, COUNT(DISTINCT cc.id)
+                    FROM civicrm_contribution cc
+                      LEFT JOIN {$tablename} cd ON cd.entity_id = cc.id
+                    WHERE cc.contribution_status_id = 1 AND (cc.contribution_recur_id <> 0 OR cd.sg_flag_38 <> 0)
+
+                    GROUP BY cc.contact_id)
+               ) temp1 GROUP BY contact_id
+               ) temp ON temp.contact_id = {$this->_aliases['civicrm_contact']}.id
+               LEFT JOIN civicrm_contribution {$this->_aliases['civicrm_contribution']}
                           ON {$this->_aliases['civicrm_contact']}.id =
                              {$this->_aliases['civicrm_contribution']}.contact_id AND {$this->_aliases['civicrm_contribution']}.is_test = 0
                LEFT JOIN {$tablename} cd ON cd.entity_id = {$this->_aliases['civicrm_contribution']}.id
@@ -130,11 +158,12 @@ class CRM_Chreports_Form_Report_RecurSummary extends CRM_Report_Form {
 
   public function statistics(&$rows) {
     $selectColumns = [
-      $this->_columns['civicrm_contribution']['fields']['total_amount']['dbAlias'] . " as `civicrm_contribution_total_amount`",
-      $this->_columns['civicrm_contribution']['fields']['last_month_amount']['dbAlias'] . " as `civicrm_contribution_last_month_amount`",
+      "SUM(" . $this->_columns['civicrm_contribution']['fields']['total_amount']['dbAlias'] . ") as `civicrm_contribution_total_amount`",
+      "SUM(" . $this->_columns['civicrm_contribution']['fields']['last_month_amount']['dbAlias'] . ") as `civicrm_contribution_last_month_amount`",
     ];
 
     $sql = "SELECT " . implode(", ", $selectColumns) . " $this->_from $this->_where ";
+    $this->addToDeveloperTab($sql);
     $results = CRM_Core_DAO::executeQuery($sql)->fetchAll();
 
     $statistics = [
@@ -152,6 +181,30 @@ class CRM_Chreports_Form_Report_RecurSummary extends CRM_Report_Form {
       ],
     ];
 
+    $columnHeaders = [];
+    foreach ([
+      'civicrm_contact_exposed_id',
+      'civicrm_contact_sort_name',
+      'civicrm_address_street_address',
+      'civicrm_address_city',
+      'civicrm_address_state_province_id',
+      'civicrm_address_postal_code',
+      'civicrm_address_country_id',
+      'civicrm_phone_phone',
+      'civicrm_email_email',
+      'civicrm_contribution_source',
+      'civicrm_contribution_last_month_amount',
+      'civicrm_contribution_total_amount',
+      'civicrm_contribution_start_date',
+      'civicrm_contribution_completed_contributions',
+    ] as $name) {
+      if (array_key_exists($name, $this->_columnHeaders)) {
+        $columnHeaders[$name] = $this->_columnHeaders[$name];
+        unset($this->_columnHeaders[$name]);
+      }
+    }
+    $this->_columnHeaders = array_merge($columnHeaders, $this->_columnHeaders);
+
     return $statistics;
   }
 
@@ -164,6 +217,7 @@ class CRM_Chreports_Form_Report_RecurSummary extends CRM_Report_Form {
     $columnName = E::getColumnNameByName('SG_Flag');
 
     $this->_whereClauses[] = "( contribution_civireport.contribution_recur_id <> 0 OR cd.$columnName <> 0 )";
+    $this->_whereClauses[] = "( contribution_civireport.contribution_status_id = 1 )";
 
     $this->_where = "WHERE " . implode(' AND ', $this->_whereClauses);
 
