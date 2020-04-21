@@ -13,8 +13,8 @@ return array (
     'params' =>
     array (
       'version' => 3,
-      'label' => 'Recurring Contributions (Summary)',
-      'description' => 'Overview of Recurring Contributions (biz.jmaconsulting.chreports)',
+      'label' => 'Extended Contribution Summary',
+      'description' => 'Extended Contributions Summary (biz.jmaconsulting.chreports)',
       'class_name' => 'CRM_Chreports_Form_Report_ExtendSummary',
       'report_url' => 'biz.jmaconsulting.chreports/extendsummary',
       'component' => '',
