@@ -20,8 +20,8 @@ class CRM_Chreports_Form_Report_GLSummaryReport extends CRM_Report_Form {
             'no_repeat' => TRUE,
           ),
           'id' => array(
-            'no_display' => TRUE,
             'required' => TRUE,
+            'title' => ts('Donor ID'),
           ),
         ),
         'filters' => array(
@@ -34,19 +34,18 @@ class CRM_Chreports_Form_Report_GLSummaryReport extends CRM_Report_Form {
       'civicrm_contribution' => [
         'dao' => 'CRM_Contribute_BAO_Contribution',
         'fields' => [
-          'id' => array(
-            'no_display' => TRUE,
-            'required' => TRUE,
-          ),
           'gl_account' => [
             'title' => E::ts('Financial Account'),
             'required' => TRUE,
-            'dbAlias' => 'temp.civicrm_contact_financial_account',
+            'dbAlias' => 'fa.name',
           ],
           'gl_account_code' => [
             'title' => E::ts('Financial Account Code'),
-            'required' => TRUE,
-            'dbAlias' => 'temp.gl_account_code',
+            'dbAlias' => 'fa.accounting_code',
+          ],
+          'gl_account_type' => [
+            'title' => E::ts('Financial Account Type'),
+            'dbAlias' => 'fa.financial_account_type_id',
           ],
           'count' => [
             'title' => E::ts('Number of Contributions'),
@@ -57,10 +56,28 @@ class CRM_Chreports_Form_Report_GLSummaryReport extends CRM_Report_Form {
             'title' => E::ts('Total Amount'),
             'default' => TRUE,
             'type' => CRM_Utils_TYPE::T_MONEY,
-            'dbAlias' => 'SUM(temp.civicrm_contribution_amount_sum)'
+            'dbAlias' => 'SUM(temp.amount)'
+          ],
+          'receive_date' => [
+            'title' => E::ts('Donation Date'),
+            'type' => CRM_Utils_Type::T_DATE + CRM_Utils_Type::T_TIME,
+          ],
+          'financial_type_id' => [
+            'title' => E::ts('Fund'),
+          ],
+          'payment_instrument_id' => [
+            'title' => E::ts('Payment Method'),
+          ],
+          'source' => [
+            'title' => E::ts('Source'),
           ],
         ],
         'filters' => [
+          'contribution_id' => array(
+            'title' => 'Contribution ID',
+            'type' => CRM_Utils_Type::T_INT,
+            'dbAlias' => 'contribution_civireport.id'
+          ),
           'receive_date' => [
             'title' => E::ts('Receive Date'),
             'operatorType' => CRM_Report_form::OP_DATETIME,
@@ -78,7 +95,7 @@ class CRM_Chreports_Form_Report_GLSummaryReport extends CRM_Report_Form {
             'type' => CRM_Utils_Type::T_STRING,
             'operatorType' => CRM_Report_Form::OP_MULTISELECT,
             'options' => CRM_Contribute_PseudoConstant::financialAccount(),
-            'dbAlias' => 'temp.civicrm_contact_financial_account_id',
+            'dbAlias' => 'fa.id',
           ],
           'financial_type_id' => [
             'title' => ts('Fund'),
@@ -91,6 +108,25 @@ class CRM_Chreports_Form_Report_GLSummaryReport extends CRM_Report_Form {
             'operatorType' => CRM_Report_Form::OP_MULTISELECT,
             'options' => CRM_Contribute_PseudoConstant::paymentInstrument(),
             'type' => CRM_Utils_Type::T_INT,
+          ],
+        ],
+        'order_bys' => [
+          'receive_date' => [
+            'title' => E::ts('Donation Date'),
+          ],
+        ],
+        'group_bys' => [
+          'id' => [
+            'title' => ts('Contribution ID'),
+          ],
+          'contact_id' => [
+            'title' => ts('Contact ID'),
+          ],
+          'payment_instrument_id' => [
+            'title' => ts('Payment Method'),
+          ],
+          'receive_date' => [
+            'title' => E::ts('Donation Date'),
           ],
         ],
         'grouping' => 'contribute-fields',
@@ -120,32 +156,56 @@ class CRM_Chreports_Form_Report_GLSummaryReport extends CRM_Report_Form {
   }
 
   function from() {
+    $financialAccountTypes = CRM_Core_OptionGroup::values('financial_account_type', FALSE, FALSE, FALSE, NULL, 'name');
+    $revenue = array_search('Revenue', $financialAccountTypes);
+    $expense = array_search('Expenses', $financialAccountTypes);
+
+    $sql = "
+    SELECT SQ1.contribution_id, SQ1.financial_account_id, fa.financial_account_type_id, SUM(SQ1.total_amount) as amount
+    FROM (
+        select eftc.entity_id as contribution_id, if(ft.from_financial_account_id is null, fi.financial_account_id, ft.from_financial_account_id) as financial_account_id, ft.total_amount
+        FROM
+        civicrm_entity_financial_trxn eftc
+        inner join civicrm_entity_financial_trxn efti on eftc.entity_table='civicrm_contribution' AND efti.entity_table='civicrm_financial_item' AND eftc.financial_trxn_id=efti.financial_trxn_id
+        inner join civicrm_financial_trxn ft on eftc.financial_trxn_id=ft.id inner join
+        civicrm_financial_item fi on efti.entity_id=fi.id
+        inner join civicrm_financial_account fa on fi.financial_account_id = fa.id AND fa.financial_account_type_id = $revenue
+
+    UNION ALL
+        select eftc.entity_id as contribution_id, ft.to_financial_account_id AS financial_account_id, ft.total_amount
+        FROM civicrm_entity_financial_trxn eftc
+        inner join civicrm_entity_financial_trxn efti on eftc.entity_table='civicrm_contribution' AND efti.entity_table='civicrm_financial_item' AND eftc.financial_trxn_id=efti.financial_trxn_id
+        inner join civicrm_financial_trxn ft on eftc.financial_trxn_id=ft.id
+        inner join civicrm_financial_item fi on efti.entity_id=fi.id
+        inner join civicrm_financial_account fa on fi.financial_account_id = fa.id AND fa.financial_account_type_id = $expense
+
+    ) AS SQ1
+     INNER join civicrm_financial_account fa on SQ1.financial_account_id = fa.id AND fa.financial_account_type_id IN ($revenue, $expense)
+    GROUP BY contribution_id, financial_account_id
+    HAVING SUM(SQ1.total_amount) <> 0
+    ";
+
+    $this->createTemporaryTable('financial_revenue_details', $sql);
+    $this->createTemporaryTable('financial_expense_details', " SELECT * FROM {$this->temporaryTables['financial_revenue_details']['name']} WHERE financial_account_type_id = $expense ");
+    CRM_Core_DAO::executeQuery(" DELETE FROM {$this->temporaryTables['financial_revenue_details']['name']} WHERE financial_account_type_id = $expense ");
+    CRM_Core_DAO::executeQuery("
+      UPDATE {$this->temporaryTables['financial_revenue_details']['name']} temp1
+      INNER JOIN {$this->temporaryTables['financial_expense_details']['name']} temp2  ON temp2.contribution_id = temp1.contribution_id
+      SET temp1.amount = (temp1.amount - temp2.amount)
+    ");
 
     $this->_from = "
          FROM  civicrm_contact {$this->_aliases['civicrm_contact']}
                INNER JOIN civicrm_contribution {$this->_aliases['civicrm_contribution']}
                           ON {$this->_aliases['civicrm_contact']}.id =
                              {$this->_aliases['civicrm_contribution']}.contact_id
-               INNER JOIN (
-                  SELECT fa.name as civicrm_contact_financial_account,
-                    fa.id as civicrm_contact_financial_account_id,
-                    cc.id as contribution_id,
-                    cc.currency as civicrm_contribution_currency,
-                    SUM(fi.amount) as civicrm_contribution_amount_sum,
-                    COUNT(DISTINCT fi.id) as fi_count,
-                    ft.payment_instrument_id,
-                    fa.accounting_code as gl_account_code
-                  FROM civicrm_contribution cc
-                  INNER JOIN civicrm_entity_financial_trxn eft_c ON cc.id = eft_c.entity_id AND eft_c.entity_table = 'civicrm_contribution' AND cc.is_test  = 0
-                  INNER JOIN civicrm_financial_trxn ft ON eft_c.financial_trxn_id = ft.id
-                  INNER JOIN civicrm_entity_financial_trxn eft_fi ON ft.id = eft_fi.financial_trxn_id AND eft_fi.entity_table = 'civicrm_financial_item'
-                  INNER JOIN civicrm_financial_item fi ON eft_fi.entity_id = fi.id AND fi.entity_table = 'civicrm_line_item'
-                  INNER JOIN civicrm_financial_account fa ON fi.financial_account_id = fa.id
-                  GROUP BY fa.name, cc.id
-                  HAVING SUM(fi.amount) <> 0
-               ) temp  ON {$this->_aliases['civicrm_contribution']}.id = temp.contribution_id
-     ";
-
+          INNER JOIN (
+            (SELECT * FROM {$this->temporaryTables['financial_revenue_details']['name']})
+            UNION
+            (SELECT * FROM {$this->temporaryTables['financial_expense_details']['name']})
+         ) as temp ON temp.contribution_id = {$this->_aliases['civicrm_contribution']}.id
+         INNER JOIN civicrm_financial_account fa on temp.financial_account_id = fa.id
+    ";
   }
 
   function where() {
@@ -193,11 +253,28 @@ class CRM_Chreports_Form_Report_GLSummaryReport extends CRM_Report_Form {
   }
 
   function groupBy() {
-    $this->_groupBy = " GROUP BY temp.civicrm_contact_financial_account";
+    $groupBys = [
+      'fa.name',
+    ];
+    $params = CRM_Utils_Array::value('group_bys', $this->_params);
+
+    if (!empty($params)) {
+      $alias = $this->_aliases['civicrm_contribution'];
+      foreach ($params as $groupBy => $dontCare) {
+        $groupBys[] = $alias . '.' . $groupBy;
+      }
+    }
+    $this->_groupBy = " GROUP BY " . implode(', ', $groupBys);
   }
 
   function orderBy() {
-    $this->_orderBy = " ORDER BY temp.civicrm_contact_financial_account ASC";
+    $this->storeOrderByArray();
+    if (!empty($this->_orderByArray)) {
+      $this->_orderBy = "ORDER BY " . implode(', ', $this->_orderByArray);
+    }
+    else {
+      $this->_orderBy = " ORDER BY fa.name ASC";
+    }
   }
 
   public function statistics(&$rows) {
@@ -205,8 +282,9 @@ class CRM_Chreports_Form_Report_GLSummaryReport extends CRM_Report_Form {
       $sql = "
       SELECT
       COUNT(DISTINCT {$this->_aliases['civicrm_contribution']}.id) as total_count,
-      SUM({$this->_aliases['civicrm_contribution']}.total_amount) as amount,
+      SUM(temp.amount) as amount,
       {$this->_aliases['civicrm_contribution']}.currency
+
        {$this->_from} {$this->_where} GROUP BY {$this->_aliases['civicrm_contribution']}.currency
       ";
       $dao = CRM_Core_DAO::executeQuery($sql);
@@ -228,32 +306,39 @@ class CRM_Chreports_Form_Report_GLSummaryReport extends CRM_Report_Form {
        'type' => CRM_Utils_Type::T_STRING,
      ];
 
+     $columnHeaders = [];
+     foreach ([
+       'civicrm_contribution_gl_account',
+       'civicrm_contribution_gl_account_code',
+       'civicrm_contribution_gl_account_type',
+       'civicrm_contact_exposed_id',
+       'civicrm_contact_sort_name',
+       'civicrm_contribution_receive_date',
+       'civicrm_contribution_completed_contributions',
+       'civicrm_contribution_gl_amount',
+       'civicrm_contribution_financial_type_id',
+       'civicrm_contribution_payment_instrument_id',
+       'civicrm_contribution_source',
+     ] as $name) {
+       if (array_key_exists($name, $this->_columnHeaders)) {
+         $columnHeaders[$name] = $this->_columnHeaders[$name];
+         unset($this->_columnHeaders[$name]);
+       }
+     }
+     $this->_columnHeaders = array_merge($columnHeaders, $this->_columnHeaders);
+
      return $statistics;
   }
 
   function alterDisplay(&$rows) {
+    $paymentInstruments = CRM_Contribute_PseudoConstant::paymentInstrument();
+    $financialType = CRM_Financial_BAO_FinancialType::getAvailableFinancialTypes();
+    $financialAccountTypes = CRM_Core_OptionGroup::values('financial_account_type', FALSE, FALSE, FALSE, NULL, 'name');
+
     // custom code to alter rows
     $entryFound = FALSE;
     $checkList = array();
     foreach ($rows as $rowNum => $row) {
-
-      if (!empty($this->_noRepeats) && $this->_outputMode != 'csv') {
-        // not repeat contact display names if it matches with the one
-        // in previous row
-        $repeatFound = FALSE;
-        foreach ($row as $colName => $colVal) {
-          if (CRM_Utils_Array::value($colName, $checkList) &&
-            is_array($checkList[$colName]) &&
-            in_array($colVal, $checkList[$colName])
-          ) {
-            $rows[$rowNum][$colName] = "";
-            $repeatFound = TRUE;
-          }
-          if (in_array($colName, $this->_noRepeats)) {
-            $checkList[$colName][] = $colVal;
-          }
-        }
-      }
 
       if (array_key_exists('civicrm_contact_sort_name', $row) &&
         $rows[$rowNum]['civicrm_contact_sort_name'] &&
@@ -268,7 +353,15 @@ class CRM_Chreports_Form_Report_GLSummaryReport extends CRM_Report_Form {
         $entryFound = TRUE;
       }
 
-
+      if (!empty($row['civicrm_contribution_financial_type_id'])) {
+        $rows[$rowNum]['civicrm_contribution_financial_type_id'] = $financialType[$row['civicrm_contribution_financial_type_id']];
+      }
+      if (!empty($row['civicrm_contribution_payment_instrument_id'])) {
+        $rows[$rowNum]['civicrm_contribution_payment_instrument_id'] = $paymentInstruments[$row['civicrm_contribution_payment_instrument_id']];
+      }
+      if (!empty($row['civicrm_contribution_gl_account_type'])) {
+        $rows[$rowNum]['civicrm_contribution_gl_account_type'] = $financialAccountTypes[$row['civicrm_contribution_gl_account_type']];
+      }
 
       if (!$entryFound) {
         break;
