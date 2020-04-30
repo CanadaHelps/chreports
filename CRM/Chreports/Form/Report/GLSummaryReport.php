@@ -174,6 +174,14 @@ class CRM_Chreports_Form_Report_GLSummaryReport extends CRM_Report_Form {
         'grouping' => 'contribute-fields',
       ],
     );
+
+    CRM_Core_Resources::singleton()->addScript(
+      "CRM.$(function($) {
+        $('.crm-report-criteria-field input:checkbox').click(function() {
+          $('#group_bys_' + this.id.substr(7)).prop('checked', this.checked);
+        });
+      });"
+    );
   }
 
   function select() {
