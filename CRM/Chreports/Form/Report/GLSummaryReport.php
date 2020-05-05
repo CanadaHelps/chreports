@@ -10,18 +10,28 @@ class CRM_Chreports_Form_Report_GLSummaryReport extends CRM_Report_Form {
   protected $_summary = NULL;
 
   protected $_customGroupExtends = ['Contribute'];
+
+  protected $_groupByDateFreq = [
+    'MONTH' => 'Month',
+    'YEARWEEK' => 'Week',
+    'DATE' => 'Day',
+    'QUARTER' => 'Quarter',
+    'YEAR' => 'Year',
+  ];
+
   protected $_customGroupGroupBy = FALSE; function __construct() {
+    parent::__construct();
     $this->_columns = array(
       'civicrm_contact' => array(
         'dao' => 'CRM_Contact_DAO_Contact',
         'fields' => array(
           'sort_name' => array(
-            'title' => E::ts('Contact Name'),
+            'title' => E::ts('Donor Name'),
             'no_repeat' => TRUE,
           ),
-          'id' => array(
-            'required' => TRUE,
+          'contact_id' => array(
             'title' => ts('Donor ID'),
+            'dbAlias' => 'contribution_civireport.contact_id',
           ),
         ),
         'filters' => array(
@@ -29,18 +39,21 @@ class CRM_Chreports_Form_Report_GLSummaryReport extends CRM_Report_Form {
             'no_display' => TRUE,
           ),
         ),
-        'grouping' => 'contact-fields',
       ),
       'civicrm_contribution' => [
         'dao' => 'CRM_Contribute_BAO_Contribution',
         'fields' => [
+          'id' => [
+            'title' => E::ts('Contribution ID'),
+          ],
           'gl_account' => [
             'title' => E::ts('Financial Account'),
             'required' => TRUE,
             'dbAlias' => 'fa.name',
           ],
           'gl_account_code' => [
-            'title' => E::ts('Financial Account Code'),
+            'title' => E::ts('GL Code'),
+            'default' => TRUE,
             'dbAlias' => 'fa.accounting_code',
           ],
           'gl_account_type' => [
@@ -48,7 +61,7 @@ class CRM_Chreports_Form_Report_GLSummaryReport extends CRM_Report_Form {
             'dbAlias' => 'fa.financial_account_type_id',
           ],
           'count' => [
-            'title' => E::ts('Number of Contributions'),
+            'title' => E::ts('Number of Donations'),
             'type' => CRM_Utils_TYPE::T_INT,
             'dbAlias' => 'COUNT(DISTINCT contribution_civireport.id)',
           ],
@@ -59,7 +72,7 @@ class CRM_Chreports_Form_Report_GLSummaryReport extends CRM_Report_Form {
             'dbAlias' => 'SUM(temp.amount)'
           ],
           'receive_date' => [
-            'title' => E::ts('Donation Date'),
+            'title' => E::ts('Received Date'),
             'type' => CRM_Utils_Type::T_DATE + CRM_Utils_Type::T_TIME,
           ],
           'financial_type_id' => [
@@ -70,6 +83,11 @@ class CRM_Chreports_Form_Report_GLSummaryReport extends CRM_Report_Form {
           ],
           'source' => [
             'title' => E::ts('Source'),
+          ],
+          'credit_card_type_id' => [
+            'title' => E::ts('Credit Card Type'),
+            'type' => CRM_Utils_TYPE::T_INT,
+            'dbAlias' => 'temp.card_type_id',
           ],
         ],
         'filters' => [
@@ -109,30 +127,61 @@ class CRM_Chreports_Form_Report_GLSummaryReport extends CRM_Report_Form {
             'options' => CRM_Contribute_PseudoConstant::paymentInstrument(),
             'type' => CRM_Utils_Type::T_INT,
           ],
+          'credit_card_type_id' => [
+            'title' => E::ts('Credit Card Type'),
+            'operatorType' => CRM_Report_Form::OP_MULTISELECT,
+            'options' => CRM_Financial_DAO_FinancialTrxn::buildOptions('card_type_id'),
+            'dbAlias' => 'temp.card_type_id',
+          ],
         ],
         'order_bys' => [
           'receive_date' => [
-            'title' => E::ts('Donation Date'),
+            'title' => E::ts('Received Date'),
           ],
         ],
         'group_bys' => [
-          'id' => [
-            'title' => ts('Contribution ID'),
+          'gl_account' => [
+            'title' => E::ts('Financial Account'),
+            'default' => TRUE,
+            'required' => TRUE,
           ],
           'contact_id' => [
-            'title' => ts('Contact ID'),
+            'title' => ts('Donor ID'),
+          ],
+          'sort_name' => array(
+            'title' => E::ts('Donor Name'),
+          ),
+          'receive_date' => [
+            'title' => E::ts('Received Date'),
+            'frequency' => TRUE,
+          ],
+          'financial_type_id' => [
+            'title' => E::ts('Fund'),
           ],
           'payment_instrument_id' => [
             'title' => ts('Payment Method'),
           ],
-          'receive_date' => [
-            'title' => E::ts('Donation Date'),
+          'credit_card_type_id' => [
+            'title' => E::ts('Credit Card Type'),
+          ],
+          'source' => [
+            'title' => E::ts('Source'),
+          ],
+          'id' => [
+            'title' => ts('Contribution ID'),
           ],
         ],
         'grouping' => 'contribute-fields',
       ],
     );
-    parent::__construct();
+
+    CRM_Core_Resources::singleton()->addScript(
+      "CRM.$(function($) {
+        $('.crm-report-criteria-field input:checkbox').click(function() {
+          $('#group_bys_' + this.id.substr(7)).prop('checked', this.checked);
+        });
+      });"
+    );
   }
 
   function select() {
@@ -144,6 +193,29 @@ class CRM_Chreports_Form_Report_GLSummaryReport extends CRM_Report_Form {
           if (CRM_Utils_Array::value('required', $field) ||
             CRM_Utils_Array::value($fieldName, $this->_params['fields'])
           ) {
+            if ($fieldName == 'receive_date' && !empty($this->_params['group_bys'][$fieldName])) {
+              switch ($this->_params['group_bys_freq'][$fieldName]) {
+                case 'YEAR':
+                  $field['dbAlias'] = "YEAR({$field['dbAlias']})";
+                  break;
+
+                case 'QUARTER':
+                  $field['dbAlias'] = "YEAR({$field['dbAlias']}), QUARTER({$field['dbAlias']})";
+                  break;
+
+                case 'YEARWEEK':
+                  $field['dbAlias'] = "YEARWEEK({$field['dbAlias']})";
+                  break;
+
+                case 'MONTH':
+                  $field['dbAlias'] = "EXTRACT(YEAR_MONTH FROM {$field['dbAlias']})";
+                  break;
+
+                case 'DATE':
+                  $field['dbAlias'] = "DATE({$field['dbAlias']})";
+                  break;
+              }
+            }
             $select[] = "{$field['dbAlias']} as {$tableName}_{$fieldName}";
             $this->_columnHeaders["{$tableName}_{$fieldName}"]['title'] = CRM_Utils_Array::value('title', $field);
             $this->_columnHeaders["{$tableName}_{$fieldName}"]['type'] = CRM_Utils_Array::value('type', $field);
@@ -155,15 +227,24 @@ class CRM_Chreports_Form_Report_GLSummaryReport extends CRM_Report_Form {
     $this->_select = "SELECT " . implode(', ', $select) . " ";
   }
 
+  // core doesn't support 'required' attribute for group_bys field, so we are overriding the core function to make 'GL Account' as required grouping field
+  public function addGroupBys() {
+    parent::addGroupBys();
+    $obj = $this->getElementFromGroup("group_bys", 'gl_account');
+    if ($obj) {
+     $obj->freeze();
+    }
+  }
+
   function from() {
     $financialAccountTypes = CRM_Core_OptionGroup::values('financial_account_type', FALSE, FALSE, FALSE, NULL, 'name');
     $revenue = array_search('Revenue', $financialAccountTypes);
     $expense = array_search('Expenses', $financialAccountTypes);
 
     $sql = "
-    SELECT SQ1.contribution_id, SQ1.financial_account_id, fa.financial_account_type_id, SUM(SQ1.total_amount) as amount
+    SELECT SQ1.contribution_id, SQ1.financial_account_id, fa.financial_account_type_id, SUM(SQ1.total_amount) as amount, SQ1.card_type_id
     FROM (
-        select eftc.entity_id as contribution_id, if(ft.from_financial_account_id is null, fi.financial_account_id, ft.from_financial_account_id) as financial_account_id, ft.total_amount
+        select eftc.entity_id as contribution_id, if(ft.from_financial_account_id is null, fi.financial_account_id, ft.from_financial_account_id) as financial_account_id, ft.total_amount, ft.card_type_id
         FROM
         civicrm_entity_financial_trxn eftc
         inner join civicrm_entity_financial_trxn efti on eftc.entity_table='civicrm_contribution' AND efti.entity_table='civicrm_financial_item' AND eftc.financial_trxn_id=efti.financial_trxn_id
@@ -172,7 +253,7 @@ class CRM_Chreports_Form_Report_GLSummaryReport extends CRM_Report_Form {
         inner join civicrm_financial_account fa on fi.financial_account_id = fa.id AND fa.financial_account_type_id = $revenue
 
     UNION ALL
-        select eftc.entity_id as contribution_id, ft.to_financial_account_id AS financial_account_id, ft.total_amount
+        select eftc.entity_id as contribution_id, ft.to_financial_account_id AS financial_account_id, ft.total_amount, ft.card_type_id
         FROM civicrm_entity_financial_trxn eftc
         inner join civicrm_entity_financial_trxn efti on eftc.entity_table='civicrm_contribution' AND efti.entity_table='civicrm_financial_item' AND eftc.financial_trxn_id=efti.financial_trxn_id
         inner join civicrm_financial_trxn ft on eftc.financial_trxn_id=ft.id
@@ -203,7 +284,7 @@ class CRM_Chreports_Form_Report_GLSummaryReport extends CRM_Report_Form {
             (SELECT * FROM {$this->temporaryTables['financial_revenue_details']['name']})
             UNION
             (SELECT * FROM {$this->temporaryTables['financial_expense_details']['name']})
-         ) as temp ON temp.contribution_id = {$this->_aliases['civicrm_contribution']}.id
+         ) as temp ON temp.contribution_id = {$this->_aliases['civicrm_contribution']}.id AND {$this->_aliases['civicrm_contribution']}.is_test = 0
          INNER JOIN civicrm_financial_account fa on temp.financial_account_id = fa.id
     ";
   }
@@ -253,15 +334,49 @@ class CRM_Chreports_Form_Report_GLSummaryReport extends CRM_Report_Form {
   }
 
   function groupBy() {
-    $groupBys = [
-      'fa.name',
-    ];
+    $groupBys = [];
     $params = CRM_Utils_Array::value('group_bys', $this->_params);
-
     if (!empty($params)) {
-      $alias = $this->_aliases['civicrm_contribution'];
       foreach ($params as $groupBy => $dontCare) {
-        $groupBys[] = $alias . '.' . $groupBy;
+        $alias = $groupBy == 'sort_name' ? $this->_aliases['civicrm_contact'] : $this->_aliases['civicrm_contribution'];
+        if ($groupBy == 'gl_account') {
+          $groupBys[] = 'fa.name';
+        }
+        elseif ($groupBy == 'credit_card_type_id') {
+          $groupBys[] = 'temp.card_type_id';
+        }
+        elseif ($groupBy == 'receive_date') {
+          $table = $this->_columns['civicrm_contribution'];
+
+          if (!empty($table['group_bys'][$groupBy]['frequency']) &&
+            !empty($this->_params['group_bys_freq'][$groupBy])
+          ) {
+            switch ($this->_params['group_bys_freq'][$groupBy]) {
+              case 'YEAR':
+                $groupBys[] = " YEAR({$alias}.{$groupBy})";
+                break;
+
+              case 'QUARTER':
+                $groupBys[] = "YEAR({$alias}.{$groupBy}), QUARTER({$alias}.{$groupBy})";
+                break;
+
+              case 'YEARWEEK':
+                $groupBys[] = "YEARWEEK({$alias}.{$groupBy})";
+                break;
+
+              case 'MONTH':
+                $groupBys[] = "EXTRACT(YEAR_MONTH FROM {$alias}.{$groupBy})";
+                break;
+
+              case 'DATE':
+                $groupBys[] = "DATE({$alias}.{$groupBy})";
+                break;
+            }
+          }
+        }
+        else {
+          $groupBys[] = $alias . '.' . $groupBy;
+        }
       }
     }
     $this->_groupBy = " GROUP BY " . implode(', ', $groupBys);
@@ -311,14 +426,17 @@ class CRM_Chreports_Form_Report_GLSummaryReport extends CRM_Report_Form {
        'civicrm_contribution_gl_account',
        'civicrm_contribution_gl_account_code',
        'civicrm_contribution_gl_account_type',
-       'civicrm_contact_exposed_id',
+       'civicrm_contact_contact_id',
        'civicrm_contact_sort_name',
        'civicrm_contribution_receive_date',
        'civicrm_contribution_completed_contributions',
        'civicrm_contribution_gl_amount',
        'civicrm_contribution_financial_type_id',
        'civicrm_contribution_payment_instrument_id',
+       'civicrm_contribution_credit_card_type_id',
        'civicrm_contribution_source',
+       'civicrm_contribution_id',
+       'civicrm_contribution_count',
      ] as $name) {
        if (array_key_exists($name, $this->_columnHeaders)) {
          $columnHeaders[$name] = $this->_columnHeaders[$name];
@@ -331,12 +449,12 @@ class CRM_Chreports_Form_Report_GLSummaryReport extends CRM_Report_Form {
   }
 
   function alterDisplay(&$rows) {
-    $paymentInstruments = CRM_Contribute_PseudoConstant::paymentInstrument();
-    $financialType = CRM_Financial_BAO_FinancialType::getAvailableFinancialTypes();
+    $paymentInstruments = CRM_Core_OptionGroup::values('payment_instrument', FALSE, FALSE, FALSE, NULL, 'label');
+    $financialType = CRM_Contribute_PseudoConstant::financialType(NULL, FALSE);
     $financialAccountTypes = CRM_Core_OptionGroup::values('financial_account_type', FALSE, FALSE, FALSE, NULL, 'name');
+    $ccTypes = CRM_Financial_DAO_FinancialTrxn::buildOptions('card_type_id');
 
     // custom code to alter rows
-    $entryFound = FALSE;
     $checkList = array();
     foreach ($rows as $rowNum => $row) {
 
@@ -350,7 +468,6 @@ class CRM_Chreports_Form_Report_GLSummaryReport extends CRM_Report_Form {
         );
         $rows[$rowNum]['civicrm_contact_sort_name_link'] = $url;
         $rows[$rowNum]['civicrm_contact_sort_name_hover'] = E::ts("View Contact Summary for this Contact.");
-        $entryFound = TRUE;
       }
 
       if (!empty($row['civicrm_contribution_financial_type_id'])) {
@@ -362,9 +479,8 @@ class CRM_Chreports_Form_Report_GLSummaryReport extends CRM_Report_Form {
       if (!empty($row['civicrm_contribution_gl_account_type'])) {
         $rows[$rowNum]['civicrm_contribution_gl_account_type'] = $financialAccountTypes[$row['civicrm_contribution_gl_account_type']];
       }
-
-      if (!$entryFound) {
-        break;
+      if (!empty($row['civicrm_contribution_credit_card_type_id'])) {
+        $rows[$rowNum]['civicrm_contribution_credit_card_type_id'] = $ccTypes[$row['civicrm_contribution_credit_card_type_id']];
       }
     }
   }
