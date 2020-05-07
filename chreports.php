@@ -286,6 +286,7 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
       $var['civicrm_contribution']['fields']['contribution_page_id']['type'] = CRM_Utils_Type::T_STRING;
       $object->campaigns = CRM_Campaign_BAO_Campaign::getPermissionedCampaigns(NULL, NULL, FALSE, FALSE)['campaigns'];
       $var['civicrm_contribution']['filters']['contribution_page_id']['options'] = CRM_Contribute_PseudoConstant::contributionPage(NULL, TRUE);
+      $var['civicrm_contribution']['order_bys']['contribution_page_id'] = ['title' => ts('Contribution Page')];
     }
     if ($varType == 'sql' && !($object instanceof CRM_Chreports_Form_Report_ExtendSummary)) {
       $from = $var->getVar('_from');
