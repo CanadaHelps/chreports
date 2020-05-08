@@ -121,6 +121,9 @@ ROUND(AVG(IF(ISNULL(ft.from_financial_account_id), fi.amount, -fi.amount)), 2) a
     $averageCount = [];
     $count = 0;
     while ($contriDAO->fetch()) {
+      if (empty($contriDAO->currency)) {
+        continue;
+      }
       if (!isset($currAmount[$contriDAO->currency])) {
         $currAmount[$contriDAO->currency] = 0;
       }

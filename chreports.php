@@ -286,6 +286,7 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
       $var['civicrm_contribution']['fields']['contribution_page_id']['type'] = CRM_Utils_Type::T_STRING;
       $object->campaigns = CRM_Campaign_BAO_Campaign::getPermissionedCampaigns(NULL, NULL, FALSE, FALSE)['campaigns'];
       $var['civicrm_contribution']['filters']['contribution_page_id']['options'] = CRM_Contribute_PseudoConstant::contributionPage(NULL, TRUE);
+      $var['civicrm_contribution']['order_bys']['contribution_page_id'] = ['title' => ts('Contribution Page')];
     }
     if ($varType == 'sql' && !($object instanceof CRM_Chreports_Form_Report_ExtendSummary)) {
       $from = $var->getVar('_from');
@@ -300,43 +301,9 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
     if ($varType == 'rows') {
       foreach (['civicrm_contribution_contribution_page_id', 'civicrm_contribution_campaign_id', 'civicrm_financial_type_financial_type'] as $column) {
         if (!empty($var[0]) && array_key_exists($column, $var[0])) {
-          if ($column == 'civicrm_contribution_contribution_page_id') {
-            $missingContributionPageIDs = (array) explode(',',
-            CRM_Core_DAO::singleValueQuery('
-              SELECT GROUP_CONCAT(DISTINCT id) FROM civicrm_contribution_page
-              WHERE id NOT IN (SELECT contribution_page_id FROM civicrm_contribution WHERE contribution_page_id IS NOT NULL)
-            '));
-            $contributionPages = CRM_Contribute_PseudoConstant::contributionPage(NULL, TRUE);
             foreach ($var as $rowNum => $row) {
-              if (in_array(array_search($row[$column], $contributionPages), $missingContributionPageIDs)) {
-                $var[$rowNum]['civicrm_contribution_total_amount_count'] = 0;
-              }
-            }
-          }
-          elseif ($column == 'civicrm_financial_type_financial_type') {
-            $missingFinancialTypeIDs = (array) explode(',',
-            CRM_Core_DAO::singleValueQuery('
-              SELECT GROUP_CONCAT(DISTINCT id) FROM civicrm_financial_type
-                WHERE id NOT IN (SELECT financial_type_id FROM civicrm_contribution WHERE financial_type_id IS NOT NULL)
-            '));
-            $financialTypes = CRM_Financial_BAO_FinancialType::getAvailableFinancialTypes();
-            foreach ($var as $rowNum => $row) {
-              if (in_array(array_search($row[$column], $financialTypes), $missingFinancialTypeIDs)) {
-                $var[$rowNum]['civicrm_contribution_total_amount_count'] = 0;
-              }
-            }
-          }
-          else {
-            $missingCampaignIds = explode(',',
-            CRM_Core_DAO::singleValueQuery('
-              SELECT GROUP_CONCAT(DISTINCT id) FROM civicrm_campaign
-              WHERE id NOT IN (SELECT campaign_id FROM civicrm_contribution WHERE campaign_id IS NOT NULL)
-            '));
-            $campaigns = CRM_Campaign_BAO_Campaign::getPermissionedCampaigns(NULL, NULL, FALSE, FALSE)['campaigns'];
-            foreach ($var as $rowNum => $row) {
-              if (in_array(array_search($row[$column], $campaigns), $missingCampaignIds)) {
-                $var[$rowNum]['civicrm_contribution_total_amount_count'] = 0;
-              }
+            if (empty($var[$rowNum]['civicrm_contribution_currency'])) {
+              $var[$rowNum]['civicrm_contribution_total_amount_count'] = 0;
             }
           }
         }
