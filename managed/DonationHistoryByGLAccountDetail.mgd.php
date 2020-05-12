@@ -8,8 +8,8 @@ return array(
     'params' => array(
       'version' => 3,
       "report_id" => "biz.jmaconsulting.chreports/glsummaryreport",
-      'title' => ts('Donation History by GL Account (Detailed)'),
-      'name' => 'Donation History by GL Account (Detailed)',
+      'title' => ts('Contribution Historyby GL Account (Detailed)'),
+      'name' => 'Contribution History by GL Account (Detailed)',
       "description" => "In depth view of contributions by GL Account",
       'permission' => 'administer Reports',
       'is_active' => 1,
