@@ -65,7 +65,7 @@ class CRM_Chreports_Form_Report_GLSummaryReport extends CRM_Report_Form {
             'title' => E::ts('Total Amount'),
             'default' => TRUE,
             'type' => CRM_Utils_TYPE::T_MONEY,
-            'dbAlias' => 'SUM(temp.amount)'
+            'dbAlias' => 'SUM(temp.total_amount)'
           ],
           'financial_type_id' => [
             'title' => E::ts('Fund'),
@@ -261,39 +261,38 @@ class CRM_Chreports_Form_Report_GLSummaryReport extends CRM_Report_Form {
     $revenue = array_search('Revenue', $financialAccountTypes);
     $expense = array_search('Expenses', $financialAccountTypes);
 
-    $sql = "
-    SELECT SQ1.contribution_id, SQ1.financial_account_id, fa.financial_account_type_id, SUM(SQ1.total_amount) as amount, SQ1.trxn_date, SQ1.card_type_id
+    $this->createTemporaryTable('financial_expense_details', "
+    select eftc.entity_id as contribution_id, ft.to_financial_account_id AS financial_account_id, fa.financial_account_type_id, ft.total_amount, ft.trxn_date, ft.card_type_id
+    FROM civicrm_entity_financial_trxn eftc
+    inner join civicrm_entity_financial_trxn efti on eftc.entity_table='civicrm_contribution' AND efti.entity_table='civicrm_financial_item' AND eftc.financial_trxn_id=efti.financial_trxn_id
+    inner join civicrm_financial_trxn ft on eftc.financial_trxn_id=ft.id
+    inner join civicrm_financial_item fi on efti.entity_id=fi.id
+    inner join civicrm_financial_account fa on fi.financial_account_id = fa.id AND fa.financial_account_type_id = $expense
+    inner join civicrm_contribution cc ON cc.id = eftc.entity_id AND cc.is_test = 0
+    ", FALSE, TRUE);
+
+
+    $this->createTemporaryTable('financial_revenue_details', "
+    SELECT SQ1.contribution_id, SQ1.financial_account_id, SQ1.financial_account_type_id, (SUM(SQ1.total_amount) - COALESCE(SQ2.total_amount, 0)) as total_amount, SQ1.trxn_date, SQ1.card_type_id
     FROM (
-        select eftc.entity_id as contribution_id, if(ft.from_financial_account_id is null, fi.financial_account_id, ft.from_financial_account_id) as financial_account_id, ft.total_amount, ft.trxn_date, ft.card_type_id
-        FROM
-        civicrm_entity_financial_trxn eftc
-        inner join civicrm_entity_financial_trxn efti on eftc.entity_table='civicrm_contribution' AND efti.entity_table='civicrm_financial_item' AND eftc.financial_trxn_id=efti.financial_trxn_id
-        inner join civicrm_financial_trxn ft on eftc.financial_trxn_id=ft.id inner join
-        civicrm_financial_item fi on efti.entity_id=fi.id
-        inner join civicrm_financial_account fa on fi.financial_account_id = fa.id AND fa.financial_account_type_id = $revenue
 
-    UNION ALL
-        select eftc.entity_id as contribution_id, ft.to_financial_account_id AS financial_account_id, ft.total_amount, ft.trxn_date, ft.card_type_id
-        FROM civicrm_entity_financial_trxn eftc
-        inner join civicrm_entity_financial_trxn efti on eftc.entity_table='civicrm_contribution' AND efti.entity_table='civicrm_financial_item' AND eftc.financial_trxn_id=efti.financial_trxn_id
-        inner join civicrm_financial_trxn ft on eftc.financial_trxn_id=ft.id
-        inner join civicrm_financial_item fi on efti.entity_id=fi.id
-        inner join civicrm_financial_account fa on fi.financial_account_id = fa.id AND fa.financial_account_type_id = $expense
-
-    ) AS SQ1
-     INNER join civicrm_financial_account fa on SQ1.financial_account_id = fa.id AND fa.financial_account_type_id IN ($revenue, $expense)
-    GROUP BY contribution_id, financial_account_id
-    HAVING SUM(SQ1.total_amount) <> 0
-    ";
-
-    $this->createTemporaryTable('financial_revenue_details', $sql);
-    $this->createTemporaryTable('financial_expense_details', " SELECT * FROM {$this->temporaryTables['financial_revenue_details']['name']} WHERE financial_account_type_id = $expense ");
-    CRM_Core_DAO::executeQuery(" DELETE FROM {$this->temporaryTables['financial_revenue_details']['name']} WHERE financial_account_type_id = $expense ");
-    CRM_Core_DAO::executeQuery("
-      UPDATE {$this->temporaryTables['financial_revenue_details']['name']} temp1
-      INNER JOIN {$this->temporaryTables['financial_expense_details']['name']} temp2  ON temp2.contribution_id = temp1.contribution_id
-      SET temp1.amount = (temp1.amount - temp2.amount)
-    ");
+      select eftc.entity_id as contribution_id, if(ft.from_financial_account_id is null, fi.financial_account_id, ft.from_financial_account_id) as financial_account_id, fa.financial_account_type_id, ft.total_amount, ft.trxn_date, ft.card_type_id
+      FROM
+      civicrm_entity_financial_trxn eftc
+      inner join civicrm_entity_financial_trxn efti on eftc.entity_table='civicrm_contribution' AND efti.entity_table='civicrm_financial_item' AND eftc.financial_trxn_id=efti.financial_trxn_id
+      inner join civicrm_financial_trxn ft on eftc.financial_trxn_id=ft.id
+      inner join civicrm_financial_item fi on efti.entity_id=fi.id
+      inner join civicrm_financial_account fa on fi.financial_account_id = fa.id AND fa.financial_account_type_id = $revenue
+      inner join civicrm_contribution cc ON cc.id = eftc.entity_id AND cc.is_test = 0
+  ) SQ1
+    LEFT JOIN (
+      SELECT contribution_id,  SUM(total_amount) as total_amount
+      FROM {$this->temporaryTables['financial_expense_details']['name']}
+     GROUP BY contribution_id, financial_account_id
+  ) SQ2 ON SQ1.contribution_id = SQ2.contribution_id
+  GROUP BY SQ1.contribution_id, SQ1.financial_account_id
+  HAVING SUM(SQ1.total_amount) > 0
+    ", FALSE, TRUE);
 
     $this->_from = "
          FROM  civicrm_contact {$this->_aliases['civicrm_contact']}
@@ -304,7 +303,7 @@ class CRM_Chreports_Form_Report_GLSummaryReport extends CRM_Report_Form {
             (SELECT * FROM {$this->temporaryTables['financial_revenue_details']['name']})
             UNION
             (SELECT * FROM {$this->temporaryTables['financial_expense_details']['name']})
-         ) as temp ON temp.contribution_id = {$this->_aliases['civicrm_contribution']}.id AND {$this->_aliases['civicrm_contribution']}.is_test = 0
+         ) as temp ON temp.contribution_id = {$this->_aliases['civicrm_contribution']}.id
          INNER JOIN civicrm_financial_account fa on temp.financial_account_id = fa.id
     ";
   }
@@ -417,7 +416,7 @@ class CRM_Chreports_Form_Report_GLSummaryReport extends CRM_Report_Form {
       $sql = "
       SELECT
       COUNT(DISTINCT {$this->_aliases['civicrm_contribution']}.id) as total_count,
-      SUM(temp.amount) as amount,
+      SUM(temp.total_amount) as amount,
       {$this->_aliases['civicrm_contribution']}.currency
 
        {$this->_from} {$this->_where} GROUP BY {$this->_aliases['civicrm_contribution']}.currency
@@ -495,7 +494,7 @@ class CRM_Chreports_Form_Report_GLSummaryReport extends CRM_Report_Form {
           switch ($this->_params['group_bys_freq'][$date]) {
             case 'MONTH':
               $this->_columnHeaders["civicrm_contribution_{$date}"]['type'] = CRM_Utils_Type::T_STRING;
-              $rows[$rowNum]["civicrm_contribution_{$date}"] = date('Y-m', strtotime(CRM_Utils_Date::isoToMysql($row["civicrm_contribution_{$date}_raw"])));
+              $rows[$rowNum]["civicrm_contribution_{$date}"] = date('m-Y', strtotime(CRM_Utils_Date::isoToMysql($row["civicrm_contribution_{$date}_raw"])));
               break;
 
             case 'YEAR':
