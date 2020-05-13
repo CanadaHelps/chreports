@@ -8,8 +8,8 @@ return array(
     'params' => array(
       'version' => 3,
       'report_id' => 'contribute/detail',
-      'title' => ts('Latest Contributions'),
-      'name' => 'Latest Contributions',
+      'title' => ts('Latest Contributions (Dashlet)'),
+      'name' => 'Latest Contributions (Dashlet)',
       "description" => "Most recent contributions",
       'permission' => 'access CiviReport',
       'is_active' => 1,
