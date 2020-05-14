@@ -54,6 +54,8 @@ class CRM_Chreports_Form_Report_ExtendSummary extends CRM_Report_Form_Contribute
                         {$this->_aliases['civicrm_contribution']}.is_test = 0
              LEFT  JOIN civicrm_financial_type  {$this->_aliases['civicrm_financial_type']}
                      ON {$this->_aliases['civicrm_contribution']}.financial_type_id ={$this->_aliases['civicrm_financial_type']}.id
+             LEFT JOIN civicrm_campaign campaign
+                    ON {$this->_aliases['civicrm_contribution']}.campaign_id = campaign.id
              ";
 
     $this->joinAddressFromContact();

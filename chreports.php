@@ -281,7 +281,7 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
         }
       }
       $var['civicrm_contribution']['group_bys']['campaign_id'] = ['title' => ts('Campaign')];
-      $var['civicrm_contribution']['order_bys']['campaign_id'] = ['title' => ts('Campaign')];
+      $var['civicrm_contribution']['order_bys']['campaign_id'] = ['title' => ts('Campaign'), 'dbAlias' => 'campaign.title'];
       $var['civicrm_contribution']['fields']['campaign_id'] = ['title' => ts('Campaign')];
       $var['civicrm_contribution']['group_bys']['payment_instrument_id'] = ['title' => ts('Payment Method')];
       $var['civicrm_contribution']['fields']['contribution_page_id']['type'] = CRM_Utils_Type::T_STRING;
