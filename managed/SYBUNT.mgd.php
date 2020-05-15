@@ -1,4 +1,4 @@
-t<?php
+<?php
 return array(
   array(
     'module' => 'biz.jmaconsulting.chreports',
