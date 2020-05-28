@@ -63,10 +63,10 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
           'dbAlias' => 'ct.' . E::getColumnNameByName('Campaign_Type'),
           'name' => 'campaign_type',
         ];
-        $filter = "AND " . $var->whereClause($field, $params['campaign_type_op'], $params['campaign_type_value'], NULL, NULL);
+        $filter = "AND " . $this->whereClause($field, $this->_params['campaign_type_op'], $this->_params['campaign_type_value'], NULL, NULL);
       }
 
-      $from .= "
+      $this->_from .= "
       $join JOIN $cpTableName ct ON ct.entity_id = contribution_civireport.contribution_page_id $filter
       ";
     }
@@ -83,37 +83,36 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
    */
   public function alterDisplay(&$rows) {
     $key = $tableName . 'custom_' . CRM_Utils_Array::value('id', civicrm_api3('CustomField', 'get', ['sequential' => 1, 'name' => 'Receipt_Number'])['values'][0], '');
-      if (!empty($object->_columnHeaders[$key])) {
-        $column = [$key => $object->_columnHeaders[$key]];
-        $object->_columnHeaders = $column + $object->_columnHeaders;
-      }
+    if (!empty($this->_columnHeaders[$key])) {
+      $column = [$key => $this->_columnHeaders[$key]];
+      $this->_columnHeaders = $column + $this->_columnHeaders;
+    }
 
-      // reorder the columns
-      $columnHeaders = [];
-      foreach ([
-        'civicrm_contribution_campaign_id',
-        'civicrm_contact_exposed_id',
-        'civicrm_contact_sort_name',
-        'civicrm_contribution_receive_date',
-        'civicrm_contribution_total_amount',
-        'civicrm_contribution_financial_type_id',
-        'civicrm_contribution_contribution_page_id',
-        'civicrm_contribution_campaign_type',
-        'civicrm_contribution_source',
-        'civicrm_contribution_payment_instrument_id',
-      ] as $name) {
-        if (array_key_exists($name, $object->_columnHeaders)) {
-          $columnHeaders[$name] = $object->_columnHeaders[$name];
-          unset($object->_columnHeaders[$name]);
-        }
+    // reorder the columns
+    $columnHeaders = [];
+    foreach ([
+      'civicrm_contribution_campaign_id',
+      'civicrm_contact_exposed_id',
+      'civicrm_contact_sort_name',
+      'civicrm_contribution_receive_date',
+      'civicrm_contribution_total_amount',
+      'civicrm_contribution_financial_type_id',
+      'civicrm_contribution_contribution_page_id',
+      'civicrm_contribution_campaign_type',
+      'civicrm_contribution_source',
+      'civicrm_contribution_payment_instrument_id',
+    ] as $name) {
+      if (array_key_exists($name, $this->_columnHeaders)) {
+        $columnHeaders[$name] = $this->_columnHeaders[$name];
+        unset($this->_columnHeaders[$name]);
       }
-      $object->_columnHeaders = array_merge($object->_columnHeaders, $columnHeaders);
+    }
+    $this->_columnHeaders = array_merge($this->_columnHeaders, $columnHeaders);
 
-      if (!empty($object->_columnHeaders['civicrm_contribution_campaign_type'])) {
-        $optionValues = CRM_Core_OptionGroup::values(E::getOptionGroupNameByColumnName(E::getColumnNameByName('Campaign_Type')));
-        foreach ($var as $rowNum => $row) {
-          $var[$rowNum]['civicrm_contribution_campaign_type'] = CRM_Utils_Array::value($row['civicrm_contribution_campaign_type'], $optionValues);
-        }
+    if (!empty($this->_columnHeaders['civicrm_contribution_campaign_type'])) {
+      $optionValues = CRM_Core_OptionGroup::values(E::getOptionGroupNameByColumnName(E::getColumnNameByName('Campaign_Type')));
+      foreach ($rows as $rowNum => $row) {
+        $rows[$rowNum]['civicrm_contribution_campaign_type'] = CRM_Utils_Array::value($row['civicrm_contribution_campaign_type'], $optionValues);
       }
     }
     $entryFound = FALSE;
