@@ -60,11 +60,30 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
    *
    * @return TRUE on success
    * @throws Exception
-   *
-  public function upgrade_4200() {
-    $this->ctx->log->info('Applying update 4200');
-    CRM_Core_DAO::executeQuery('UPDATE foo SET bar = "whiz"');
-    CRM_Core_DAO::executeQuery('DELETE FROM bang WHERE willy = wonka(2)');
+   */
+  public function upgrade_1100() {
+    $this->ctx->log->info('Applying update 1100: Update reports to used the extendedDetail report');
+    $reportNames = [
+      'Contribution History by Campaign Group (Detailed)',
+      'Contribution History by Campaign (Detailed)',
+      'Contribution History by Fund (Detailed)',
+      'Receipts',
+      'In Memory of',
+    ];
+    foreach ($reportNames as $name) {
+      $report = civicrm_api3('ReportInstance', 'get', ['name' => $name]);
+      if (!empty($report['values'])) {
+        foreach ($report['values'] as $r) {
+          $formValues = unserialize($r['form_values']);
+          $formValues['entryURL'] = str_replace('contribute/detail', 'biz.jmaconsulting.chreports/extendeddetail', $formValues['entryURL']);
+          civicrm_api3('ReportInstance', 'create', [
+           'report_id' => 'biz.jmaconsulting.chreports/extendeddetail',
+           'form_values' => serialize($formValues),
+           'id' => $r['id'],
+          ]);
+        }
+      }
+    }
     return TRUE;
   } // */
 
