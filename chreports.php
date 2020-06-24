@@ -135,6 +135,98 @@ function chreports_civicrm_entityTypes(&$entityTypes) {
 }
 
 function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
+  if (($object instanceof CRM_Chreports_Form_Report_ExtendedDetail ||
+    $object instanceof CRM_Chreports_Form_Report_ExtendSummary ||
+    $object instanceof CRM_Chreports_Form_Report_GLSummaryReport
+    ) && $varType == 'columns') {
+    $fieldsToHide = [
+      'civicrm_contact' => [
+        'sort_name',
+        'nick_name',
+        'display_name',
+        'external_identifier',
+        'preferred_language',
+        'preferred_communication_method',
+        'postal_greeting_display',
+        'email_greeting_display',
+        'addressee_display',
+        'do_not_email',
+        'do_not_phone',
+        'do_not_mail',
+        'do_not_sms',
+        'is_opt_out',
+        'first_name',
+        'last_name',
+        'middle_name',
+        'prefix_id',
+        'suffix_id',
+        'gender_id',
+        'birth_date',
+        'age',
+        'job_title',
+        'employer_id',
+      ],
+      'civicrm_phone' => [
+        'phone',
+      ],
+      'civicrm_email' => [
+        'email',
+      ],
+      'civicrm_contribution' => [
+        'contribution_status_id',
+        'thankyou_date',
+        'contribution_or_soft',
+        'soft_credits',
+        'soft_credit_for',
+      ],
+      'civicrm_contribution_soft' => [
+        'all',
+      ],
+      'civicrm_value_contribution__15' => [
+        'custom_37',
+      ],
+      'civicrm_value_contribution__19' => [
+        'custom_35',
+      ],
+      'civicrm_value_mailchimp_details' => ['delete'],
+      'civicrm_value_summary_field_7' => ['delete'],
+    ];
+    if ($object instanceof CRM_Chreports_Form_Report_ExtendSummary) {
+      $fieldsToHide['civicrm_contact'] = array_merge($fieldsToHide['civicrm_contact'], ['contact_type', 'contact_sub_type']);
+      $fieldsToHide['civicrm_batch'] = ['batch_id'];
+      $fieldsToHide['civicrm_value_contribution__15'] = ['delete'];
+      $fieldsToHide['civicrm_value_contribution__19'] = ['delete'];
+    }
+    if ($object instanceof CRM_Chreports_Form_Report_GLSummaryReport) {
+      $fieldsToHide = [
+        'civicrm_contribution' => [
+          'sort_name',
+          'receive_date',
+          'credit_card_type_id',
+          'trxn_date',
+          'id',
+        ],
+      ];
+    }
+    foreach ($fieldsToHide as $table => $fields) {
+      foreach ($fields as $field) {
+        if ($field == 'delete') {
+          unset($var[$table]);
+        }
+        elseif ($field == 'all') {
+          foreach (array_keys($var[$table]['fields']) as $name) {
+            unset($var[$table]['fields'][$name]);
+            unset($var[$table]['metadata'][$name]);
+          }
+        }
+        elseif (!empty($var[$table]['metadata'][$field]) || !empty($var[$table]['fields'][$field])) {
+          unset($var[$table]['metadata'][$field]);
+          unset($var[$table]['fields'][$field]);
+        }
+      }
+    }
+  }
+
   if ($object instanceof CRM_Report_Form_Contribute_Lybunt) {
     $object->setVar('_charts', []);
   }
