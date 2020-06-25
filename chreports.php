@@ -137,11 +137,11 @@ function chreports_civicrm_entityTypes(&$entityTypes) {
 function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
   if (($object instanceof CRM_Chreports_Form_Report_ExtendedDetail ||
     $object instanceof CRM_Chreports_Form_Report_ExtendSummary ||
-    $object instanceof CRM_Chreports_Form_Report_GLSummaryReport
+    $object instanceof CRM_Chreports_Form_Report_GLSummaryReport ||
+    $object instanceof CRM_Report_Form_Contact_Summary
     ) && $varType == 'columns') {
     $fieldsToHide = [
       'civicrm_contact' => [
-        'sort_name',
         'nick_name',
         'display_name',
         'external_identifier',
@@ -174,7 +174,6 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
       ],
       'civicrm_contribution' => [
         'contribution_status_id',
-        'thankyou_date',
         'contribution_or_soft',
         'soft_credits',
         'soft_credit_for',
@@ -191,8 +190,42 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
       'civicrm_value_mailchimp_details' => ['delete'],
       'civicrm_value_summary_field_7' => ['delete'],
     ];
+    if ($object instanceof CRM_Report_Form_Contact_Summary) {
+      $fieldsToHide = [
+        'civicrm_contact' => [
+          'suffix_id',
+          'addressee_display',
+          'age',
+        ],
+        'civicrm_address' => [
+          'address_name',
+          'address_street_number',
+          'address_street_name',
+          'address_supplemental_address_3',
+          'address_street_unit',
+          'address_postal_code_suffix',
+          'address_county_id',
+          'address_location_type_id',
+          'address_id',
+          'fields_address_is_primary',
+        ],
+        'civicrm_value_mailchimp_details' => ['delete'],
+      ];
+    }
     if ($object instanceof CRM_Chreports_Form_Report_ExtendSummary) {
-      $fieldsToHide['civicrm_contact'] = array_merge($fieldsToHide['civicrm_contact'], ['contact_type', 'contact_sub_type']);
+      $fieldsToHide['civicrm_contact'] = array_merge($fieldsToHide['civicrm_contact'], [
+        'sort_name',
+        'contact_type',
+        'contact_sub_type',
+        'organization_name', // not sure
+        'is_deceased', // not sure
+        'exposed_id', // not sure
+      ]);
+      $fieldsToHide['civicrm_contribution'] = array_merge($fieldsToHide['civicrm_contribution'], [
+        'thankyou_date',
+        'non_deductible_amount',
+        'card_type_id', // not sure
+      ]);
       $fieldsToHide['civicrm_batch'] = ['batch_id'];
       $fieldsToHide['civicrm_value_contribution__15'] = ['delete'];
       $fieldsToHide['civicrm_value_contribution__19'] = ['delete'];
@@ -219,7 +252,7 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
             unset($var[$table]['metadata'][$name]);
           }
         }
-        elseif (!empty($var[$table]['metadata'][$field]) || !empty($var[$table]['fields'][$field])) {
+        elseif (!empty($var[$table]['metadata'][$field]) || !empty($var[$table]['fields'][$field]) || array_key_exists($field, $var[$table]['fields'])) {
           unset($var[$table]['metadata'][$field]);
           unset($var[$table]['fields'][$field]);
         }
