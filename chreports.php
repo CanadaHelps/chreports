@@ -166,11 +166,17 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
         'job_title',
         'employer_id',
       ],
-      'civicrm_phone' => [
-        'phone',
-      ],
-      'civicrm_email' => [
-        'email',
+      'civicrm_address' => [
+        'address_name',
+        'address_street_number',
+        'address_street_name',
+        'address_supplemental_address_3',
+        'address_street_unit',
+        'address_postal_code_suffix',
+        'address_county_id',
+        'address_location_type_id',
+        'address_id',
+        'address_is_primary',
       ],
       'civicrm_contribution' => [
         'contribution_status_id',
@@ -207,7 +213,7 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
           'address_county_id',
           'address_location_type_id',
           'address_id',
-          'fields_address_is_primary',
+          'address_is_primary',
         ],
         'civicrm_value_mailchimp_details' => ['delete'],
       ];
@@ -221,6 +227,8 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
         'is_deceased', // not sure
         'exposed_id', // not sure
       ]);
+      $fieldsToHide['civicrm_phone'] => ['phone'];
+      $fieldsToHide['civicrm_email'] => ['email'];
       $fieldsToHide['civicrm_contribution'] = array_merge($fieldsToHide['civicrm_contribution'], [
         'thankyou_date',
         'non_deductible_amount',
@@ -229,6 +237,16 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
       $fieldsToHide['civicrm_batch'] = ['batch_id'];
       $fieldsToHide['civicrm_value_contribution__15'] = ['delete'];
       $fieldsToHide['civicrm_value_contribution__19'] = ['delete'];
+      if (module_exists('user')) {
+        if (in_array('client administrator', user_roles())) {
+          CRM_Core_Resources::singleton()->addScript(
+            "CRM.$(function($) {
+              $('#ui-id-2').parent().show();
+              $('#ui-id-2').show();
+            });"
+          );
+        }
+      }
     }
     if ($object instanceof CRM_Chreports_Form_Report_GLSummaryReport) {
       $fieldsToHide = [
