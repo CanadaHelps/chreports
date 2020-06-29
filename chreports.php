@@ -140,6 +140,19 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
     $object instanceof CRM_Chreports_Form_Report_GLSummaryReport ||
     $object instanceof CRM_Report_Form_Contact_Summary
     ) && $varType == 'columns') {
+
+    // show columns tab for 'Charity Admins' role
+    if (module_exists('user')) {
+      if (in_array('client administrator', user_roles())) {
+        CRM_Core_Resources::singleton()->addScript(
+          "CRM.$(function($) {
+            $('#ui-id-2').parent().show();
+            $('#ui-id-2').show();
+          });"
+        );
+      }
+    }
+
     $fieldsToHide = [
       'civicrm_contact' => [
         'nick_name',
@@ -227,8 +240,8 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
         'is_deceased', // not sure
         'exposed_id', // not sure
       ]);
-      $fieldsToHide['civicrm_phone'] => ['phone'];
-      $fieldsToHide['civicrm_email'] => ['email'];
+      $fieldsToHide['civicrm_phone'] = ['phone'];
+      $fieldsToHide['civicrm_email'] = ['email'];
       $fieldsToHide['civicrm_contribution'] = array_merge($fieldsToHide['civicrm_contribution'], [
         'thankyou_date',
         'non_deductible_amount',
@@ -237,16 +250,6 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
       $fieldsToHide['civicrm_batch'] = ['batch_id'];
       $fieldsToHide['civicrm_value_contribution__15'] = ['delete'];
       $fieldsToHide['civicrm_value_contribution__19'] = ['delete'];
-      if (module_exists('user')) {
-        if (in_array('client administrator', user_roles())) {
-          CRM_Core_Resources::singleton()->addScript(
-            "CRM.$(function($) {
-              $('#ui-id-2').parent().show();
-              $('#ui-id-2').show();
-            });"
-          );
-        }
-      }
     }
     if ($object instanceof CRM_Chreports_Form_Report_GLSummaryReport) {
       $fieldsToHide = [

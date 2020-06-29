@@ -362,7 +362,7 @@ class CRM_Chreports_Form_Report_GLSummaryReport extends CRM_Report_Form {
           $groupBys[] = 'fa.name';
         }
         elseif ($groupBy == 'credit_card_type_id') {
-          $groupBys[] = 'temp.'. $groupBy;
+          $groupBys[] = 'temp.card_type_id' ;
         }
         elseif ($groupBy == 'receive_date' || $groupBy == 'trxn_date') {
           $table = ($groupBy == 'receive_date') ? $this->_columns['civicrm_contribution'] : 'temp';
