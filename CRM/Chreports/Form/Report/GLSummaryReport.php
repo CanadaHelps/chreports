@@ -19,8 +19,8 @@ class CRM_Chreports_Form_Report_GLSummaryReport extends CRM_Report_Form {
     'YEAR' => 'Year',
   ];
 
-  protected $_customGroupGroupBy = FALSE; function __construct() {
-    parent::__construct();
+  protected $_customGroupGroupBy = FALSE;
+  public function __construct() {
     $this->_columns = array(
       'civicrm_contact' => array(
         'dao' => 'CRM_Contact_DAO_Contact',
@@ -196,6 +196,7 @@ class CRM_Chreports_Form_Report_GLSummaryReport extends CRM_Report_Form {
         });
       });"
     );
+    parent::__construct();
   }
 
   function select() {

@@ -247,6 +247,28 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
         'non_deductible_amount',
         'card_type_id', // not sure
       ]);
+      $fieldsToHide['civicrm_financial_trxn'] = [
+        'card_type_id',
+      ];
+      $fieldsToHide['civicrm_address'] = [
+        'address_name',
+        'street_number',
+        'street_name',
+        'street_address',
+        'supplemental_address_1',
+        'supplemental_address_2',
+        'supplemental_address_3',
+        'city',
+        'street_unit',
+        'postal_code',
+        'state_province_id',
+        'postal_code_suffix',
+        'county_id',
+        'country_id',
+        'location_type_id',
+        'address_id',
+        'is_primary',
+      ];
       $fieldsToHide['civicrm_batch'] = ['batch_id'];
       $fieldsToHide['civicrm_value_contribution__15'] = ['delete'];
       $fieldsToHide['civicrm_value_contribution__19'] = ['delete'];
