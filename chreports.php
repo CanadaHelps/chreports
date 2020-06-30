@@ -311,16 +311,6 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
     if ($varType == 'columns') {
       if ($object instanceof CRM_Chreports_Form_Report_ExtendSummary) {
         unset($var['civicrm_contribution']['fields']['total_amount']['statistics']['avg']);
-        // Add GL Account columns, groupBy and filter to only Extended Contribution Summary Report template
-        $var['civicrm_contact']['fields']['financial_account'] = ['title' => ts('Financial Account'), 'dbAlias' => 'fa.name'];
-        $var['civicrm_contact']['group_bys']['financial_account'] = ['title' => ts('Financial Account'), 'dbAlias' => 'fa.name'];
-        $var['civicrm_contact']['filters']['financial_account'] = [
-          'title' => ts('GL Account'),
-          'type' => CRM_Utils_Type::T_STRING,
-          'operatorType' => CRM_Report_Form::OP_MULTISELECT,
-          'options' => CRM_Contribute_PseudoConstant::financialAccount(),
-          'dbAlias' => 'fa.id',
-        ];
       }
       $var['civicrm_contribution']['fields']['total_amount']['statistics'] =  ['count' => ts('Number of Contributions'), 'sum' => ts('Total Amount')];
       $var['civicrm_contribution']['fields']['payment_instrument_id'] = ['title' => 'Payment Method'];
