@@ -134,6 +134,21 @@ function chreports_civicrm_entityTypes(&$entityTypes) {
   _chreports_civix_civicrm_entityTypes($entityTypes);
 }
 
+function chreports_civicrm_buildForm($formName, &$form) {
+  if (in_array($formName, [
+    'CRM_Report_Form_Contact_Summary',
+    'CRM_Chreports_Form_Report_ExtendedDetail',
+    'CRM_Chreports_Form_Report_GLSummaryReport',
+    'CRM_Chreports_Form_Report_ExtendedDetail'
+  ])) {
+    CRM_Core_Resources::singleton()->addScript(
+      "CRM.$(function($) {
+        $('.report-layout.display').wrap('<div class=\"new\" style=\"overflow:scroll; width:100%;\"></div>');
+      });"
+    );
+  }
+}
+
 function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
   if (($object instanceof CRM_Chreports_Form_Report_ExtendedDetail ||
     $object instanceof CRM_Chreports_Form_Report_ExtendSummary ||
@@ -389,6 +404,14 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
       ];
     }
   }
+  elseif ($object instanceof CRM_Report_Form_Contact_Summary && $varType == 'rows') {
+    foreach ($var as $rowNum => $row) {
+      if (!empty($var[$rowNum]['civicrm_contact_sort_name'])) {
+        $url = CRM_Utils_System::url('civicrm/contact/view', 'reset=1&cid=' . $row['civicrm_contact_id']);
+        $var[$rowNum]['civicrm_contact_sort_name'] = sprintf('<a href="%s" target="_blank">%s</a>', $url, $var[$rowNum]['civicrm_contact_sort_name']);
+      }
+    }
+  }
 }
 
 // --- Functions below this ship commented out. Uncomment as required. ---
@@ -397,7 +420,7 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
  * Implements hook_civicrm_preProcess().
  *
  * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_preProcess
- *
+ */
 function chreports_civicrm_preProcess($formName, &$form) {
 
 } // */
