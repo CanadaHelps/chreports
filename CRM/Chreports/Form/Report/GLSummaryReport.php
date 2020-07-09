@@ -39,19 +39,6 @@ class CRM_Chreports_Form_Report_GLSummaryReport extends CRM_Report_Form {
             'required' => TRUE,
             'dbAlias' => 'fa.name',
           ],
-          'gl_account_code' => [
-            'title' => E::ts('GL Code'),
-            'default' => TRUE,
-            'dbAlias' => 'fa.accounting_code',
-          ],
-          'gl_account_type' => [
-            'title' => E::ts('Financial Account Type'),
-            'dbAlias' => 'fa.financial_account_type_id',
-          ],
-          'contact_id' => array(
-            'title' => ts('Donor ID'),
-            'dbAlias' => 'contribution_civireport.contact_id',
-          ),
           'sort_name' => array(
             'title' => E::ts('Donor Name'),
             'no_repeat' => TRUE,

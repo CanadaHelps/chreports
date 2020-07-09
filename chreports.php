@@ -194,6 +194,10 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
         'job_title',
         'employer_id',
       ],
+      'civicrm_financial_trxn' => [
+        'card_type_id',
+        'trxn_id',
+      ],
       'civicrm_address' => [
         'address_name',
         'address_street_number',
@@ -206,17 +210,24 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
         'address_id',
         'address_is_primary',
       ],
+      'civicrm_pledge_payment' => [
+        'pledge_id',
+      ],
       'civicrm_contribution' => [
         'contribution_status_id',
         'contribution_or_soft',
         'soft_credits',
         'soft_credit_for',
       ],
+      'civicrm_note' => [
+        'contribution_note',
+      ],
       'civicrm_contribution_soft' => [
         'all',
       ],
       'civicrm_value_contribution__15' => [
         'custom_37',
+        'custom_24',
       ],
       'civicrm_value_contribution__19' => [
         'custom_35',
@@ -253,7 +264,6 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
         'contact_sub_type',
         'organization_name', // not sure
         'is_deceased', // not sure
-        'exposed_id', // not sure
       ]);
       $fieldsToHide['civicrm_phone'] = ['phone'];
       $fieldsToHide['civicrm_email'] = ['email'];
@@ -261,6 +271,7 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
         'thankyou_date',
         'non_deductible_amount',
         'card_type_id', // not sure
+        'payment_instrument_id',
       ]);
       $fieldsToHide['civicrm_financial_trxn'] = [
         'card_type_id',
