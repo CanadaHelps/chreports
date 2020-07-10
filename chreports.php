@@ -147,6 +147,12 @@ function chreports_civicrm_buildForm($formName, &$form) {
       });"
     );
   }
+  if ($formName == 'CRM_Chreports_Form_Report_ExtendSummary' || $formName == 'CRM_Report_Form_Contact_Summary') {
+    CRM_Core_Resources::singleton()->addScript(
+      "CRM.$(function($) {
+        $('#fields_total_amount').parent().hide();
+      });");
+   }
 }
 
 function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
@@ -308,6 +314,9 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
           'trxn_date',
           'id',
         ],
+        'civicrm_contact' => [
+          'exposed_id',
+        ],
       ];
     }
     foreach ($fieldsToHide as $table => $fields) {
@@ -339,7 +348,6 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
         unset($var['civicrm_contribution']['fields']['total_amount']['statistics']['avg']);
       }
       $var['civicrm_contribution']['fields']['total_amount']['statistics'] =  ['count' => ts('Number of Contributions'), 'sum' => ts('Total Amount')];
-      $var['civicrm_contribution']['fields']['payment_instrument_id'] = ['title' => 'Payment Method'];
 
       $var['civicrm_contribution']['filters']['payment_instrument_id'] = [
         'title' => ts('Payment Method'),
