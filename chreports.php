@@ -238,6 +238,7 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
       'civicrm_value_contribution__19' => [
         'custom_35',
       ],
+      'civicrm_value_email_consent_5' => ['delete'],
       'civicrm_value_mailchimp_details' => ['delete'],
       'civicrm_value_summary_field_7' => ['delete'],
     ];
