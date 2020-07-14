@@ -19,8 +19,8 @@ class CRM_Chreports_Form_Report_GLSummaryReport extends CRM_Report_Form {
     'YEAR' => 'Year',
   ];
 
-  protected $_customGroupGroupBy = FALSE; function __construct() {
-    parent::__construct();
+  protected $_customGroupGroupBy = FALSE;
+  public function __construct() {
     $this->_columns = array(
       'civicrm_contact' => array(
         'dao' => 'CRM_Contact_DAO_Contact',
@@ -39,19 +39,6 @@ class CRM_Chreports_Form_Report_GLSummaryReport extends CRM_Report_Form {
             'required' => TRUE,
             'dbAlias' => 'fa.name',
           ],
-          'gl_account_code' => [
-            'title' => E::ts('GL Code'),
-            'default' => TRUE,
-            'dbAlias' => 'fa.accounting_code',
-          ],
-          'gl_account_type' => [
-            'title' => E::ts('Financial Account Type'),
-            'dbAlias' => 'fa.financial_account_type_id',
-          ],
-          'contact_id' => array(
-            'title' => ts('Donor ID'),
-            'dbAlias' => 'contribution_civireport.contact_id',
-          ),
           'sort_name' => array(
             'title' => E::ts('Donor Name'),
             'no_repeat' => TRUE,
@@ -196,6 +183,7 @@ class CRM_Chreports_Form_Report_GLSummaryReport extends CRM_Report_Form {
         });
       });"
     );
+    parent::__construct();
   }
 
   function select() {
@@ -362,7 +350,7 @@ class CRM_Chreports_Form_Report_GLSummaryReport extends CRM_Report_Form {
           $groupBys[] = 'fa.name';
         }
         elseif ($groupBy == 'credit_card_type_id') {
-          $groupBys[] = 'temp.'. $groupBy;
+          $groupBys[] = 'temp.card_type_id' ;
         }
         elseif ($groupBy == 'receive_date' || $groupBy == 'trxn_date') {
           $table = ($groupBy == 'receive_date') ? $this->_columns['civicrm_contribution'] : 'temp';

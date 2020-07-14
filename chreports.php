@@ -134,7 +134,210 @@ function chreports_civicrm_entityTypes(&$entityTypes) {
   _chreports_civix_civicrm_entityTypes($entityTypes);
 }
 
+function chreports_civicrm_buildForm($formName, &$form) {
+  if (in_array($formName, [
+    'CRM_Report_Form_Contact_Summary',
+    'CRM_Chreports_Form_Report_ExtendedDetail',
+    'CRM_Chreports_Form_Report_GLSummaryReport',
+    'CRM_Chreports_Form_Report_ExtendedDetail'
+  ])) {
+    CRM_Core_Resources::singleton()->addScript(
+      "CRM.$(function($) {
+        $('.report-layout.display').wrap('<div class=\"new\" style=\"overflow:scroll; width:100%;\"></div>');
+      });"
+    );
+  }
+  if ($formName == 'CRM_Chreports_Form_Report_ExtendSummary' || $formName == 'CRM_Report_Form_Contact_Summary') {
+    CRM_Core_Resources::singleton()->addScript(
+      "CRM.$(function($) {
+        $('#fields_total_amount').parent().hide();
+      });");
+   }
+}
+
 function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
+  if (($object instanceof CRM_Chreports_Form_Report_ExtendedDetail ||
+    $object instanceof CRM_Chreports_Form_Report_ExtendSummary ||
+    $object instanceof CRM_Chreports_Form_Report_GLSummaryReport ||
+    $object instanceof CRM_Report_Form_Contact_Summary
+    ) && $varType == 'columns') {
+
+    // show columns tab for 'Charity Admins' role
+    if (module_exists('user')) {
+      if (in_array('client administrator', user_roles())) {
+        CRM_Core_Resources::singleton()->addScript(
+          "CRM.$(function($) {
+            $('#ui-id-2').parent().show();
+            $('#ui-id-2').show();
+          });"
+        );
+      }
+    }
+
+    $fieldsToHide = [
+      'civicrm_contact' => [
+        'nick_name',
+        'display_name',
+        'external_identifier',
+        'preferred_language',
+        'preferred_communication_method',
+        'postal_greeting_display',
+        'email_greeting_display',
+        'addressee_display',
+        'do_not_email',
+        'do_not_phone',
+        'do_not_mail',
+        'do_not_sms',
+        'is_opt_out',
+        'first_name',
+        'last_name',
+        'middle_name',
+        'prefix_id',
+        'suffix_id',
+        'gender_id',
+        'birth_date',
+        'age',
+        'job_title',
+        'employer_id',
+      ],
+      'civicrm_financial_trxn' => [
+        'card_type_id',
+        'trxn_id',
+      ],
+      'civicrm_address' => [
+        'address_name',
+        'address_street_number',
+        'address_street_name',
+        'address_supplemental_address_3',
+        'address_street_unit',
+        'address_postal_code_suffix',
+        'address_county_id',
+        'address_location_type_id',
+        'address_id',
+        'address_is_primary',
+      ],
+      'civicrm_pledge_payment' => [
+        'pledge_id',
+      ],
+      'civicrm_contribution' => [
+        'contribution_status_id',
+        'contribution_or_soft',
+        'soft_credits',
+        'soft_credit_for',
+      ],
+      'civicrm_note' => [
+        'contribution_note',
+      ],
+      'civicrm_contribution_soft' => [
+        'all',
+      ],
+      'civicrm_value_contribution__15' => [
+        'custom_37',
+        'custom_24',
+      ],
+      'civicrm_value_contribution__19' => [
+        'custom_35',
+      ],
+      'civicrm_value_mailchimp_details' => ['delete'],
+      'civicrm_value_summary_field_7' => ['delete'],
+    ];
+    if ($object instanceof CRM_Report_Form_Contact_Summary) {
+      $fieldsToHide = [
+        'civicrm_contact' => [
+          'suffix_id',
+          'addressee_display',
+          'age',
+        ],
+        'civicrm_address' => [
+          'address_name',
+          'address_street_number',
+          'address_street_name',
+          'address_supplemental_address_3',
+          'address_street_unit',
+          'address_postal_code_suffix',
+          'address_county_id',
+          'address_location_type_id',
+          'address_id',
+          'address_is_primary',
+        ],
+        'civicrm_value_mailchimp_details' => ['delete'],
+      ];
+    }
+    if ($object instanceof CRM_Chreports_Form_Report_ExtendSummary) {
+      $fieldsToHide['civicrm_contact'] = array_merge($fieldsToHide['civicrm_contact'], [
+        'sort_name',
+        'contact_type',
+        'contact_sub_type',
+        'organization_name', // not sure
+        'is_deceased', // not sure
+      ]);
+      $fieldsToHide['civicrm_phone'] = ['phone'];
+      $fieldsToHide['civicrm_email'] = ['email'];
+      $fieldsToHide['civicrm_contribution'] = array_merge($fieldsToHide['civicrm_contribution'], [
+        'thankyou_date',
+        'non_deductible_amount',
+        'card_type_id', // not sure
+        'payment_instrument_id',
+      ]);
+      $fieldsToHide['civicrm_financial_trxn'] = [
+        'card_type_id',
+      ];
+      $fieldsToHide['civicrm_address'] = [
+        'address_name',
+        'street_number',
+        'street_name',
+        'street_address',
+        'supplemental_address_1',
+        'supplemental_address_2',
+        'supplemental_address_3',
+        'city',
+        'street_unit',
+        'postal_code',
+        'state_province_id',
+        'postal_code_suffix',
+        'county_id',
+        'country_id',
+        'location_type_id',
+        'address_id',
+        'is_primary',
+      ];
+      $fieldsToHide['civicrm_batch'] = ['batch_id'];
+      $fieldsToHide['civicrm_value_contribution__15'] = ['delete'];
+      $fieldsToHide['civicrm_value_contribution__19'] = ['delete'];
+    }
+    if ($object instanceof CRM_Chreports_Form_Report_GLSummaryReport) {
+      $fieldsToHide = [
+        'civicrm_contribution' => [
+          'sort_name',
+          'receive_date',
+          'credit_card_type_id',
+          'trxn_date',
+          'id',
+        ],
+        'civicrm_contact' => [
+          'exposed_id',
+        ],
+      ];
+    }
+    foreach ($fieldsToHide as $table => $fields) {
+      foreach ($fields as $field) {
+        if ($field == 'delete') {
+          unset($var[$table]);
+        }
+        elseif ($field == 'all') {
+          foreach (array_keys($var[$table]['fields']) as $name) {
+            unset($var[$table]['fields'][$name]);
+            unset($var[$table]['metadata'][$name]);
+          }
+        }
+        elseif (!empty($var[$table]['metadata'][$field]) || !empty($var[$table]['fields'][$field]) || array_key_exists($field, $var[$table]['fields'])) {
+          unset($var[$table]['metadata'][$field]);
+          unset($var[$table]['fields'][$field]);
+        }
+      }
+    }
+  }
+
   if ($object instanceof CRM_Report_Form_Contribute_Lybunt) {
     $object->setVar('_charts', []);
   }
@@ -143,19 +346,8 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
     if ($varType == 'columns') {
       if ($object instanceof CRM_Chreports_Form_Report_ExtendSummary) {
         unset($var['civicrm_contribution']['fields']['total_amount']['statistics']['avg']);
-        // Add GL Account columns, groupBy and filter to only Extended Contribution Summary Report template
-        $var['civicrm_contact']['fields']['financial_account'] = ['title' => ts('Financial Account'), 'dbAlias' => 'fa.name'];
-        $var['civicrm_contact']['group_bys']['financial_account'] = ['title' => ts('Financial Account'), 'dbAlias' => 'fa.name'];
-        $var['civicrm_contact']['filters']['financial_account'] = [
-          'title' => ts('GL Account'),
-          'type' => CRM_Utils_Type::T_STRING,
-          'operatorType' => CRM_Report_Form::OP_MULTISELECT,
-          'options' => CRM_Contribute_PseudoConstant::financialAccount(),
-          'dbAlias' => 'fa.id',
-        ];
       }
       $var['civicrm_contribution']['fields']['total_amount']['statistics'] =  ['count' => ts('Number of Contributions'), 'sum' => ts('Total Amount')];
-      $var['civicrm_contribution']['fields']['payment_instrument_id'] = ['title' => 'Payment Method'];
 
       $var['civicrm_contribution']['filters']['payment_instrument_id'] = [
         'title' => ts('Payment Method'),
@@ -231,6 +423,14 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
       ];
     }
   }
+  elseif ($object instanceof CRM_Report_Form_Contact_Summary && $varType == 'rows') {
+    foreach ($var as $rowNum => $row) {
+      if (!empty($var[$rowNum]['civicrm_contact_sort_name'])) {
+        $url = CRM_Utils_System::url('civicrm/contact/view', 'reset=1&cid=' . $row['civicrm_contact_id']);
+        $var[$rowNum]['civicrm_contact_sort_name'] = sprintf('<a href="%s" target="_blank">%s</a>', $url, $var[$rowNum]['civicrm_contact_sort_name']);
+      }
+    }
+  }
 }
 
 // --- Functions below this ship commented out. Uncomment as required. ---
@@ -239,7 +439,7 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
  * Implements hook_civicrm_preProcess().
  *
  * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_preProcess
- *
+ */
 function chreports_civicrm_preProcess($formName, &$form) {
 
 } // */
