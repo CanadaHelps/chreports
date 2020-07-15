@@ -168,7 +168,8 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
     // show columns tab for 'Charity Admins' role
     $isCharityAdmin = FALSE;
     if (module_exists('user')) {
-      if (in_array('client administrator', user_roles())) {
+      global $user;
+      if (in_array('client administrator', $user->roles)) {
         $isCharityAdmin = TRUE;
         CRM_Core_Resources::singleton()->addScript(
           "CRM.$(function($) {
