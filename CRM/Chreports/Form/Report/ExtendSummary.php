@@ -12,7 +12,6 @@ class CRM_Chreports_Form_Report_ExtendSummary extends CRM_Report_Form_Contribute
   public function from($entity = NULL) {
     $this->setFromBase('civicrm_contact');
 
-    //CRM_Core_Error::debug('a', $this->_params);
     $params = $this->_params;
     $table = 'civicrm_contribution';
     foreach (['contribution_page_id', 'campaign_id', 'financial_type'] as $key) {
@@ -344,12 +343,6 @@ ROUND(AVG(IF(ISNULL(ft.from_financial_account_id), fi.amount, -fi.amount)), 2) a
 
       $entryFound = $this->alterDisplayAddressFields($row, $rows, $rowNum, 'contribute/detail', 'List all contribution(s) for this ') ? TRUE : $entryFound;
       $entryFound = $this->alterDisplayContactFields($row, $rows, $rowNum, 'contribute/detail', 'List all contribution(s) for this ') ? TRUE : $entryFound;
-
-      // skip looking further in rows, if first row itself doesn't
-      // have the column we need
-      if (!$entryFound) {
-        break;
-      }
     }
   }
 
