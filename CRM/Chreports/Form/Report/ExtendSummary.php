@@ -12,7 +12,6 @@ class CRM_Chreports_Form_Report_ExtendSummary extends CRM_Report_Form_Contribute
   public function from($entity = NULL) {
     $this->setFromBase('civicrm_contact');
 
-    //CRM_Core_Error::debug('a', $this->_params);
     $params = $this->_params;
     $table = 'civicrm_contribution';
     foreach (['contribution_page_id', 'campaign_id', 'financial_type'] as $key) {
@@ -98,7 +97,7 @@ class CRM_Chreports_Form_Report_ExtendSummary extends CRM_Report_Form_Contribute
     CRM_Utils_Hook::alterReportVar('sql', $this, $this);
 
     $contriQuery = "
-COUNT({$this->_aliases['civicrm_contribution']}.total_amount )        as civicrm_contribution_total_amount_count,
+COUNT(DISTINCT {$this->_aliases['civicrm_contribution']}.id )        as civicrm_contribution_total_amount_count,
 SUM({$this->_aliases['civicrm_contribution']}.total_amount )          as civicrm_contribution_total_amount_sum,
 ROUND(AVG({$this->_aliases['civicrm_contribution']}.total_amount), 2) as civicrm_contribution_total_amount_avg,
 {$this->_aliases['civicrm_contribution']}.currency                    as currency
@@ -344,12 +343,6 @@ ROUND(AVG(IF(ISNULL(ft.from_financial_account_id), fi.amount, -fi.amount)), 2) a
 
       $entryFound = $this->alterDisplayAddressFields($row, $rows, $rowNum, 'contribute/detail', 'List all contribution(s) for this ') ? TRUE : $entryFound;
       $entryFound = $this->alterDisplayContactFields($row, $rows, $rowNum, 'contribute/detail', 'List all contribution(s) for this ') ? TRUE : $entryFound;
-
-      // skip looking further in rows, if first row itself doesn't
-      // have the column we need
-      if (!$entryFound) {
-        break;
-      }
     }
   }
 

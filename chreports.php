@@ -151,6 +151,9 @@ function chreports_civicrm_buildForm($formName, &$form) {
     CRM_Core_Resources::singleton()->addScript(
       "CRM.$(function($) {
         $('#fields_total_amount').parent().hide();
+        $('.crm-report-criteria-field input:checkbox').click(function() {
+          $('#group_bys_' + this.id.substr(7)).prop('checked', this.checked);
+        });
       });");
    }
 }
@@ -163,8 +166,11 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
     ) && $varType == 'columns') {
 
     // show columns tab for 'Charity Admins' role
+    $isCharityAdmin = FALSE;
     if (module_exists('user')) {
-      if (in_array('client administrator', user_roles())) {
+      global $user;
+      if (in_array('client administrator', $user->roles)) {
+        $isCharityAdmin = TRUE;
         CRM_Core_Resources::singleton()->addScript(
           "CRM.$(function($) {
             $('#ui-id-2').parent().show();
@@ -238,6 +244,7 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
       'civicrm_value_contribution__19' => [
         'custom_35',
       ],
+      'civicrm_value_email_consent_5' => ['delete'],
       'civicrm_value_mailchimp_details' => ['delete'],
       'civicrm_value_summary_field_7' => ['delete'],
     ];
@@ -262,6 +269,9 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
         ],
         'civicrm_value_mailchimp_details' => ['delete'],
       ];
+      if ($isCharityAdmin) {
+        $fieldsToHide['civicrm_contact'][] = 'exposed_id';
+      }
     }
     if ($object instanceof CRM_Chreports_Form_Report_ExtendSummary) {
       $fieldsToHide['civicrm_contact'] = array_merge($fieldsToHide['civicrm_contact'], [
@@ -271,6 +281,9 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
         'organization_name', // not sure
         'is_deceased', // not sure
       ]);
+      if ($isCharityAdmin) {
+        $fieldsToHide['civicrm_contact'][] = 'exposed_id';
+      }
       $fieldsToHide['civicrm_phone'] = ['phone'];
       $fieldsToHide['civicrm_email'] = ['email'];
       $fieldsToHide['civicrm_contribution'] = array_merge($fieldsToHide['civicrm_contribution'], [
