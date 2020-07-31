@@ -24,6 +24,8 @@ class CRM_Chreports_Form_Report_ExtendLYBUNT extends CRM_Report_Form_Contribute_
     $previousYearField = $this->_columns['civicrm_contribution']['fields']['last_year_total_amount'];
     unset($this->_columns['civicrm_contribution']['fields']['last_year_total_amount']);
     $this->_columns['civicrm_contribution']['fields']['last_year_total_amount'] = $previousYearField;
+    $this->_columns['civicrm_contact']['fields'] = array('exposed_id' => $this->_columns['civicrm_contact']['fields']['exposed_id']) + $this->_columns['civicrm_contact']['fields'];
+    $this->_columns['civicrm_contact']['fields']['exposed_id']['default'] = TRUE;
   }
 
   /**
