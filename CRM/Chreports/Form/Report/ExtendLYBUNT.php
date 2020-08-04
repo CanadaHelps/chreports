@@ -192,7 +192,8 @@ class CRM_Chreports_Form_Report_ExtendLYBUNT extends CRM_Report_Form_Contribute_
           SELECT cont_exclude.contact_id
           FROM civicrm_contribution cont_exclude
           WHERE " . $this->whereClauseThisYear('cont_exclude.receive_date')
-        . ")";
+           . " AND cont_exclude.contribution_status_id IN (1) and cont_exclude.is_test = 0
+          )";
       }
     }
     // Group filtering is already done so skip.
