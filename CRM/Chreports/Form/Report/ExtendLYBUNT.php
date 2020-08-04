@@ -187,12 +187,13 @@ class CRM_Chreports_Form_Report_ExtendLYBUNT extends CRM_Report_Form_Contribute_
   public function whereClause(&$field, $op, $value, $min, $max) {
     if ($field['name'] == 'receive_date') {
       $clause = 1;
+      $completedStatus = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Completed');
       if (empty($this->contactTempTable)) {
         $clause = "{$this->_aliases['civicrm_contribution']}.contact_id NOT IN (
           SELECT cont_exclude.contact_id
           FROM civicrm_contribution cont_exclude
           WHERE " . $this->whereClauseThisYear('cont_exclude.receive_date')
-           . " AND cont_exclude.contribution_status_id IN (1) and cont_exclude.is_test = 0
+           . " AND cont_exclude.contribution_status_id IN (" . $completedStatus . ") and cont_exclude.is_test = 0
           )";
       }
     }
