@@ -9,7 +9,7 @@ class CRM_Chreports_Form_Report_GLSummaryReport extends CRM_Report_Form {
 
   protected $_summary = NULL;
 
-  protected $_customGroupExtends = ['Contribute'];
+  protected $_customGroupExtends = ['Contribution'];
 
   protected $_groupByDateFreq = [
     'MONTH' => 'Month',
