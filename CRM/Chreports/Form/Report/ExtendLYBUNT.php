@@ -172,21 +172,10 @@ class CRM_Chreports_Form_Report_ExtendLYBUNT extends CRM_Report_Form_Contribute_
         // primary filter and the index hint will block that.
         $this->_from .= "USE index (received_date)";
       }
-      // Distinguish between LYBNT AND SYBNT
-      if (!empty($this->_params['fields']['last_year_total_amount'])
-        && (empty($this->_params['fields']['last_two_year_total_amount']) && empty($this->_params['fields']['last_two_year_total_amount'])
-          && empty($this->_params['fields']['last_three_year_total_amount']) && empty($this->_params['fields']['last_four_year_total_amount']))) {
-        $this->_from .= " ON {$this->_aliases['civicrm_contribution']}.contact_id = {$this->_aliases['civicrm_contact']}.id
-         AND {$this->_aliases['civicrm_contribution']}.is_test = 0
-         AND " . $this->whereClauseLastYear("{$this->_aliases['civicrm_contribution']}.receive_date") . "
-       {$this->_aclFrom} ";
-      }
-      else {
-        $this->_from .= " ON {$this->_aliases['civicrm_contribution']}.contact_id = {$this->_aliases['civicrm_contact']}.id
+      $this->_from .= " ON {$this->_aliases['civicrm_contribution']}.contact_id = {$this->_aliases['civicrm_contact']}.id
          AND {$this->_aliases['civicrm_contribution']}.is_test = 0
          AND " . $this->whereClauseLast4Year("{$this->_aliases['civicrm_contribution']}.receive_date") . "
       {$this->_aclFrom} ";
-      }
       $this->selectivelyAddLocationTablesJoinsToFilterQuery();
     }
 
