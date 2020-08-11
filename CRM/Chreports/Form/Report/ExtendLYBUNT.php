@@ -24,6 +24,10 @@ class CRM_Chreports_Form_Report_ExtendLYBUNT extends CRM_Report_Form_Contribute_
     $previousYearField = $this->_columns['civicrm_contribution']['fields']['last_year_total_amount'];
     unset($this->_columns['civicrm_contribution']['fields']['last_year_total_amount']);
     $this->_columns['civicrm_contribution']['fields']['last_year_total_amount'] = $previousYearField;
+    // CRM-515 Remove Email, phone and country columns from showing by default
+    $this->_columns['civicrm_email']['fields']['email']['default'] = FALSE;
+    $this->_columns['civicrm_phone']['fields']['phone']['default'] = FALSE;
+    $this->_columns['civicrm_address']['fields']['country_id']['default'] = FALSE;
   }
 
   /**
