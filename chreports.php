@@ -353,6 +353,21 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
 
   if ($object instanceof CRM_Report_Form_Contribute_Lybunt) {
     $object->setVar('_charts', []);
+    if ($varType == 'rows') {
+      foreach ($var as $rowNum => $row) {
+        //Convert Display name into link
+        if (array_key_exists('civicrm_contact_sort_name', $row) &&
+          array_key_exists('civicrm_contribution_contact_id', $row)
+        ) {
+          $url = CRM_Utils_System::url("civicrm/contact/view",
+            'reset=1&cid=' . $row['civicrm_contribution_contact_id'],
+            $object->getVar('_absoluteUrl')
+          );
+          $var[$rowNum]['civicrm_contact_sort_name_link'] = $url;
+          $var[$rowNum]['civicrm_contact_sort_name_hover'] = ts("View contact");
+        }
+      }
+    }
   }
   if ($object instanceof CRM_Report_Form_Contribute_Summary || $object instanceof CRM_Chreports_Form_Report_ExtendSummary) {
     $tablename = E::getTableNameByName('Campaign_Information');
