@@ -7,7 +7,7 @@ return array(
     'entity' => 'ReportInstance',
     'params' => array(
       'version' => 3,
-      'report_id' => 'biz.jmaconsulting.chreports/extendlybunt',
+      'report_id' => 'contribute/lybunt',
       'title' => ts('LYBNT'),
       'name' => 'LYBNT',
       "description" => "Contributors who gave 'Last Year, But Not This'",

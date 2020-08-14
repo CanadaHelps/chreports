@@ -88,24 +88,6 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
   } // */
 
   /**
-   * Example: Run a couple simple queries.
-   *
-   * @return TRUE on success
-   * @throws Exception
-   */
-  public function upgrade_1200() {
-    $this->ctx->log->info('Applying update 1200: Update LYBNT report to use the correct report instance');
-    $report = civicrm_api3('ReportInstance', 'get', ['name' => 'LYBNT', 'sequential' => 1]);
-    if (!empty($report['values'][0]['id'])) {
-      civicrm_api3('ReportInstance', 'create', [
-        'name' => "biz.jmaconsulting.chreports/extendlybunt",
-        'report_id' => $report['values'][0]['id'],
-      ]);
-    }
-  }
-
-
-  /**
    * Example: Run an external SQL script.
    *
    * @return TRUE on success
