@@ -87,7 +87,7 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
     return TRUE;
   } // */
 
-  
+
   /**
    * Example: Run an external SQL script.
    *
