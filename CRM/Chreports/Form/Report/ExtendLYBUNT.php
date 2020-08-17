@@ -33,6 +33,10 @@ class CRM_Chreports_Form_Report_ExtendLYBUNT extends CRM_Report_Form_Contribute_
       $this->_columns['civicrm_contribution']['filters']['campaign_id'],
       $this->_columns['civicrm_contribution']['order_bys']['campaign_id']
     );
+    // CRM-515 Remove Email, phone and country columns from showing by default
+    $this->_columns['civicrm_email']['fields']['email']['default'] = FALSE;
+    $this->_columns['civicrm_phone']['fields']['phone']['default'] = FALSE;
+    $this->_columns['civicrm_address']['fields']['country_id']['default'] = FALSE;
   }
 
   /**
@@ -180,7 +184,7 @@ class CRM_Chreports_Form_Report_ExtendLYBUNT extends CRM_Report_Form_Contribute_
       $this->_from .= " ON {$this->_aliases['civicrm_contribution']}.contact_id = {$this->_aliases['civicrm_contact']}.id
          AND {$this->_aliases['civicrm_contribution']}.is_test = 0
          AND " . $this->whereClauseLast4Year("{$this->_aliases['civicrm_contribution']}.receive_date") . "
-       {$this->_aclFrom} ";
+      {$this->_aclFrom} ";
       $this->selectivelyAddLocationTablesJoinsToFilterQuery();
     }
 
