@@ -18,6 +18,10 @@ class CRM_Chreports_Form_Report_RecurSummary extends CRM_Report_Form {
             'title' => E::ts('Contact ID'),
             'required' => TRUE,
           ],
+          'exposed_id' => [
+            'title' => E::ts('Contact ID'),
+            'default' => TRUE,
+          ],
           'sort_name' => [
             'title' => E::ts('Contact Name'),
             'required' => TRUE,
@@ -109,7 +113,6 @@ class CRM_Chreports_Form_Report_RecurSummary extends CRM_Report_Form {
     $this->addCampaignFields('civicrm_contribution', FALSE, TRUE);
     $this->_groupByArray = ['contact_civireport.id'];
     parent::__construct();
-    $this->_columns['civicrm_contact']['fields']['exposed_id']['default'] = TRUE;
   }
 
   function from() {
