@@ -109,6 +109,7 @@ class CRM_Chreports_Form_Report_RecurSummary extends CRM_Report_Form {
     $this->addCampaignFields('civicrm_contribution', FALSE, TRUE);
     $this->_groupByArray = ['contact_civireport.id'];
     parent::__construct();
+    $this->_columns['civicrm_contact']['fields']['exposed_id']['default'] = TRUE;
   }
 
   function from() {
