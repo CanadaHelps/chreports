@@ -162,7 +162,8 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
   if (($object instanceof CRM_Chreports_Form_Report_ExtendedDetail ||
     $object instanceof CRM_Chreports_Form_Report_ExtendSummary ||
     $object instanceof CRM_Chreports_Form_Report_GLSummaryReport ||
-    $object instanceof CRM_Report_Form_Contact_Summary
+    $object instanceof CRM_Report_Form_Contact_Summary ||
+    $object instanceof CRM_Report_Form_Activity
     ) && $varType == 'columns') {
 
     // show columns tab for 'Charity Admins' role
@@ -332,6 +333,36 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
         ],
       ];
     }
+    if ($object instanceof CRM_Report_Form_Activity) {
+      $fieldsToHide = [
+        'civicrm_activity' => [
+          'result',
+          'campaign_id',
+          'engagement_level',
+        ],
+        'civicrm_address' => [
+          'address_name',
+          'supplemental_address_3',
+          'street_number',
+          'street_name',
+          'street_unit',
+          'postal_code_suffix',
+          'county_id',
+        ],
+      ];
+      $filtersToHide = [
+        'civicrm_activity' => [
+          'result',
+          'campaign_id',
+          'engagement_level'
+        ],
+        'civicrm_address' => [
+          'county_id'
+        ]
+      ];
+      unset($var['civicrm_address']['order_bys']['street_name']);
+      unset($var['civicrm_address']['order_bys']['street_number']);
+    }
     foreach ($fieldsToHide as $table => $fields) {
       foreach ($fields as $field) {
         if ($field == 'delete') {
@@ -349,8 +380,16 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
         }
       }
     }
+    if($filtersToHide) {
+      foreach($filtersToHide as $table => $filters) {
+        foreach($filters as $filter) {
+          if(array_key_exists($filter, $var[$table]['filters'])) {
+            unset($var[$table]['filters'][$filter]);
+          }
+        }
+      }
+    }
   }
-
   if ($object instanceof CRM_Report_Form_Contribute_Lybunt) {
     $object->setVar('_charts', []);
     if ($varType == 'rows') {
