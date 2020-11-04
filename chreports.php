@@ -163,7 +163,8 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
     $object instanceof CRM_Chreports_Form_Report_ExtendSummary ||
     $object instanceof CRM_Chreports_Form_Report_GLSummaryReport ||
     $object instanceof CRM_Report_Form_Contact_Summary ||
-    $object instanceof CRM_Report_Form_Activity
+    $object instanceof CRM_Report_Form_Activity ||
+    $object instanceof CRM_Report_Form_Grant_Detail
     ) && $varType == 'columns') {
 
     // show columns tab for 'Charity Admins' role
@@ -363,6 +364,90 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
       unset($var['civicrm_address']['order_bys']['street_name']);
       unset($var['civicrm_address']['order_bys']['street_number']);
     }
+    if ($object instanceof CRM_Report_Form_Grant_Detail) {
+      $fieldsToHide = [
+        'civicrm_contact' => [
+          'sort_name',
+          'email_greeting_display',
+          'do_not_mail',
+          'middle_name',
+          'suffix_id',
+          'job_title',
+          'preferred_language',
+          'preferred_communication_method',
+          'addressee_display',
+          'do_not_sms',
+          'last_name',
+          'gender_id',
+          'employer_id',
+          'external_identifier',
+          'do_not_email',
+          'is_opt_out',
+          'nick_name',
+          'birth_date',
+          'postal_greeting_display',
+          'do_not_phone',
+          'first_name',
+          'prefix_id',
+          'age',
+          'expposed_id'
+        ],
+        'civicrm_grant' => [
+          'rationale',
+          'money_transfer_date',
+          'grant_report_received'
+        ],
+        'civicrm_address' => [
+          'address_name',
+          'street_number',
+          'street_name',
+          'street_address',
+          'supplemental_address_1',
+          'supplemental_address_2',
+          'supplemental_address_3',
+          'city',
+          'street_unit',
+          'postal_code',
+          'state_province_id',
+          'postal_code_suffix',
+          'county_id',
+          'country_id',
+        ],
+        'civicrm_value_mailchimp_details' => ['delete'],
+        'civicrm_value_summary_field_7' => ['delete'],
+        'civicrm_value_email_consent_5' => ['delete'],
+      ];
+      unset($var['civicrm_address']['filters']);
+      unset($var['civicrm_contact']['filters']);
+      unset($var['civicrm_grant']['filters']['money_transfer_date']);
+      unset($var['civicrm_grant']['group_bys']['money_transfer_date']);
+      unset($var['civicrm_grant']['order_bys']['money_transfer_date']);
+
+      if($varType == 'columns') {
+        $labels = [
+          'civicrm_contact' => [
+            'display_name' => 'Prospect',
+          ],
+          'civicrm_grant' => [
+            'amount_total' => 'Opportunity Amount',
+            'application_received_date' => 'Application Deadline',
+            'decision_date' => 'Decision Date',
+            'grant_due_date' => 'Report Due',
+            'amount_granted' => 'Amount Received',
+          ]
+        ];
+        foreach($labels as $table => $label) {
+          foreach ($label as $elementName => $title) {
+            if (array_key_exists($elementName, $var[$table]['fields'])) {
+              $var[$table]['fields'][$elementName] = ['title' => ts($title)];
+            }
+            if (array_key_exists($elementName, $var[$table]['filters'])) {
+              $var[$table]['filters'][$elementName] = ['title' => ts($title)];
+            }
+          }
+        }
+      }
+    }
     foreach ($fieldsToHide as $table => $fields) {
       foreach ($fields as $field) {
         if ($field == 'delete') {
@@ -493,9 +578,15 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
   elseif ($object instanceof CRM_Report_Form_Contact_Summary && $varType == 'rows') {
     foreach ($var as $rowNum => $row) {
       if (!empty($var[$rowNum]['civicrm_contact_sort_name'])) {
-        $url = CRM_Utils_System::url('civicrm/contact/view', 'reset=1&cid=' . $row['civicrm_contact_id']);
+        $url = CRM_Utils_System::url('dms/contact/view', 'reset=1&cid=' . $row['civicrm_contact_id']);
         $var[$rowNum]['civicrm_contact_sort_name'] = sprintf('<a href="%s" target="_blank">%s</a>', $url, $var[$rowNum]['civicrm_contact_sort_name']);
       }
+    }
+  }
+  elseif ($object instanceof CRM_Report_Form_Grant_Detail && $varType == 'rows') {
+    foreach ($var as $rowNum => $row) {
+      // Add link to Prospect name
+      $var[$rowNum]['civicrm_contact_display_name_link'] = $var[$rowNum]['civicrm_contact_id_link'];
     }
   }
 }
