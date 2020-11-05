@@ -164,7 +164,8 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
     $object instanceof CRM_Chreports_Form_Report_GLSummaryReport ||
     $object instanceof CRM_Report_Form_Contact_Summary ||
     $object instanceof CRM_Report_Form_Activity ||
-    $object instanceof CRM_Report_Form_Grant_Detail
+    $object instanceof CRM_Report_Form_Grant_Detail ||
+    $object instanceof CRM_Report_Form_Contact_Relationship
     ) && $varType == 'columns') {
 
     // show columns tab for 'Charity Admins' role
@@ -448,6 +449,20 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
         }
       }
     }
+    if($object instanceof CRM_Report_Form_Contact_Relationship) {
+      $fieldsToHide = [
+        'civicrm_relationship' => [
+          'is_permission_a_b',
+          'is_permission_b_a'
+        ]
+      ];
+      $filtersToHide = [
+        'civicrm_relationship' => [
+          'is_permission_a_b',
+          'is_permission_b_a'
+        ]
+      ];
+    }
     foreach ($fieldsToHide as $table => $fields) {
       foreach ($fields as $field) {
         if ($field == 'delete') {
@@ -588,6 +603,15 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
       // Add link to Prospect name
       $var[$rowNum]['civicrm_contact_display_name_link'] = $var[$rowNum]['civicrm_contact_id_link'];
     }
+  }
+  elseif ($object instanceof CRM_Report_Form_Contact_Relationship && $varType == 'rows') {
+    foreach ($var as $rowNum => $row) {
+      if (!empty($var[$rowNum]['civicrm_contact_sort_name_a']) && !empty($var[$rowNum]['civicrm_contact_b_sort_name_b'])) {
+        $var[$rowNum]['civicrm_contact_sort_name_a_link'] = CRM_Utils_System::url('dms/contact/view', 'reset=1&cid=' . $row['civicrm_contact_id']);
+        $var[$rowNum]['civicrm_contact_b_sort_name_b_link'] = CRM_Utils_System::url('dms/contact/view', 'reset=1&cid=' . $row['civicrm_contact_b_id']);
+        $var[$rowNum]['civicrm_relationship_relationship_id'] = sprintf('<a href="%s" target="_blank">%s</a>', $var[$rowNum]['civicrm_relationship_relationship_id_link'], $var[$rowNum]['civicrm_relationship_relationship_id']);
+      }
+    } 
   }
 }
 
