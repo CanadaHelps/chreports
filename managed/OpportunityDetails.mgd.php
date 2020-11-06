@@ -2,13 +2,13 @@
 return array(
   array(
     'module' => 'biz.jmaconsulting.chreports',
-    'name' => 'Opportunity Details',
+    'name' => 'Opportunity Report',
     'update' => 'never',
     'entity' => 'ReportInstance',
     'params' => array(
       'version' => 3,
       'report_id' => 'grant/detail',
-      'title' => ts('Opportunity Details'),
+      'title' => ts('Opportunity Report'),
       'name' => 'Opportunity Details',
       "description" => "This report is meant to list all active opportunities",
       'permission' => 'access CiviReport',

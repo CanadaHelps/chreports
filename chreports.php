@@ -440,10 +440,10 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
         foreach($labels as $table => $label) {
           foreach ($label as $elementName => $title) {
             if (array_key_exists($elementName, $var[$table]['fields'])) {
-              $var[$table]['fields'][$elementName] = ['title' => ts($title)];
+              $var[$table]['fields'][$elementName]['title'] = ts($title);
             }
             if (array_key_exists($elementName, $var[$table]['filters'])) {
-              $var[$table]['filters'][$elementName] = ['title' => ts($title)];
+              $var[$table]['filters'][$elementName]['title'] = ts($title);
             }
           }
         }
