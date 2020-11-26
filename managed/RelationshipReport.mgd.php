@@ -7,7 +7,7 @@ return array(
     'entity' => 'ReportInstance',
     'params' => array(
       'version' => 3,
-      'report_id' => 'contribute/detail',
+      'report_id' => 'contact/relationship',
       'title' => ts('Relationship Report'),
       'name' => 'Relationship Report',
       "description" => "Contact A to Contact B Relationship Report",
