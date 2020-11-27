@@ -19,7 +19,7 @@ class CRM_Chreports_Form_Report_GLSummaryReport extends CRM_Report_Form {
     'YEAR' => 'Year',
   ];
 
-  protected $_customGroupGroupBy = FALSE;
+  protected $_customGroupGroupBy = TRUE;
   public function __construct() {
     $this->_columns = array(
       'civicrm_contact' => array(
