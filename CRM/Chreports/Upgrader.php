@@ -174,7 +174,7 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
       foreach ($report['values'] as $r) {
         $formValues = unserialize($r['form_values']);
         $fund = E::getCustomFieldIdByName('Fund');
-        if (!empty($fund) && array_key_exists('custom_' . $fund', $formValues['fields'])) {
+        if (!empty($fund) && array_key_exists('custom_' . $fund, $formValues['fields'])) {
           $formValues['group_bys']['custom_' . $fund] = 1;
         }
         civicrm_api3('ReportInstance', 'create', [
