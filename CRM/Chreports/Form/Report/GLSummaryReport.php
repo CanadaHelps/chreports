@@ -345,7 +345,18 @@ class CRM_Chreports_Form_Report_GLSummaryReport extends CRM_Report_Form {
     $params = CRM_Utils_Array::value('group_bys', $this->_params);
     if (!empty($params)) {
       foreach ($params as $groupBy => $dontCare) {
-        $alias = $groupBy == 'sort_name' ? $this->_aliases['civicrm_contact'] : $this->_aliases['civicrm_contribution'];
+        if (strpos($groupBy, 'custom_') !== FALSE) {
+          $result = civicrm_api3('CustomField', 'get', [
+            'id' => str_replace('custom_', '', $groupBy),
+            'return' => ['custom_group_id.table_name', 'column_name'],
+            'sequential' => 1,
+          ]);
+          $alias = $this->_aliases[$result['values'][0]['custom_group_id.table_name']];
+          $groupBy = $result['values'][0]['column_name'];
+        }
+        else {
+          $alias = $groupBy == 'sort_name' ? $this->_aliases['civicrm_contact'] : $this->_aliases['civicrm_contribution'];
+        }
         if ($groupBy == 'gl_account') {
           $groupBys[] = 'fa.name';
         }

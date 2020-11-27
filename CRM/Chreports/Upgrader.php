@@ -172,7 +172,7 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
     $report = civicrm_api3('ReportInstance', 'get', ['name' => 'Contribution History by GL Account (Summary)']);
     if (!empty($report['values'])) {
       foreach ($report['values'] as $r) {
-        $formValues = unserialize($report['form_values']);
+        $formValues = unserialize($r['form_values']);
         $fund = E::getCustomFieldIdByName('Fund');
         if (!empty($fund)) {
           $formValues['group_bys']['custom_' . $fund] = 1;
