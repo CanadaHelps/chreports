@@ -474,7 +474,7 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
             unset($var[$table]['metadata'][$name]);
           }
         }
-        elseif (!empty($var[$table]['metadata'][$field]) || !empty($var[$table]['fields'][$field]) || array_key_exists($field, $var[$table]['fields'])) {
+        elseif (!empty($var[$table]['metadata'][$field]) || !empty($var[$table]['fields'][$field]) || array_key_exists($field, (array) $var[$table]['fields'])) {
           unset($var[$table]['metadata'][$field]);
           unset($var[$table]['fields'][$field]);
         }
