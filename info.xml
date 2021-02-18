@@ -1,8 +1,8 @@
-<?xml version="1.0"?>
+s<?xml version="1.0"?>
 <extension key="biz.jmaconsulting.chreports" type="module">
   <file>chreports</file>
-  <name>CH Report Customisation</name>
-  <description>FIXME</description>
+  <name>CanadaHelps Report Customisations</name>
+  <description>CanadaHelps Report Customisations</description>
   <license>AGPL-3.0</license>
   <maintainer>
     <author>JMA Consulting</author>
@@ -20,7 +20,7 @@
   <compatibility>
     <ver>4.7</ver>
   </compatibility>
-  <comments>This is a new, undeveloped module</comments>
+  <comments>CanadaHelps Report Customisations</comments>
   <civix>
     <namespace>CRM/Chreports</namespace>
   </civix>
