@@ -164,6 +164,35 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
     return TRUE;
   }
 
+  public function upgrade_1700() {
+    $this->ctx->log->info('Applying update 1700: CRM-768 Update Report templates name and description');
+    $result = civicrm_api3('OptionValue', 'get', [
+      'sequential' => 1,
+      'option_group_id' => "report_template",
+      'options' => ['limit' => 0],
+    ]);
+    $reports = array_column($result['values'], NULL, 'name');
+    $reports['CRM_Cdntaxreceipts_Form_Report_ReceiptsIssued']['description'] = 'Tax Receipts - Receipts Issued';
+    $reports['CRM_Cdntaxreceipts_Form_Report_ReceiptsNotIssued']['description'] = 'Tax Receipts - Receipts Not Issued';
+    $reports['CRM_Extendedreport_Form_Report_Contribute_DetailExtended']['description'] = 'Extended Report - Contributions Detail with extra fields';
+    $reports['CRM_Chreports_Form_Report_ExtendLYBUNT']['description'] = 'Extended LYBNT';
+    $reports['CRM_Chreports_Form_Report_ExtendLYBUNT']['label'] = 'Extended LYBNT';
+    $reports['CRM_Chreports_Form_Report_ExtendedDetail']['description'] = 'Extended Contribution Detail';
+    $reports['CRM_Chreports_Form_Report_RecurSummary']['label'] = 'Recurring Contributions (Summary)';
+    $reports['CRM_Chreports_Form_Report_RevisedLYBUNT']['label'] = 'Revised LYBNT';
+    $reports['CRM_Chreports_Form_Report_RevisedLYBUNT']['description'] = 'Revised LYBNT';
+    $reports['CRM_Chreports_Form_Report_GLSummaryReport']['label'] = 'Contribution History by GL Account (Summary)';
+    $reports['CRM_Chreports_Form_Report_GLSummaryReport']['description'] = 'Overview of contributions by GL Account';
+    $reports['CRM_Report_Form_Contribute_Lybunt']['label'] = 'LYBNT Report';
+    $reports['CRM_Report_Form_Contribute_Lybunt']['description'] = 'LYBNT means last year but not this year. Provides a list of constituents who donated last year but did not donate during the time period you specify as the current year.';
+
+    foreach($reports as $reportTemplate) {
+      $reportTemplate['description'] = str_replace(' (biz.jmaconsulting.chreports)', '', $reportTemplate['description']);
+      civicrm_api3('ReportTemplate', 'create', $reportTemplate);
+    }
+    return TRUE;
+  }
+
   /**
    * Example: Run an external SQL script.
    *
