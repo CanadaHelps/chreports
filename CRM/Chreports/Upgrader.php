@@ -185,6 +185,8 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
     $reports['CRM_Chreports_Form_Report_GLSummaryReport']['description'] = 'Overview of contributions by GL Account';
     $reports['CRM_Report_Form_Contribute_Lybunt']['label'] = 'LYBNT Report';
     $reports['CRM_Report_Form_Contribute_Lybunt']['description'] = 'LYBNT means last year but not this year. Provides a list of constituents who donated last year but did not donate during the time period you specify as the current year.';
+    $reports['CRM_Chreports_Form_Report_GLAccountDetail']['description'] = 'GL Account Detail';
+    $reports['CRM_Chreports_Form_Report_GLAccountDetail']['label'] = 'GL Account Detail';
 
     foreach($reports as $reportTemplate) {
       $reportTemplate['description'] = str_replace(' (biz.jmaconsulting.chreports)', '', $reportTemplate['description']);
