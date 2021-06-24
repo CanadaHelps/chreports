@@ -212,7 +212,7 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
       ]);
       $dashlet = civicrm_api3('Dashboard', 'get', [
         'sequential' => 1,
-        'label' => "Last Year inc. Today",
+        'label' => "Fiscal Year to Date",
       ]);
       if(empty($dashlet['values'])) {
         civicrm_api3('Dashboard', 'create', [
