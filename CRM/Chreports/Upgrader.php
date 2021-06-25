@@ -229,7 +229,7 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
       }
     }
 
-    $report = civicrm_api3('ReportInstance', 'get', ['name' => 'Last Year inc Today']);
+    $report = civicrm_api3('ReportInstance', 'get', ['name' => 'Last Year inc. Today']);
     if(empty($report['values'])) {
       $report_id = civicrm_api3('ReportInstance', 'create', [
         'version' => 3,
