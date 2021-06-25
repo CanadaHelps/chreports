@@ -343,8 +343,10 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
         }
         // Set new order for Contacts
         foreach($dashletNewOrder as $newOrder) {
-          $newOrder['contact_id'] = $user['contact_id'];
-          $result = civicrm_api3('DashboardContact', 'create', $newOrder);
+          if($newOrder['dashboard_id']) {
+            $newOrder['contact_id'] = $user['contact_id'];
+            $result = civicrm_api3('DashboardContact', 'create', $newOrder);
+          }
         }
       }
     }
