@@ -263,8 +263,57 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
     return TRUE;
   }
 
-  public function upgrade_1900() {
-    $this->ctx->log->info('Applying update 1900: CRM-896: Rearrange Dashboard');
+  public function upgrade_2000() {
+    $this->ctx->log->info('Applying update 2000: Create the Missing Dashboard');
+    $reportInstances = civicrm_api3('ReportInstance', 'get', [
+      'sequential' => 1,
+      'return' => ["id", "title", "name"],
+      'name' => ['IN' => ["Fiscal Year to Date", "Last Year inc. Today"]],
+      'options' => ['limit' => 0],
+    ]);
+    if($reportInstances['values']) {
+      $reportInstanceDashlet = [];
+      foreach($reportInstances['values'] as $report) {
+        $report_name = 'report/'.$report['id'];
+        $dashlet = civicrm_api3('Dashboard', 'get', [
+          'sequential' => 1,
+          'name' => $report_name,
+        ]);
+        if(empty($dashlet['values'])) {
+          if($report['name'] == 'Fiscal Year to Date') {
+            civicrm_api3('Dashboard', 'create', [
+              'domain_id' => 1,
+              'name' => "report/".$report['id'],
+              'label' => "Fiscal Year to Date",
+              'url' => "civicrm/report/instance/".$report['id']."?reset=1&section=1&charts=pieChart&context=dashlet&rowCount=5",
+              'fullscreen_url' => "civicrm/report/instance/".$report['id']."?reset=1&section=1&charts=pieChart&context=dashletFullscreen&rowCount=5",
+              'is_active' => 1,
+              'is_reserved' => 1,
+              'cache_minutes' => 60,
+              'permission' => "access CiviReport",
+            ]);
+          }
+          if($report['name'] == 'Last Year inc. Today') {
+            civicrm_api3('Dashboard', 'create', [
+              'domain_id' => 1,
+              'name' => "report/".$report['id'],
+              'label' => "Last Year inc. Today",
+              'url' => "civicrm/report/instance/".$report['id']."?reset=1&section=1&charts=barChart&context=dashlet&rowCount=5",
+              'fullscreen_url' => "civicrm/report/instance/".$report['id']."?reset=1&section=1&charts=barChart&context=dashletFullscreen&rowCount=5",
+              'is_active' => 1,
+              'is_reserved' => 1,
+              'cache_minutes' => 60,
+              'permission' => "access CiviReport",
+            ]);
+          }
+        }
+      }
+    }
+    return TRUE;
+  }
+
+  public function upgrade_2100() {
+    $this->ctx->log->info('Applying update 2100: CRM-896: Rearrange Dashboard');
     $users = civicrm_api3('UFMatch', 'get', [
       'sequential' => 1,
       'return' => ["contact_id"],
@@ -350,7 +399,6 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
         }
       }
     }
-    
     return TRUE;
   }
 
