@@ -156,9 +156,21 @@ function chreports_civicrm_buildForm($formName, &$form) {
         });
       });");
    }
+   if ($formName == 'CRM_Chreports_Form_Report_RetentionRate') {
+     CRM_Core_Resources::singleton()->addScript(
+       "CRM.$(function($) {
+         $('ul.ui-tabs-nav li:nth-child(1), ul.ui-tabs-nav li:nth-child(3), ul.ui-tabs-nav li:nth-child(5)').hide();
+         $('.crm-report-instanceForm-form-block-is_navigation, .crm-report-instanceForm-form-block-permission, .crm-report-instanceForm-form-block-role, .crm-report-instanceForm-form-block-isReserved, .crm-report-instanceForm-form-block-report_header, .crm-report-instanceForm-form-block-report_footer').hide();
+       });");
+    }
 }
 
 function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
+  if ($object instanceof CRM_Report_Form_Contact_Summary && $varType == 'columns') {
+    $var['civicrm_contact']['filters']['id'] = [
+      'title' => 'Contact ID(s)',
+    ];
+  }
   if (($object instanceof CRM_Chreports_Form_Report_ExtendedDetail ||
     $object instanceof CRM_Chreports_Form_Report_ExtendSummary ||
     $object instanceof CRM_Chreports_Form_Report_GLSummaryReport ||
