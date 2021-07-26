@@ -68,6 +68,7 @@ class CRM_Chreports_Form_Report_RetentionRate extends CRM_Report_Form {
             'title' => ts('Base Year'),
             'operatorType' => CRM_Report_Form::OP_SELECT,
             'options' => $baseYears(),
+            'default' => 2016,
             'type' => CRM_Utils_Type::T_INT,
           ],
           'financial_type_id' => [
@@ -210,10 +211,10 @@ class CRM_Chreports_Form_Report_RetentionRate extends CRM_Report_Form {
     //CRM_Core_Error::debug_var('rows', $rows);
     $declareRow = $rows[0];
     $currentYear = date('Y');
-    while($currentYear > $this->_baseYear) {
+    while($currentYear >= $this->_baseYear) {
       $declareRow['civicrm_contact_' . $currentYear] = 0;
       $declareRow['civicrm_contact_contact_id'] = [];
-      $currentYear = -1;
+      $currentYear -= 1;
     }
     $newRows = [
       array_merge($declareRow, ['civicrm_contact_retention_rate' => 'Repeat Donors']),
@@ -227,13 +228,13 @@ class CRM_Chreports_Form_Report_RetentionRate extends CRM_Report_Form {
         continue;
       }
       for ($i = $baseYear; $i <= $currentYear; $i++) {
-        if ($row['civicrm_contact_' . $i] == $row['civicrm_contact_retention_rate']) {
+        if ($row['civicrm_contact_' . $i] > 0 && $row['civicrm_contact_' . ($i - 1)] == 0 && !in_array($row['civicrm_contact_contact_id'], $newRows[1]['civicrm_contact_contact_id_' . $i])) {
           $newRows[1]['civicrm_contact_' . $i] += 1;
-          $newRows[1]['civicrm_contact_contact_id'][] = $row['civicrm_contact_contact_id'];
+          $newRows[1]['civicrm_contact_contact_id_'. $i][] = $row['civicrm_contact_contact_id'];
         }
-        if ($row['civicrm_contact_' . $i] > 0 && $row['civicrm_contact_' . ($i - 1)] > 0) {
+        if ($row['civicrm_contact_' . $i] > 0 && $row['civicrm_contact_' . ($i - 1)] > 0 && !in_array($row['civicrm_contact_contact_id'], $newRows[0]['civicrm_contact_contact_id_' . $i])) {
           $newRows[0]['civicrm_contact_' . $i] += 1;
-          $newRows[0]['civicrm_contact_contact_id'][] = $row['civicrm_contact_contact_id'];
+          $newRows[0]['civicrm_contact_contact_id_' . $i][] = $row['civicrm_contact_contact_id'];
         }
       }
     }
@@ -249,7 +250,6 @@ class CRM_Chreports_Form_Report_RetentionRate extends CRM_Report_Form {
         else {
           $newRows[2]['civicrm_contact_' . $i] = round(($newRows[0]['civicrm_contact_' . $i] / $reminder) * 100, 2) . '%';
         }
-        
       }
     }
     foreach ($newRows as $key => $newRow) {
@@ -257,7 +257,7 @@ class CRM_Chreports_Form_Report_RetentionRate extends CRM_Report_Form {
         for ($i = $baseYear; $i <= $currentYear; $i++) {
           if ($newRow['civicrm_contact_' . $i] > 0) {
             $newRows[$key]['civicrm_contact_' . $i] = sprintf('<a target="_blank" href="%s">%s</a>',
-              CRM_Utils_System::url('civicrm/report/contact/summary', sprintf('id_value=%s&id_op=in&force=1', implode(',', $newRow['civicrm_contact_contact_id']))), $newRow['civicrm_contact_' . $i]);
+              CRM_Utils_System::url('civicrm/report/contact/summary', sprintf('id_value=%s&id_op=in&force=1', implode(',', $newRow['civicrm_contact_contact_id_' . $i]))), $newRow['civicrm_contact_' . $i]);
           }
         }
       }

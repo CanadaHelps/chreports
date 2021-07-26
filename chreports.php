@@ -160,6 +160,7 @@ function chreports_civicrm_buildForm($formName, &$form) {
      CRM_Core_Resources::singleton()->addScript(
        "CRM.$(function($) {
          $('ul.ui-tabs-nav li:nth-child(1), ul.ui-tabs-nav li:nth-child(3), ul.ui-tabs-nav li:nth-child(5)').hide();
+         $('#report-tab-col-groups').hide();
          $('.crm-report-instanceForm-form-block-is_navigation, .crm-report-instanceForm-form-block-permission, .crm-report-instanceForm-form-block-role, .crm-report-instanceForm-form-block-isReserved, .crm-report-instanceForm-form-block-report_header, .crm-report-instanceForm-form-block-report_footer').hide();
        });");
     }
@@ -169,7 +170,16 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
   if ($object instanceof CRM_Report_Form_Contact_Summary && $varType == 'columns') {
     $var['civicrm_contact']['filters']['id'] = [
       'title' => 'Contact ID(s)',
+      'type' => CRM_Utils_Type::T_STRING,
+      'operatorType' => CRM_Report_Form::OP_MULTISELECT,
+      'options' => [CRM_Core_Session::getLoggedInContactID()],
     ];
+    if (!empty($_GET['id_value'])) {
+      $var['civicrm_contact']['filters']['id']['options'] = explode(',', $_GET['id_value']);
+      $object->setVar('_formValues', array_merge($object->getVar('_formValues'), ['id_value' => explode(',', $_GET['id_value'])]));
+      $object->setVar('_params', array_merge($object->getVar('_params'), ['id_value' => explode(',', $_GET['id_value'])]));
+      $object->setDefaults(['id_value' => explode(',', $_GET['id_value'])]);
+    }
   }
   if (($object instanceof CRM_Chreports_Form_Report_ExtendedDetail ||
     $object instanceof CRM_Chreports_Form_Report_ExtendSummary ||
