@@ -161,8 +161,17 @@ function chreports_civicrm_buildForm($formName, &$form) {
        "CRM.$(function($) {
          $('ul.ui-tabs-nav li:nth-child(1), ul.ui-tabs-nav li:nth-child(3), ul.ui-tabs-nav li:nth-child(5)').hide();
          $('#report-tab-col-groups').hide();
+         $('td').css('text-align', 'right');
          $('.crm-report-instanceForm-form-block-is_navigation, .crm-report-instanceForm-form-block-permission, .crm-report-instanceForm-form-block-role, .crm-report-instanceForm-form-block-isReserved, .crm-report-instanceForm-form-block-report_header, .crm-report-instanceForm-form-block-report_footer').hide();
        });");
+    }
+    if ($formName == 'CRM_Report_Form_Contact_Summary') {
+      if (!empty($_GET['id_value'])) {
+        $var['civicrm_contact']['filters']['id']['options'] = explode(',', $_GET['id_value']);
+        $form->setVar('_formValues', array_merge($form->getVar('_formValues'), ['id_value' => explode(',', $_GET['id_value'])]));
+        $form->setVar('_params', array_merge($form->getVar('_params'), ['id_value' => explode(',', $_GET['id_value'])]));
+        $form->setDefaults(['id_value' => explode(',', $_GET['id_value'])]);
+      }
     }
 }
 
@@ -174,12 +183,6 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
       'operatorType' => CRM_Report_Form::OP_MULTISELECT,
       'options' => [CRM_Core_Session::getLoggedInContactID()],
     ];
-    if (!empty($_GET['id_value'])) {
-      $var['civicrm_contact']['filters']['id']['options'] = explode(',', $_GET['id_value']);
-      $object->setVar('_formValues', array_merge($object->getVar('_formValues'), ['id_value' => explode(',', $_GET['id_value'])]));
-      $object->setVar('_params', array_merge($object->getVar('_params'), ['id_value' => explode(',', $_GET['id_value'])]));
-      $object->setDefaults(['id_value' => explode(',', $_GET['id_value'])]);
-    }
   }
   if (($object instanceof CRM_Chreports_Form_Report_ExtendedDetail ||
     $object instanceof CRM_Chreports_Form_Report_ExtendSummary ||
@@ -633,7 +636,7 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
         $var[$rowNum]['civicrm_contact_b_sort_name_b_link'] = CRM_Utils_System::url('dms/contact/view', 'reset=1&cid=' . $row['civicrm_contact_b_id']);
         $var[$rowNum]['civicrm_relationship_relationship_id'] = sprintf('<a href="%s" target="_blank">%s</a>', $var[$rowNum]['civicrm_relationship_relationship_id_link'], $var[$rowNum]['civicrm_relationship_relationship_id']);
       }
-    } 
+    }
   }
 }
 
