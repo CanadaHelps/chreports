@@ -121,7 +121,7 @@ class CRM_Chreports_Form_Report_RetentionRate extends CRM_Report_Form {
       $this->_columns['civicrm_contact']['fields'][$i] = [
         'title' => $i,
         'required' => TRUE,
-        'dbAlias' => 'temp.' . $i, 
+        'dbAlias' => 'temp.' . $i,
       ];
     }
     parent::__construct();
@@ -136,15 +136,15 @@ class CRM_Chreports_Form_Report_RetentionRate extends CRM_Report_Form {
       $select[] = "(SELECT count(id) FROM civicrm_contribution WHERE YEAR(receive_date) = '{$i}' AND contact_id = cc.contact_id) as `$i`";
     }
     $sql = 'SELECT contact_id, ' . implode(', ', $select) . "
-      FROM civicrm_contribution cc 
+      FROM civicrm_contribution cc
       WHERE YEAR(receive_date) >= '{$baseYear}'
       GROUP BY contact_id ";
-    
+
     $this->_from = "
          FROM  civicrm_contact {$this->_aliases['civicrm_contact']} {$this->_aclFrom}
                INNER JOIN (
                  $sql
-               ) temp ON temp.contact_id = {$this->_aliases['civicrm_contact']}.id 
+               ) temp ON temp.contact_id = {$this->_aliases['civicrm_contact']}.id
                INNER JOIN civicrm_contribution {$this->_aliases['civicrm_contribution']}
                           ON {$this->_aliases['civicrm_contact']}.id =
                              {$this->_aliases['civicrm_contribution']}.contact_id AND {$this->_aliases['civicrm_contribution']}.is_test = 0
@@ -154,7 +154,7 @@ class CRM_Chreports_Form_Report_RetentionRate extends CRM_Report_Form {
     $this->joinEmailFromContact();
     $this->joinPhoneFromContact();
   }
-  
+
   public function storeWhereHavingClauseArray() {
     foreach ($this->_columns as $tableName => $table) {
       if (array_key_exists('filters', $table)) {
@@ -179,7 +179,7 @@ class CRM_Chreports_Form_Report_RetentionRate extends CRM_Report_Form {
     }
 
   }
-  
+
   public function postProcess() {
     $this->beginPostProcess();
 
@@ -188,7 +188,7 @@ class CRM_Chreports_Form_Report_RetentionRate extends CRM_Report_Form {
     $this->from();
     $this->customDataFrom();
     $this->where();
-    
+
     // build array of result based on column headers. This method also allows
     // modifying column headers before using it to build result set i.e $rows.
     $rows = [];
@@ -251,12 +251,13 @@ class CRM_Chreports_Form_Report_RetentionRate extends CRM_Report_Form {
           $newRows[2]['civicrm_contact_' . $i] = round(($newRows[0]['civicrm_contact_' . $i] / $reminder) * 100, 2) . '%';
         }
       }
+      $newRows[2]['civicrm_contact_' . $i] = sprintf('<span class="count-link">%s</span>', $newRows[2]['civicrm_contact_' . $i]);
     }
     foreach ($newRows as $key => $newRow) {
       if ($key != 2) {
         for ($i = $baseYear; $i <= $currentYear; $i++) {
           if ($newRow['civicrm_contact_' . $i] > 0) {
-            $newRows[$key]['civicrm_contact_' . $i] = sprintf('<a target="_blank" href="%s">%s</a>',
+            $newRows[$key]['civicrm_contact_' . $i] = sprintf('<a class="count-link" target="_blank" href="%s">%s</a>',
               CRM_Utils_System::url('civicrm/report/contact/summary', sprintf('id_value=%s&id_op=in&force=1', implode(',', $newRow['civicrm_contact_contact_id_' . $i]))), $newRow['civicrm_contact_' . $i]);
           }
         }
