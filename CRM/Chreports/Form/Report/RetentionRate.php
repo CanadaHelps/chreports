@@ -87,12 +87,17 @@ class CRM_Chreports_Form_Report_RetentionRate extends CRM_Report_Form {
           'source' => [
             'title' => E::ts('Source'),
           ],
+          'contribution_page_id' => [
+            'title' => ts('Contribution Page'),
+            'operatorType' => CRM_Report_Form::OP_MULTISELECT,
+            'options' => CRM_Contribute_PseudoConstant::contributionPage(),
+            'type' => CRM_Utils_Type::T_INT,
+          ],
         ],
       ],
     ];
     $this->_groupFilter = TRUE;
     $this->_tagFilter = TRUE;
-    $this->addCampaignFields('civicrm_contribution', FALSE, FALSE, TRUE);
     unset($this->_columns['civicrm_contribution']['fields']['campaign_id']);
 
     $baseYear = $this->_baseYear;
