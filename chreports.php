@@ -241,7 +241,7 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
         'all',
       ],
       'civicrm_value_contribution__15' => [
-        'custom_37',
+        // 'custom_37',
         'custom_24',
       ],
       'civicrm_value_contribution__19' => [
