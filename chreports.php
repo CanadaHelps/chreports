@@ -162,6 +162,7 @@ function chreports_civicrm_buildForm($formName, &$form) {
          $('ul.ui-tabs-nav li:nth-child(1), ul.ui-tabs-nav li:nth-child(3), ul.ui-tabs-nav li:nth-child(5)').hide();
          $('#report-tab-col-groups').hide();
          $('.count-link').parent().css('text-align', 'right');
+         $('.reports-header').css('text-align', 'right');
          $('.crm-report-instanceForm-form-block-is_navigation, .crm-report-instanceForm-form-block-permission, .crm-report-instanceForm-form-block-role, .crm-report-instanceForm-form-block-isReserved, .crm-report-instanceForm-form-block-report_header, .crm-report-instanceForm-form-block-report_footer').hide();
        });");
     }
