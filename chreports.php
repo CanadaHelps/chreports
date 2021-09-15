@@ -123,6 +123,17 @@ function chreports_civicrm_alterSettingsFolders(&$metaDataFolders = NULL) {
   _chreports_civix_civicrm_alterSettingsFolders($metaDataFolders);
 }
 
+function chreports_civicrm_validateForm($formName, &$fields, &$files, &$form, &$errors) {
+  if (strpos($formName, '_Report_') && $fields['task'] == 'report_instance.copy') {
+    if (empty($fields['title'])) {
+      $errors['title'] = ts('Report Title is a required field');
+    }
+    elseif (civicrm_api3('ReportInstance', 'getcount', ['title' => $fields['title']]) > 0) {
+      $errors['title'] = ts('Report Title is already taken. Please select another Report Title');
+    }
+  }
+}
+
 /**
  * Implements hook_civicrm_entityTypes().
  *
