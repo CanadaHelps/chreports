@@ -438,6 +438,35 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
     return TRUE;
   }
 
+  public function upgrade_2300() {
+    $this->ctx->log->info('Applying update 2300: Hotfix: Fix Empty Dashlet bug');
+    $report = civicrm_api3('ReportInstance', 'get', ['name' => 'Retention Rate Report (Dashlet)']);
+    if($report['values']) {
+      foreach($report['values'] as $report_id) {
+        $reportId = $report_id['id'];
+      }
+      $dashlet = civicrm_api3('Dashboard', 'get', [
+        'sequential' => 1,
+        'label' => "Retention Rate Report (Dashlet)",
+      ]);
+      if($dashlet['id']) {
+        civicrm_api3('Dashboard', 'create', [
+          'id' => $dashlet['id'],
+          'domain_id' => 1,
+          'name' => "report/".$reportId,
+          'label' => "Retention Rate Report (Dashlet)",
+          'url' => "civicrm/report/instance/".$reportId."?reset=1&section=2&context=dashlet",
+          'fullscreen_url' => "civicrm/report/instance/".$reportId."?reset=1&section=2&context=dashletFullscreen",
+          'is_active' => 1,
+          'is_reserved' => 1,
+          'cache_minutes' => 60,
+          'permission' => "access CiviReport",
+        ]);
+      }
+    }
+    return TRUE;
+  }
+
   /**
    * Example: Run an external SQL script.
    *
