@@ -13,7 +13,7 @@ return array (
     array (
       'version' => 3,
       'label' => 'RecurSummary',
-      'description' => 'Recurring Contributions (Summary)',
+      'description' => 'Total amounts raised by Recurring Contributions with individual Contribution information',
       'class_name' => 'CRM_Chreports_Form_Report_RecurSummary',
       'report_url' => 'biz.jmaconsulting.chreports/recursummary',
       'component' => 'CiviContribute',

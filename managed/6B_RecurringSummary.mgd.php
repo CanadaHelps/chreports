@@ -9,7 +9,7 @@ return array(
       'version' => 3,
       'report_id' => 'biz.jmaconsulting.chreports/recursummary',
       'title' => ts('Recurring Contributions (Summary)'),
-      "description" => "Overview of Recurring Contributions",
+      "description" => "Total amounts raised by Recurring Contributions with individual Contribution information",
       'name' => 'Recurring Contributions (Summary)',
       'permission' => 'access CiviReport',
       'is_active' => 1,
