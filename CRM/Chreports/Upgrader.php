@@ -468,6 +468,30 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
   }
 
   /**
+   * Add in grouping on CHFund field to the Contribution History by GL Account (summary) report if CHFund field has been selected in the fields.
+   */
+  public function upgrade_1600() {
+    $this->ctx->log->info('Applying update 1600: Adding grouping by CHFund to the contribution hisotry by GL Account (summary) report');
+    $report = civicrm_api3('ReportInstance', 'get', ['report_id' => 'biz.jmaconsulting.chreports/glsummaryreport']);
+    if (!empty($report['values'])) {
+      foreach ($report['values'] as $r) {
+        $formValues = unserialize($r['form_values']);
+        $fund = E::getCustomFieldIdByName('Fund');
+        if (!empty($fund) && array_key_exists('custom_' . $fund, $formValues['fields'])) {
+          $formValues['group_bys']['custom_' . $fund] = 1;
+        }
+        civicrm_api3('ReportInstance', 'create', [
+          'title' => $r['title'],
+          'id' => $r['id'],
+          'form_values' => serialize($formValues),
+          'report_id' => $r['report_id'],
+        ]);
+      }
+    }
+    return TRUE;
+  }
+
+  /**
    * Example: Run an external SQL script.
    *
    * @return TRUE on success

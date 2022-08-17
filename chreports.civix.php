@@ -116,14 +116,25 @@ class CRM_Chreports_ExtensionUtil {
   }
 
 
-public static function getOptionGroupNameByColumnName($columnName) {
-  return CRM_Core_DAO::singlevalueQuery("
-    SELECT g.name
-     FROM civicrm_option_group g
-      INNER JOIN civicrm_custom_field cf ON cf.option_group_id = g.id
-     WHERE cf.column_name = '$columnName'
-  ");
-}
+  public static function getOptionGroupNameByColumnName($columnName) {
+    return CRM_Core_DAO::singlevalueQuery("
+      SELECT g.name
+       FROM civicrm_option_group g
+        INNER JOIN civicrm_custom_field cf ON cf.option_group_id = g.id
+       WHERE cf.column_name = '$columnName'
+    ");
+  }
+
+  public static function getCustomFieldIdByName($name) {
+    $values = civicrm_api3('CustomField', 'get', [
+      'name' => $name,
+      'sequential' => 1,
+    ])['values'];
+    if (!empty($values[0])) {
+      return $values[0]['id'];
+    }
+    return NULL;
+  }
 
 }
 
