@@ -157,6 +157,28 @@ class CRM_Chreports_Form_Report_ExtendLYBUNT extends CRM_Report_Form_Contribute_
     return $statistics;
   }
 
+  public function beginPostProcessCommon() {
+    $this->buildQuery();
+    // @todo this acl has no test coverage and is very hard to test manually so could be fragile.
+    $this->resetFormSqlAndWhereHavingClauses();
+
+    $this->contactTempTable = $this->createTemporaryTable('rptlybunt', "
+      SELECT SQL_CALC_FOUND_ROWS {$this->_aliases['civicrm_contact']}.id as cid,
+      MAX(contribution_civireport.receive_date) as lastContributionTime
+      {$this->_from}
+      {$this->_where}
+      GROUP BY {$this->_aliases['civicrm_contact']}.id
+      HAVING " . $this->whereClauseLast4Year("lastContributionTime")
+    );
+    $this->limit();
+    if (empty($this->_params['charts'])) {
+      $this->setPager();
+    }
+
+    // Reset where clauses to be regenerated in postProcess.
+    $this->_whereClauses = [];
+  }
+
   public function from() {
     if (!empty($this->contactTempTable)) {
       $this->_from = "
@@ -183,7 +205,6 @@ class CRM_Chreports_Form_Report_ExtendLYBUNT extends CRM_Report_Form_Contribute_
       }
       $this->_from .= " ON {$this->_aliases['civicrm_contribution']}.contact_id = {$this->_aliases['civicrm_contact']}.id
          AND {$this->_aliases['civicrm_contribution']}.is_test = 0
-         AND " . $this->whereClauseLast4Year("{$this->_aliases['civicrm_contribution']}.receive_date") . "
       {$this->_aclFrom} ";
       $this->selectivelyAddLocationTablesJoinsToFilterQuery();
     }
