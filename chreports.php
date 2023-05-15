@@ -468,7 +468,7 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
             if (array_key_exists($elementName, $var[$table]['fields'])) {
               $var[$table]['fields'][$elementName]['title'] = ts($title);
             }
-            if (array_key_exists($elementName, $var[$table]['filters'])) {
+            if (is_array($var[$table]['filters']) && array_key_exists($elementName, $var[$table]['filters'])) {
               $var[$table]['filters'][$elementName]['title'] = ts($title);
             }
           }
@@ -506,10 +506,10 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
         }
       }
     }
-    if($filtersToHide) {
-      foreach($filtersToHide as $table => $filters) {
-        foreach($filters as $filter) {
-          if(array_key_exists($filter, $var[$table]['filters'])) {
+    if (isset($filtersToHide)) {
+      foreach ($filtersToHide as $table => $filters) {
+        foreach ($filters as $filter) {
+          if (array_key_exists($filter, $var[$table]['filters'])) {
             unset($var[$table]['filters'][$filter]);
           }
         }
