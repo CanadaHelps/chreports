@@ -233,6 +233,8 @@ class CRM_Chreports_Form_Report_RetentionRate extends CRM_Report_Form {
         continue;
       }
       for ($i = $baseYear; $i <= $currentYear; $i++) {
+        if (!is_array($newRows[1]['civicrm_contact_contact_id_' . $i]))
+          $newRows[1]['civicrm_contact_contact_id_' . $i] = [];
         if ($row['civicrm_contact_' . $i] > 0 && $row['civicrm_contact_' . ($i - 1)] == 0 && !in_array($row['civicrm_contact_contact_id'], $newRows[1]['civicrm_contact_contact_id_' . $i])) {
           $newRows[1]['civicrm_contact_' . $i] += 1;
           $newRows[1]['civicrm_contact_contact_id_'. $i][] = $row['civicrm_contact_contact_id'];
