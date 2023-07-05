@@ -63,7 +63,7 @@ class CRM_Chreports_Form_Report_ExtendSummary extends CRM_Report_Form_Contribute
     $this->addFinancialTrxnFromClause();
 
     // replace the core select columns to use respective columns
-    $this->_select = str_replace("SUM({$this->_aliases['civicrm_contribution']}.total_amount)", "SUM(IF(ISNULL(ft.from_financial_account_id), fi.amount, -fi.amount))", $this->_select);
+    $this->_select = str_replace("SUM({$this->_aliases['civicrm_contribution']}.total_amount)", "SUM(eft_fi.amount)", $this->_select);
     $this->_select = str_replace("COUNT({$this->_aliases['civicrm_contribution']}.total_amount)", "COUNT(DISTINCT {$this->_aliases['civicrm_contribution']}.id)", $this->_select);
 
     $this->_from .= "
@@ -98,7 +98,7 @@ class CRM_Chreports_Form_Report_ExtendSummary extends CRM_Report_Form_Contribute
 
     $contriQuery = "
 COUNT(DISTINCT {$this->_aliases['civicrm_contribution']}.id )         as civicrm_contribution_total_amount_count,
-SUM(IF(ISNULL(ft.from_financial_account_id), fi.amount, -fi.amount))  as civicrm_contribution_total_amount_sum,
+SUM(eft_fi.amount)  as civicrm_contribution_total_amount_sum,
 ROUND(AVG({$this->_aliases['civicrm_contribution']}.total_amount), 2) as civicrm_contribution_total_amount_avg,
 {$this->_aliases['civicrm_contribution']}.currency                    as currency
 {$this->_from} {$this->_where}";
@@ -106,7 +106,7 @@ ROUND(AVG({$this->_aliases['civicrm_contribution']}.total_amount), 2) as civicrm
 if (!strstr($this->_from, 'civicrm_line_item li') && array_key_exists('financial_account', $this->_params['group_bys'])) {
   $contriQuery = "
 COUNT(DISTINCT {$this->_aliases['civicrm_contribution']}.id )        as civicrm_contribution_total_amount_count,
-SUM(IF(ISNULL(ft.from_financial_account_id), fi.amount, -fi.amount))          as civicrm_contribution_total_amount_sum,
+SUM(eft_fi.amount)          as civicrm_contribution_total_amount_sum,
 ROUND(AVG(IF(ISNULL(ft.from_financial_account_id), fi.amount, -fi.amount)), 2) as civicrm_contribution_total_amount_avg,
 {$this->_aliases['civicrm_contribution']}.currency                    as currency
 {$this->_from} {$this->_where}";
@@ -137,7 +137,7 @@ ROUND(AVG(IF(ISNULL(ft.from_financial_account_id), fi.amount, -fi.amount)), 2) a
       }
       $currAmount[$contriDAO->currency] += $contriDAO->civicrm_contribution_total_amount_sum;
       $currCount[$contriDAO->currency] += $contriDAO->civicrm_contribution_total_amount_count;
-      $currAverage[$contriDAO->currency] += $contriDAO->civicrm_contribution_total_amount_avg;
+      $currAverage[$contriDAO->currency] += ($contriDAO->civicrm_contribution_total_amount_sum/$contriDAO->civicrm_contribution_total_amount_count);
       $averageCount[$contriDAO->currency]++;
       $count += $contriDAO->civicrm_contribution_total_amount_count;
 
