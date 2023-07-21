@@ -61,17 +61,14 @@ class CRM_Chreports_Form_Report_ExtendSummary extends CRM_Report_Form_Contribute
     $this->joinPhoneFromContact();
     $this->joinEmailFromContact();
     $this->addFinancialTrxnFromClause();
-
+    //CRM-1887 Removed reliability of report generation from extra transaction and line item tables
+    //Now detailed and summary report primarily using same tables for report generation
     // replace the core select columns to use respective columns
-    $this->_select = str_replace("SUM({$this->_aliases['civicrm_contribution']}.total_amount)", "SUM(eft_fi.amount)", $this->_select);
     $this->_select = str_replace("COUNT({$this->_aliases['civicrm_contribution']}.total_amount)", "COUNT(DISTINCT {$this->_aliases['civicrm_contribution']}.id)", $this->_select);
 
     $this->_from .= "
-    INNER JOIN civicrm_entity_financial_trxn eft_c ON contribution_civireport.id = eft_c.entity_id AND eft_c.entity_table = 'civicrm_contribution'
-    INNER JOIN civicrm_financial_trxn ft ON eft_c.financial_trxn_id = ft.id
-    INNER JOIN civicrm_entity_financial_trxn eft_fi ON ft.id = eft_fi.financial_trxn_id AND eft_fi.entity_table = 'civicrm_financial_item'
-    INNER JOIN civicrm_financial_item fi ON eft_fi.entity_id = fi.id AND fi.entity_table = 'civicrm_line_item'
-    INNER JOIN civicrm_financial_account fa ON fi.financial_account_id = fa.id
+    LEFT JOIN civicrm_financial_item fi ON {$this->_aliases['civicrm_contribution']}.id = fi.id AND fi.entity_table = 'civicrm_line_item'
+    LEFT JOIN civicrm_financial_account fa ON fi.financial_account_id = fa.id
     ";
     $tableName = E::getTableNameByName('Campaign_Information');
     if (!empty($tableName)) {
@@ -98,7 +95,7 @@ class CRM_Chreports_Form_Report_ExtendSummary extends CRM_Report_Form_Contribute
 
     $contriQuery = "
 COUNT(DISTINCT {$this->_aliases['civicrm_contribution']}.id )         as civicrm_contribution_total_amount_count,
-SUM(eft_fi.amount)  as civicrm_contribution_total_amount_sum,
+SUM({$this->_aliases['civicrm_contribution']}.total_amount)  as civicrm_contribution_total_amount_sum,
 ROUND(AVG({$this->_aliases['civicrm_contribution']}.total_amount), 2) as civicrm_contribution_total_amount_avg,
 {$this->_aliases['civicrm_contribution']}.currency                    as currency
 {$this->_from} {$this->_where}";
@@ -106,8 +103,8 @@ ROUND(AVG({$this->_aliases['civicrm_contribution']}.total_amount), 2) as civicrm
 if (!strstr($this->_from, 'civicrm_line_item li') && array_key_exists('financial_account', $this->_params['group_bys'])) {
   $contriQuery = "
 COUNT(DISTINCT {$this->_aliases['civicrm_contribution']}.id )        as civicrm_contribution_total_amount_count,
-SUM(eft_fi.amount)          as civicrm_contribution_total_amount_sum,
-ROUND(AVG(IF(ISNULL(ft.from_financial_account_id), fi.amount, -fi.amount)), 2) as civicrm_contribution_total_amount_avg,
+SUM({$this->_aliases['civicrm_contribution']}.total_amount)          as civicrm_contribution_total_amount_sum,
+ROUND(AVG({$this->_aliases['civicrm_contribution']}.total_amount), 2) as civicrm_contribution_total_amount_avg,
 {$this->_aliases['civicrm_contribution']}.currency                    as currency
 {$this->_from} {$this->_where}";
 }
