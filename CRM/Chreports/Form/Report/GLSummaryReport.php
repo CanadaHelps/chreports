@@ -264,7 +264,7 @@ class CRM_Chreports_Form_Report_GLSummaryReport extends CRM_Report_Form {
     SELECT SQ1.contribution_id, SQ1.financial_account_id, SQ1.financial_account_type_id, (SUM(SQ1.total_amount) - COALESCE(SQ2.total_amount, 0)) as total_amount, SQ1.trxn_date, SQ1.card_type_id
     FROM (
 
-      select eftc.entity_id as contribution_id, if(ft.from_financial_account_id is null, fi.financial_account_id, ft.from_financial_account_id) as financial_account_id, fa.financial_account_type_id, ft.total_amount, ft.trxn_date, ft.card_type_id
+      select eftc.entity_id as contribution_id, fi.financial_account_id as financial_account_id, fa.financial_account_type_id, ft.total_amount, ft.trxn_date, ft.card_type_id
       FROM
       civicrm_entity_financial_trxn eftc
       inner join civicrm_entity_financial_trxn efti on eftc.entity_table='civicrm_contribution' AND efti.entity_table='civicrm_financial_item' AND eftc.financial_trxn_id=efti.financial_trxn_id
@@ -281,7 +281,8 @@ class CRM_Chreports_Form_Report_GLSummaryReport extends CRM_Report_Form {
   GROUP BY SQ1.contribution_id, SQ1.financial_account_id
   HAVING SUM(SQ1.total_amount) > 0
     ", FALSE, TRUE);
-
+    //CRM-1891 fetching total_amount value from contribution table rather than civicrm_financial_trxn table to get accurate amount
+    $this->_select = str_replace("SUM(temp.total_amount)", "SUM({$this->_aliases['civicrm_contribution']}.total_amount)", $this->_select);
     $this->_from = "
          FROM  civicrm_contact {$this->_aliases['civicrm_contact']}
                INNER JOIN civicrm_contribution {$this->_aliases['civicrm_contribution']}
@@ -338,6 +339,8 @@ class CRM_Chreports_Form_Report_GLSummaryReport extends CRM_Report_Form {
     if ($this->_aclWhere) {
       $this->_where .= " AND {$this->_aclWhere} ";
     }
+    //CRM-1891 Adding this where clause to get records of those contacts which are not in trash
+    $this->_where .= " AND {$this->_aliases['civicrm_contact']}.is_deleted = 0 ";
   }
 
   function groupBy() {
@@ -404,7 +407,7 @@ class CRM_Chreports_Form_Report_GLSummaryReport extends CRM_Report_Form {
       $sql = "
       SELECT
       COUNT(DISTINCT {$this->_aliases['civicrm_contribution']}.id) as total_count,
-      SUM(temp.total_amount) as amount,
+      SUM({$this->_aliases['civicrm_contribution']}.total_amount) as amount,
       {$this->_aliases['civicrm_contribution']}.currency
 
        {$this->_from} {$this->_where} GROUP BY {$this->_aliases['civicrm_contribution']}.currency
