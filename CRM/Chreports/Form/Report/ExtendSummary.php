@@ -65,7 +65,8 @@ class CRM_Chreports_Form_Report_ExtendSummary extends CRM_Report_Form_Contribute
     //Now detailed and summary report primarily using same tables for report generation
     // replace the core select columns to use respective columns
     $this->_select = str_replace("COUNT({$this->_aliases['civicrm_contribution']}.total_amount)", "COUNT(DISTINCT {$this->_aliases['civicrm_contribution']}.id)", $this->_select);
-
+    //CRM-819 To resolve data discrepancy where discrepancy contributions not having a GL account (financial account) defined
+    //changing condition from "INNER" join to "LEFT" join
     $this->_from .= "
     LEFT JOIN civicrm_financial_item fi ON {$this->_aliases['civicrm_contribution']}.id = fi.id AND fi.entity_table = 'civicrm_line_item'
     LEFT JOIN civicrm_financial_account fa ON fi.financial_account_id = fa.id
