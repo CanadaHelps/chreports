@@ -1,0 +1,17 @@
+{ 
+    "default_column" : "contribution_source",
+    "use_default_filters" : true,
+    "fields":[
+        "contribution_source","campaign_id","financial_type","contribution_page_id","total_amount","currency","id"
+    ],
+    "filters":[
+        "receive_date","receipt_date","contribution_status_id","contribution_page_id","financial_type_id","contribution_recur_id","total_amount","non_deductible_amount","total_sum","total_count","campaign_id","contribution_source",
+        "card_type_id","batch_id","amount","tagid","gid","total_sum","total_count","total_avg"
+    ],
+    "group_bys":[
+        "financial_type", "contribution_page_id","source","contribution_source","campaign_id"
+    ],
+    "order_bys":[
+        "financial_type", "contribution_page_id","source","contribution_source","campaign_id"
+    ]
+}

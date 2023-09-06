@@ -177,6 +177,36 @@ function chreports_civicrm_buildForm($formName, &$form) {
 }
 
 function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
+
+  if ($object instanceof CRM_Chreports_Form_Report_ExtendSummary) {
+      
+      $reportInstance = $object->getReportInstance();
+
+      if ($varType == 'columns') {
+        //manage columns, group bys, sorts, filters based on json config
+        $reportInstance->filteringReportOptions($var);
+        return;
+      }
+
+      if ($varType == 'sql') {
+        //build main sql query to display result
+        $object->buildSQLQuery($var);
+        return;
+      }
+
+      if ($varType == 'rows') {
+        //Hide currency column from display result
+        $columnHeaders = $object->_columnHeaders;
+        unset($columnHeaders['currency']);
+        $object->_columnHeaders = $columnHeaders;
+
+        //manage display of result
+        $reportInstance->alterDisplayRows($var);
+        return;
+      }
+  }
+
+  // anything BELOW, we should exclude
   if ($object instanceof CRM_Report_Form_Contact_Summary && $varType == 'columns') {
     $var['civicrm_contact']['filters']['id'] = [
       'title' => 'Contact ID(s)',
@@ -649,7 +679,14 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
  * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_preProcess
  */
 function chreports_civicrm_preProcess($formName, &$form) {
-
+  if($formName == "CRM_Chreports_Form_Report_ExtendSummary")
+  {
+    //hide empty custom fields based filter sections on filter tab
+    $reportInstance = $form->getReportInstance();
+    $filters = $form->getVar('_filters');
+    $filters = $reportInstance->unsetEmptyFilterEntity($filters);
+    $form->setVar('_filters', $filters);
+  }
 } // */
 
 /**
