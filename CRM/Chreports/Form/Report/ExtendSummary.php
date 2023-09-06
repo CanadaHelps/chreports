@@ -3,6 +3,101 @@ use CRM_Chreports_ExtensionUtil as E;
 
 class CRM_Chreports_Form_Report_ExtendSummary extends CRM_Report_Form_Contribute_Summary {
 
+  private $_reportInstance;
+
+  public function __construct() {
+    parent::__construct();
+  }
+
+  public function getReportInstance(): CRM_Chreports_Reports_SummaryReport {
+    
+    
+    // Instantiate Report Instance if doesn't exists yet
+    if ($this->_reportInstance == NULL) {
+      $reportPath = $this->_attributes['action'];
+      $reportId = end(explode('/', $reportPath));
+      $reportName = CRM_Chreports_Reports_BaseReport::getReportInstanceDetails($reportId)['name'];
+      
+      $this->_reportInstance = new CRM_Chreports_Reports_SummaryReport('contribution', $reportId, $reportName);
+    }
+    
+    return $this->_reportInstance;
+  }
+
+  public function buildSQLQuery(&$var) {
+
+    $params = $var->getVar('_params');
+        
+    // setting out columns, filters, params,mapping from report object
+    $this->_reportInstance->setFieldsMapping($var->getVar('_columns'));
+    $this->_reportInstance->setFormParams($params);
+    $this->_reportInstance->setColumns($params['fields']);
+    $this->_reportInstance->setFilters();
+
+    $this->_reportInstance->isPagination($this->addPaging);
+
+    // Report Instance
+    // _entity => Contribution, Contact, etc
+    // _columns => array of columns with info for each field
+    // _sorting_fields => array of sort by with info for each field
+    // _filters => array of filters with info for each field, and operator/filter info  
+
+    // SELECT
+    $this->_reportInstance->buildSelectQuery();
+    $var->setVar('_select', $this->_reportInstance->getSelect());
+    $var->setVar('_selectClauses', $this->_reportInstance->getSelectClauses());
+    $var->setVar('_columnHeaders', $this->_reportInstance->getColumnHeaders());
+    
+    // FROM
+    $this->_reportInstance->buildFromQuery();
+    $var->setVar('_from', $this->_reportInstance->getFrom());
+
+    // GROUP BY
+    $this->_reportInstance->buildGroupByQuery();
+    $var->setVar('_groupBy', $this->_reportInstance->getGroupBy());
+
+    // ORDER BY
+    $this->_reportInstance->buildOrderByQuery();
+    $var->setVar('_orderBy', $this->_reportInstance->getOrderBy());
+    
+    // WHERE
+    // requires access to form
+    $clauses = $this->buildWhereClause();
+    if (empty($clauses)) {
+      $var->setVar('_where', "WHERE ( 1 ) ");
+      $var->setVar('_having', "");
+    } else {
+      $var->setVar('_where', "WHERE " . implode(' AND ', $clauses));
+    }
+
+    $this->_reportInstance->setWhere($var->getVar('_where'));
+    
+  }
+  private function buildWhereClause(): array {
+    $clauses = [];
+      
+    //-- DEFAULT: NOT a test contribution
+    $clauses[] = $this->_reportInstance->getEntityTable().'.is_test = 0';
+    
+    //-- DEFAULT: Contact is not deleted (trash)
+    $clauses[] = $this->_reportInstance->getEntityTable('contact').'.is_deleted = 0';
+    
+    // Filters
+    if(!empty($this->_reportInstance->getFilters())){
+      foreach ($this->_reportInstance->getFilters() as $fieldName => $fieldInfo) {
+        switch ($fieldName) {
+          case 'ch_fund': // fund_13
+            $clauses[] = $this->generateFilterClause($fieldInfo, $fieldInfo['name']);
+            break;
+          default:
+            $clauses[] = $this->generateFilterClause($fieldInfo, $fieldName);
+            break;
+        }
+      }
+    }
+    return $clauses;
+  }
+
   public function groupBy() {
     parent::groupBy();
     $this->_groupBy = str_replace($this->_rollup, '', $this->_groupBy);
@@ -80,6 +175,20 @@ class CRM_Chreports_Form_Report_ExtendSummary extends CRM_Report_Form_Contribute
   }
 
   public function statistics(&$rows) {
+
+    $statistics = $this->_reportInstance->alterStatistics($rows);
+    if($statistics){
+      $count = count($rows);
+      // requires access to form
+      //set Row(s) Listed and Total rows statistics
+      $this->countStat($statistics, $count);
+      //set Group by criteria statistics
+      $this->groupByStat($statistics);
+      //set filter criteria statistics
+      $this->filterStat($statistics);
+      return $statistics;
+    }
+
     $statistics = parent::statistics($rows);
     unset($statistics['counts']['mode'], $statistics['counts']['median'], $statistics['counts']['avg']);
 
