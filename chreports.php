@@ -148,6 +148,14 @@ function chreports_civicrm_buildForm($formName, &$form) {
     );
   }
   if ($formName == 'CRM_Chreports_Form_Report_ExtendSummary' || $formName == 'CRM_Report_Form_Contact_Summary') {
+    // pre-select the column and group by
+    if (array_key_exists('fields', $form->_elementIndex)) {
+      $reportInstance = $form->getReportInstance();
+      foreach( ['fields','group_bys'] as $entity) {
+        $elementField = $form->getElement($entity)->_elements;
+        $reportInstance->setPreSelectField($elementField);
+      }
+    }
     CRM_Core_Resources::singleton()->addScript(
       "CRM.$(function($) {
         $('#fields_total_amount').parent().hide();
@@ -686,6 +694,10 @@ function chreports_civicrm_preProcess($formName, &$form) {
     $filters = $form->getVar('_filters');
     $filters = $reportInstance->unsetEmptyFilterEntity($filters);
     $form->setVar('_filters', $filters);
+    //make the default field selected for sort by option
+    $defaults = $form->getVar('_defaults');
+    $defaults = $reportInstance->setDefaultOptionSortBy($defaults);
+    $form->setVar('_defaults', $defaults);
   }
 } // */
 

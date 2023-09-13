@@ -76,6 +76,8 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
 
     if (!empty($groupBy)) {
       $this->_groupBy = ' GROUP BY ' . implode(', ', $groupBy);
+    }else{
+      $this->_groupBy = "GROUP BY ".$this->getEntityTable('contact').".id";
     }
 
     } 
@@ -129,6 +131,13 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
             $from[] = " LEFT JOIN ".$this->getEntityTable('financial_type')."
             ON ".$this->getEntityTable().".financial_type_id = ".$this->getEntityTable('financial_type').".id";
             break;
+          case 'ch_fund': // fund_13
+            if(!array_key_exists('ch_fund',$this->_filters)){
+              $entityTable = EU::getTableNameByName('Additional_info');
+              $from[] = " LEFT JOIN ".$entityTable." 
+              ON ".$entityTable.".entity_id = ".$this->getEntityTable().".id";
+            }
+            break;
         }
       }  
 
@@ -138,6 +147,10 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
         case 'ch_fund': // fund_13
           $from[] = " LEFT JOIN ".$fieldInfo['table_name']."
           ON ".$fieldInfo['table_name'].".entity_id = ".$this->getEntityTable().".id";
+          break;
+        case 'campaign_type': 
+          $from[] = " LEFT JOIN ".$fieldInfo['table_name']."
+          ON ".$fieldInfo['table_name'].".entity_id = ".$this->getEntityTable().".contribution_page_id";
           break;
         }
       }

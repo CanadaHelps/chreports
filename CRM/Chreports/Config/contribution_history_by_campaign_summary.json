@@ -1,0 +1,15 @@
+{ 
+    "name": "contribution_history_by_campaign_summary",
+    "title": "Contribution History By Camapaign (Summary)",
+    "type": "summary",
+    "entity": "contribution",
+    "fields":{
+        "contribution_source": {},
+        "campaign_id": {},
+        "financial_type": {},
+        "contribution_page_id": {
+            "default" : true
+        }
+    },
+    "use_default_filters" : true
+}

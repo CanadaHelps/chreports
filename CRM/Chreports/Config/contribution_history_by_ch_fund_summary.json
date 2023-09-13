@@ -1,0 +1,19 @@
+{ 
+    "name": "contribution_history_by_ch_fund_summary",
+    "title": "Contribution History By CH Fund (Summary)",
+    "type": "summary",
+    "entity": "contribution",
+    "fields":{
+        "ch_fund": {
+            "default" : true
+        },
+        "contribution_source": {},
+        "campaign_id": {},
+        "financial_type": {},
+        "contribution_page_id": {}
+    },
+    "use_default_filters" : true,
+    "filters":[
+        "ch_fund"
+    ]
+}

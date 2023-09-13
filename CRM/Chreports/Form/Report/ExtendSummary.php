@@ -31,6 +31,14 @@ class CRM_Chreports_Form_Report_ExtendSummary extends CRM_Report_Form_Contribute
     // setting out columns, filters, params,mapping from report object
     $this->_reportInstance->setFieldsMapping($var->getVar('_columns'));
     $this->_reportInstance->setFormParams($params);
+    //TO DO need to make changes
+    $settings = $this->_reportInstance->getReportingDefaultFields();
+    if(empty($params['fields']))
+    {
+      $params['fields'] = [
+        $settings[0] => 1
+      ];
+    }
     $this->_reportInstance->setColumns($params['fields']);
     $this->_reportInstance->setFilters();
 
@@ -86,6 +94,7 @@ class CRM_Chreports_Form_Report_ExtendSummary extends CRM_Report_Form_Contribute
     if(!empty($this->_reportInstance->getFilters())){
       foreach ($this->_reportInstance->getFilters() as $fieldName => $fieldInfo) {
         switch ($fieldName) {
+          case 'campaign_type':
           case 'ch_fund': // fund_13
             $clauses[] = $this->generateFilterClause($fieldInfo, $fieldInfo['name']);
             break;

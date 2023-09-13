@@ -19,7 +19,7 @@ class CRM_Chreports_Reports_BaseReport {
 
     protected $_from;
 
-    protected $_groupBy = NULL;
+    protected $_groupBy = '';
 
     protected $_orderBy = NULL;
 
@@ -28,6 +28,33 @@ class CRM_Chreports_Reports_BaseReport {
     public $_filters = NULL;
 
     protected $_isPagination = FALSE;
+    // Default filters for report
+    protected $_defaultFilters = 
+    [
+        "receive_date",
+        "receipt_date",
+        "contribution_status_id",
+        "contribution_page_id",
+        "financial_type_id",
+        "contribution_recur_id",
+        "total_amount",
+        "non_deductible_amount",
+        "total_sum",
+        "total_count",
+        "campaign_id",
+        "card_type_id",
+        "batch_id",
+        "amount",
+        "tagid",
+        "gid",
+        "total_sum",
+        "total_count",
+        "total_avg",
+        "contribution_source",
+        "payment_instrument_id",
+        "campaign_type",
+        "ch_fund"
+    ];
 
     public function __construct( string $entity, int $id, string $name ) {
 
@@ -59,6 +86,40 @@ class CRM_Chreports_Reports_BaseReport {
         $entity = ($entity != NULL) ? $entity : $this->getEntity();
         return "civicrm_" . $entity;
     }
+    // access settings from extendedSummary
+    public function getSettings(): array {
+        return $this->_settings;
+    }
+    // extract reporting fields from JSON file
+    public function getReportingFields(): array {
+        return array_keys($this->_settings['fields']);
+    }
+    // extract reporting filter fields from JSON file
+    public function getReportingFilters(): array {
+        $filterValues = [];
+       
+        if($this->_settings['use_default_filters'] == TRUE)
+        {
+            $filterValues = $this->_defaultFilters;
+        }
+        if(count($this->_settings['filters']) > 0)
+        {
+            $filterValues = array_merge($filterValues, $this->_settings['filters']);
+        }
+        return $filterValues;
+    }
+    // extract default reporting fields from JSON file
+    public function getReportingDefaultFields(): array {
+        $defaultFields = [];
+        foreach($this->_settings['fields'] as $fieldKey => $value)
+            {
+                if($this->_settings['fields'][$fieldKey]['default']){
+                    $defaultFields[] = $fieldKey;
+                }
+            }
+        return $defaultFields;
+    }
+
     // manage mapping fields from extendedSummary
     public function setFieldsMapping(array $mapping) {
         $this->_mapping = $mapping;
@@ -203,10 +264,12 @@ class CRM_Chreports_Reports_BaseReport {
     *
     */
     public function filteringReportOptions(&$var) {
-
+        //set form values for mapping for columns
+       $this->setFieldsMapping($var);
         // Fields
         $this->filteringReportFields($var);
-        
+        //custom fields
+        $this->filteringReportAddCustomField('ch_fund',$var); //CH Fund 
         // Grouping
         $this->filteringReportGroupOptions($var);
 
@@ -224,11 +287,13 @@ class CRM_Chreports_Reports_BaseReport {
             foreach ($entityData['fields'] as $fieldName => $fieldData) {
                     
                 // We do not want to show this field
-                if (!in_array($fieldName, $this->_settings['fields'])) {
+                if (!in_array($fieldName, $this->getReportingFields())) {
                     unset($var[$entityName]['fields'][$fieldName]);
             
                 // We want this
                 } else {   
+                    //set default field
+                    $this->setDefaultColumn($fieldName, $var[$entityName]['fields'][$fieldName]);
                     // Fix empty / different titles
                     $this->fixFieldTitle($fieldName, $var[$entityName]['fields'][$fieldName]['title']);
                     $this->fixFieldStatistics($fieldName, $var[$entityName]['fields'][$fieldName]);
@@ -244,13 +309,44 @@ class CRM_Chreports_Reports_BaseReport {
             }
         }
     }
+    //Add Custom fields to fields and group by and order by section
+    private function filteringReportAddCustomField($fieldName,&$var) {
+        if(in_array($fieldName,$this->getReportingFields())){
+            switch ($fieldName) {
+                case 'ch_fund':
+                    $fieldDetails = [];
+                    $customTablename = EU::getTableNameByName('Additional_info');
+                    $trial = EU::getCustomFieldID('Fund');
+                    $fieldDetails = $this->_mapping[$customTablename]['fields'][$trial];
+                    $fieldDetails ['table_name'] = $customTablename;
+                    foreach( ['fields','group_bys','order_bys'] as $entityName) {
+                        switch ($entityName) {
+                            case 'fields':
+                            case 'group_bys':
+                                $var[$this->getEntityTable()][$entityName][$fieldName] = $fieldDetails;
+                                $this->setDefaultColumn($fieldName, $var[$this->getEntityTable()][$entityName][$fieldName]);
+                                break;
+                            case 'order_bys':
+                                $var[$this->getEntityTable()][$entityName][$fieldName] = [
+                                    'title' => $fieldDetails['title']
+                                ];
+                                break;
+                        }
+
+                    }
+                    break;
+            }
+        }
+    }
 
     private function filteringReportGroupOptions(&$var) {
         foreach ($var as $entityName => $entityData) {
             foreach ($entityData['group_bys'] as $fieldName => $fieldData) {
                 // We do not want to show this group_bys
-                if (!in_array($fieldName, $this->_settings['group_bys'])) {
+                if (!in_array($fieldName, $this->getReportingFields())) {
                     unset($var[$entityName]['group_bys'][$fieldName]);
+                }else{
+                    $this->setDefaultColumn($fieldName, $var[$entityName]['group_bys'][$fieldName]);
                 } 
             }
         }
@@ -260,7 +356,7 @@ class CRM_Chreports_Reports_BaseReport {
         foreach ($var as $entityName => $entityData) {
             foreach ($entityData['filters'] as $fieldName => $fieldData) {
                 // We do not want to show this filters
-                if (!in_array($fieldName, $this->_settings['filters'])) {
+                if (!in_array($fieldName, $this->getReportingFilters())) {
                     unset($var[$entityName]['filters'][$fieldName]);
                 } else{
                     //modify filter option values if required
@@ -272,57 +368,63 @@ class CRM_Chreports_Reports_BaseReport {
     }
 
     private function filteringReportAddCustomFilter($fieldName,&$var) {
-        switch ($fieldName) {
-            case 'contribution_source':
-                $source = EU::getSourceDropdownList();
-                $var[$this->getEntityTable()]['filters']['contribution_source'] = [
-                    'title' => ts('Contribution Source'),
-                    'type' => CRM_Utils_Type::T_STRING,
-                    'operatorType' => CRM_Report_Form::OP_MULTISELECT,
-                    'options' => $source,
-                    'table_name' => $this->getEntityTable(),
-                    'alias' => 'contribution_civireport',
-                    'dbAlias' => 'contribution_civireport.source'
-                ];
-                break;
-            case 'payment_instrument_id':
-                $var[$this->getEntityTable()]['filters']['payment_instrument_id'] = [
-                    'title' => ts('Payment Method'),
-                    'type' => CRM_Utils_Type::T_INT,
-                    'operatorType' => CRM_Report_Form::OP_MULTISELECT,
-                    'options' => CRM_Core_OptionGroup::values('payment_instrument'),
-                ];
-                break;
-            case 'campaign_type';
-                if ($columnName = E::getColumnNameByName('Campaign_Type')) {
-                    $optionGroupName = E::getOptionGroupNameByColumnName($columnName);
-                    $var[$this->getEntityTable()]['filters']['campaign_type'] = [
-                      'title' => ts('Contribution Page Type'),
-                      'type' => CRM_Utils_Type::T_STRING,
-                      'operatorType' => CRM_Report_Form::OP_MULTISELECT,
-                      'options' => CRM_Core_OptionGroup::values($optionGroupName),
-                      'dbAlias' => "ct.{$columnName}",
+        if(in_array($fieldName,$this->getReportingFilters())){
+            switch ($fieldName) {
+                case 'contribution_source':
+                    $source = EU::getSourceDropdownList();
+                    $var[$this->getEntityTable()]['filters']['contribution_source'] = [
+                        'title' => ts('Contribution Source'),
+                        'type' => CRM_Utils_Type::T_STRING,
+                        'operatorType' => CRM_Report_Form::OP_MULTISELECT,
+                        'options' => $source,
+                        'table_name' => $this->getEntityTable(),
+                        'alias' => $this->getEntityTable(),
+                        'dbAlias' => $this->getEntityTable().'.source'
                     ];
-                }
-                break;
-            case 'ch_fund';
-                if ($columnName = E::getColumnNameByName('Fund')) {
-                    $optionGroupName = E::getOptionGroupNameByColumnName($columnName);
-                    $customTablename = EU::getTableNameByName('Additional_info');
-                    $var[$this->getEntityTable()]['filters'][$fieldName] = [
-                      'title' => ts('CH Fund'),
-                      'column_name' => $columnName,
-                      'table_name' => $customTablename,
-                      'type' => CRM_Utils_Type::T_STRING,
-                      'operatorType' => CRM_Report_Form::OP_MULTISELECT,
-                      'options' => CRM_Core_OptionGroup::values($optionGroupName),
-                      'dbAlias' => $customTablename.".".$columnName,
+                    break;
+                case 'payment_instrument_id':
+                    $var[$this->getEntityTable()]['filters']['payment_instrument_id'] = [
+                        'title' => ts('Payment Method'),
+                        'type' => CRM_Utils_Type::T_INT,
+                        'operatorType' => CRM_Report_Form::OP_MULTISELECT,
+                        'options' => CRM_Core_OptionGroup::values('payment_instrument'),
                     ];
-                }
-                break;
+                    break;
+                case 'campaign_type';
+                    if ($columnName = E::getColumnNameByName('Campaign_Type')) {
+                        $optionGroupName = E::getOptionGroupNameByColumnName($columnName);
+                        $customTablename = EU::getTableNameByName('Campaign_Information');
+                        $var[$this->getEntityTable()]['filters']['campaign_type'] = [
+                        'title' => ts('Contribution Page Type'),
+                        'type' => CRM_Utils_Type::T_STRING,
+                        'operatorType' => CRM_Report_Form::OP_MULTISELECT,
+                        'table_name' => $customTablename,
+                        'column_name' => $columnName,
+                        'options' => CRM_Core_OptionGroup::values($optionGroupName),
+                        'dbAlias' => $customTablename.".".$columnName,
+                        ];
+                    }
+                    break;
+                case 'ch_fund';
+                    if ($columnName = E::getColumnNameByName('Fund')) {
+                        $optionGroupName = E::getOptionGroupNameByColumnName($columnName);
+                        $customTablename = EU::getTableNameByName('Additional_info');
+                        $var[$this->getEntityTable()]['filters'][$fieldName] = [
+                        'title' => ts('CH Fund'),
+                        'column_name' => $columnName,
+                        'table_name' => $customTablename,
+                        'type' => CRM_Utils_Type::T_STRING,
+                        'operatorType' => CRM_Report_Form::OP_MULTISELECT,
+                        'options' => CRM_Core_OptionGroup::values($optionGroupName),
+                        'dbAlias' => $customTablename.".".$columnName,
+                        ];
+                    }
+                    break;
+            }
         }
     }
     // manage display of resulting rows
+    //TODO : try to replace campaign_id with the name it self in the query rather than performing additional alter display
     public function alterDisplayRows(&$rows) {
 
         $contributionPages = CRM_Contribute_PseudoConstant::contributionPage(NULL, TRUE);
@@ -437,6 +539,36 @@ class CRM_Chreports_Reports_BaseReport {
                 break;
         
         }
+    }
+    //set default fields and group by checkbox checked according to default field defined
+    private function setDefaultColumn(string $fieldName, &$field) {
+        if($this->_settings['fields'][$fieldName]['default']){
+            $field['default'] = [TRUE];
+        }
+        else{
+            unset($field['default']);
+        }
+    }
+    public function setPreSelectField(array $elementObj) {
+            foreach( $elementObj as $elementIndex => $elements) {
+                
+                if ( isset( $elements->_attributes ) && in_array($elements->_attributes['name'],$this->getReportingDefaultFields())) {
+                    $elementObj[$elementIndex]->_flagFrozen = 1;
+                }
+            }
+        return $elementObj;
+    }
+    //set default option value to Sort by section
+    public function setDefaultOptionSortBy(array $defaults) {
+        if(!empty($this->getReportingDefaultFields()))
+        {
+            unset($defaults['order_bys']);
+            foreach($this->getReportingDefaultFields() as $value)
+            {
+                $defaults['order_bys'][] = ['column'=>$value,'order'=>'ASC'];
+            }
+        }
+        return $defaults;
     }
 
     private function fixFieldStatistics(string $fieldName, &$statistics) {
