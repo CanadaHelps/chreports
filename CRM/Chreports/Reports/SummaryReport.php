@@ -24,7 +24,9 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
             $entityName = $this->getEntity();
          }
         $columnInfo = $this->getFieldMapping( $entityName, $fieldName);
-        $select[] = $columnInfo['table_name'] . "." .  $columnInfo['name'] . " AS $fieldName";
+        $columnNameInfo = ($columnInfo['op_group_alias']) ? 'name' : $columnInfo['name'];
+        $columnTableInfo = ($columnInfo['op_group_alias']) ? $columnInfo['table_name'].'_value' : $columnInfo['table_name'];
+        $select[] = $columnTableInfo . "." .  $columnNameInfo . " AS $fieldName";
         //Adding columns to _columnHeaders for display purpose
         $this->_columnHeaders[$fieldName]['title'] = $columnInfo['title'];
         $this->_columnHeaders[$fieldName]['type'] = $columnInfo['type'];
@@ -138,6 +140,27 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
               ON ".$entityTable.".entity_id = ".$this->getEntityTable().".id";
             }
             break;
+          case 'gl_account': // fund_13
+              $from[] = " LEFT JOIN ".$this->getEntityTable('line_item')." 
+              ON ".$this->getEntityTable('line_item').".contribution_id = ".$this->getEntityTable().".id";
+
+              $from[] = " LEFT JOIN (
+                SELECT financial_account_id,entity_id,entity_table 
+                FROM ".$this->getEntityTable('financial_item')."  
+                GROUP BY entity_id,financial_account_id HAVING SUM(amount)>0
+              ) ".$this->getEntityTable('financial_item')." 
+              ON ( ".$this->getEntityTable('financial_item').".entity_table = 'civicrm_line_item' 
+              AND ".$this->getEntityTable('financial_item').".entity_id = ".$this->getEntityTable('line_item').".id) ";
+
+              $from[] = " INNER JOIN ".$this->getEntityTable('financial_account')." 
+              ON ".$this->getEntityTable('financial_item').".financial_account_id = ".$this->getEntityTable('financial_account').".id";
+            break;
+          case 'account_type': // Account Type
+           $from[] = $this->fetchOptionLabel("financial_account_type","financial_account_type_id",$this->getEntityTable('financial_account'));
+            break;
+          case 'payment_instrument_id': // Account Type
+            $from[] = $this->fetchOptionLabel("payment_instrument","payment_instrument_id",$this->getEntityTable());
+            break;
         }
       }  
 
@@ -159,6 +182,14 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
     
     } 
  
+    public function fetchOptionLabel($groupName,$fieldName,$tableName){
+      $tableName_group = $tableName.'_group';
+      $tableName_value = $tableName.'_value';
+      $optionValueLabel = " LEFT JOIN civicrm_option_group as ".$tableName_group." ON ".$tableName_group.".name = '".$groupName."' 
+      LEFT JOIN civicrm_option_value as $tableName_value ON $tableName_value.option_group_id = $tableName_group.id 
+      AND $tableName_value.value = ".$tableName.".".$fieldName;
+      return $optionValueLabel;
+    }
 }
 
 ?>

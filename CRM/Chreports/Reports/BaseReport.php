@@ -293,7 +293,7 @@ class CRM_Chreports_Reports_BaseReport {
                 // We want this
                 } else {   
                     //set default field
-                    $this->setDefaultColumn($fieldName, $var[$entityName]['fields'][$fieldName]);
+                    $this->setDefaultColumn($fieldName, $var[$entityName]);
                     // Fix empty / different titles
                     $this->fixFieldTitle($fieldName, $var[$entityName]['fields'][$fieldName]['title']);
                     $this->fixFieldStatistics($fieldName, $var[$entityName]['fields'][$fieldName]);
@@ -311,7 +311,7 @@ class CRM_Chreports_Reports_BaseReport {
     }
     //Add Custom fields to fields and group by and order by section
     private function filteringReportAddCustomField($fieldName,&$var) {
-        if(in_array($fieldName,$this->getReportingFields())){
+            foreach($this->getReportingFields() as $key => $fieldName){
             switch ($fieldName) {
                 case 'ch_fund':
                     $fieldDetails = [];
@@ -319,23 +319,65 @@ class CRM_Chreports_Reports_BaseReport {
                     $trial = EU::getCustomFieldID('Fund');
                     $fieldDetails = $this->_mapping[$customTablename]['fields'][$trial];
                     $fieldDetails ['table_name'] = $customTablename;
-                    foreach( ['fields','group_bys','order_bys'] as $entityName) {
-                        switch ($entityName) {
-                            case 'fields':
-                            case 'group_bys':
-                                $var[$this->getEntityTable()][$entityName][$fieldName] = $fieldDetails;
-                                $this->setDefaultColumn($fieldName, $var[$this->getEntityTable()][$entityName][$fieldName]);
-                                break;
-                            case 'order_bys':
-                                $var[$this->getEntityTable()][$entityName][$fieldName] = [
-                                    'title' => $fieldDetails['title']
-                                ];
-                                break;
-                        }
-
-                    }
+                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
+                    break;
+                case 'gl_account':
+                     $fieldDetails = [
+                                'title' => E::ts('Financial Account'),
+                                'name' => 'name',
+                                'table_name' => $this->getEntityTable('financial_account'),
+                                'dbAlias' => $this->getEntityTable('financial_account').'.name',
+                            ];
+                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
+                    break;
+                case 'gl_code':
+                    $fieldDetails = [
+                                'title' => E::ts('GL Code'),
+                                'name' => 'accounting_code',
+                                'table_name' => $this->getEntityTable('financial_account'),
+                                'dbAlias' => $this->getEntityTable('financial_account').'.accounting_code',
+                            ];
+                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
+                    break;
+                case 'account_type':
+                    $fieldDetails = [
+                        'title' => E::ts('Account Type'),
+                        'name' => 'financial_account_type_id',
+                        'op_group_alias' => TRUE,
+                        'table_name' => $this->getEntityTable('financial_account'),
+                        'dbAlias' => $this->getEntityTable('financial_account').'.financial_account_type_id',
+                    ];
+                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
+                    break;
+                case 'payment_instrument_id':
+                    $fieldDetails = [
+                        'title' => E::ts('Payment Method'),
+                        'name' => 'payment_instrument_id',
+                        'op_group_alias' => TRUE,
+                        'table_name' => $this->getEntityTable(),
+                        'dbAlias' => $this->getEntityTable().'.payment_instrument_id',
+                    ];
+                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
                     break;
             }
+        }
+    }
+
+    private function customFieldCreation($fieldName,&$var,$fieldDetails) {
+        foreach( ['fields','group_bys','order_bys'] as $entityName) {
+            switch ($entityName) {
+                case 'fields':
+                case 'group_bys':
+                    $var[$this->getEntityTable()][$entityName][$fieldName] = $fieldDetails;
+                    $this->setDefaultColumn($fieldName, $var[$this->getEntityTable()]);
+                    break;
+                case 'order_bys':
+                    $var[$this->getEntityTable()][$entityName][$fieldName] = [
+                        'title' => $fieldDetails['title']
+                    ];
+                    break;
+            }
+
         }
     }
 
@@ -345,9 +387,7 @@ class CRM_Chreports_Reports_BaseReport {
                 // We do not want to show this group_bys
                 if (!in_array($fieldName, $this->getReportingFields())) {
                     unset($var[$entityName]['group_bys'][$fieldName]);
-                }else{
-                    $this->setDefaultColumn($fieldName, $var[$entityName]['group_bys'][$fieldName]);
-                } 
+                }
             }
         }
     }
@@ -542,11 +582,17 @@ class CRM_Chreports_Reports_BaseReport {
     }
     //set default fields and group by checkbox checked according to default field defined
     private function setDefaultColumn(string $fieldName, &$field) {
-        if($this->_settings['fields'][$fieldName]['default']){
-            $field['default'] = [TRUE];
-        }
-        else{
-            unset($field['default']);
+        foreach( ['fields','group_bys'] as $entityName) {
+            switch ($entityName) {
+                case 'fields':
+                case 'group_bys':
+                    if($this->_settings['fields'][$fieldName]['default']){
+                        $field[$entityName][$fieldName]['default'] = TRUE;
+                    }else{
+                        unset($field[$entityName][$fieldName]['default']);  
+                    }
+                break;
+            }
         }
     }
     public function setPreSelectField(array $elementObj) {

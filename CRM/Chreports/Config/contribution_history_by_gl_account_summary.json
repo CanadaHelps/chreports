@@ -1,0 +1,17 @@
+{ 
+    "name": "contribution_history_by_gl_account_summary",
+    "title": "Contribution History By GL Account (Summary)",
+    "type": "summary",
+    "entity": "contribution",
+    "fields":{
+        "gl_account": {
+            "default" : true
+        },
+        "gl_code": {},
+        "account_type": {}
+    },
+    "use_default_filters" : true,
+    "filters":[
+        "gl_account"
+    ]
+}
