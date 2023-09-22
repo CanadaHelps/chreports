@@ -1,0 +1,47 @@
+{ 
+    "name": "contribution_history_by_campaign_detailed",
+    "title": "Contribution History by Campaign (Detailed)",
+    "type": "detailed",
+    "entity": "contribution",
+    "fields":{
+        "sort_name": {},
+        "first_name": {},
+        "last_name": {},
+        "organization_name": {},
+        "exposed_id": {},
+        "payment_instrument_id": {},
+        "campaign_id": {},
+        "financial_type_id": {},
+        "contribution_page_id": {},
+        "source": {},
+        "receive_date": {},
+        "total_amount": {
+            "default" : true
+        }
+    },
+    "use_default_filters" : false,
+    "filters":[
+        "receive_date",
+        "receipt_date",
+        "contribution_status_id",
+        "contribution_page_id",
+        "financial_type_id",
+        "contribution_recur_id",
+        "total_amount",
+        "non_deductible_amount",
+        "total_sum",
+        "total_count",
+        "campaign_id",
+        "batch_id",
+        "amount",
+        "tagid",
+        "gid",
+        "total_sum",
+        "total_count",
+        "total_avg",
+        "contribution_source",
+        "payment_instrument_id",
+        "campaign_type",
+        "ch_fund"
+    ]
+}
