@@ -188,7 +188,7 @@ function chreports_civicrm_buildForm($formName, &$form) {
 
 function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
 
-  if ($object instanceof CRM_Chreports_Form_Report_ExtendSummary) {
+  if ($object instanceof CRM_Chreports_Form_Report_ExtendSummary || $object instanceof CRM_Chreports_Form_Report_ExtendedDetail) {
       
       $reportInstance = $object->getReportInstance();
 
@@ -692,7 +692,7 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
  * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_preProcess
  */
 function chreports_civicrm_preProcess($formName, &$form) {
-  if($formName == "CRM_Chreports_Form_Report_ExtendSummary" || $formName == "CRM_Chreports_Form_Report_GLSummaryReport")
+  if($formName == "CRM_Chreports_Form_Report_ExtendSummary" || $formName == "CRM_Chreports_Form_Report_GLSummaryReport" || $formName == "CRM_Chreports_Form_Report_ExtendedDetail")
   {
     //hide empty custom fields based filter sections on filter tab
     $reportInstance = $form->getReportInstance();
