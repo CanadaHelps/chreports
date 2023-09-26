@@ -22,6 +22,7 @@ class CRM_Chreports_Reports_BaseReport {
     protected $_groupBy = '';
 
     protected $_orderBy = NULL;
+    protected $_orderByFields = [];
 
     protected $_where = NULL;
    
@@ -147,7 +148,11 @@ class CRM_Chreports_Reports_BaseReport {
 
     // manage select clause variables
     public function getSelect(): string {
-        return $this->_select;
+        $selectVal = "SELECT " . implode(', ', $this->_select) . " ";
+        if ($this->_isPagination) {
+          $selectVal = preg_replace('/SELECT(\s+SQL_CALC_FOUND_ROWS)?\s+/i', 'SELECT SQL_CALC_FOUND_ROWS ', $selectVal);
+        }
+        return $selectVal;
     }
 
     public function getSelectClauses(): array {
@@ -380,6 +385,8 @@ class CRM_Chreports_Reports_BaseReport {
     }
 
     private function customFieldCreation($fieldName,&$var,$fieldDetails) {
+        //Adding 'custom_alias' to custom fields so we can easily access alias for sort by section
+        $fieldDetails['custom_alias'] = $this->getEntityTable()."_".$fieldName;
         foreach( ['fields','group_bys','order_bys'] as $entityName) {
             switch ($entityName) {
                 case 'fields':
@@ -489,6 +496,60 @@ class CRM_Chreports_Reports_BaseReport {
                     break;
             }
         }
+    }
+
+    /**
+     * Alter the column headers for display
+     * 
+     * @param array  $var Array used to show columns.
+     * @return void
+     */
+    public function alterColumnHeadersForDisplay( &$columnHeaders ){
+        //Hide currency column from display result
+        unset($columnHeaders['currency']);
+        // Remove Sort by Sections from column headers
+        foreach ($this->_orderByFields as $fieldName => $value) {
+            if ($fieldName == 'financial_type') {
+                $entityName = 'financial_type';
+            } else{
+                $entityName = $this->getEntity();
+            }
+            $columnInfo = $this->getFieldMapping( $entityName, $fieldName);
+            $sortBySectionAlias = ($columnInfo['custom_alias'])? $columnInfo['custom_alias'] : $columnInfo['table_name'].'_'.$fieldName;
+            unset($columnHeaders[$sortBySectionAlias]);
+        }
+    }
+
+    /**
+     * Alter the sections based on our configuration
+     * 
+     * @param array  $var Array used to show columns.
+     * @return void
+     */
+    public function updateSelectWithSortBySections(){
+        $select = [];
+        $columnHeader = [];
+        // loop
+        foreach ($this->_orderByFields as $fieldName => $value) {
+            if ($fieldName == 'financial_type') {
+                $entityName = 'financial_type';
+            } else{
+                $entityName = $this->getEntity();
+            }
+            $columnInfo = $this->getFieldMapping( $entityName, $fieldName);
+            $sortByAlias = ($columnInfo['custom_alias']) ? $columnInfo['custom_alias'] : $columnInfo['table_name'].'_'.$fieldName;
+            // adding sort field to column headers
+            $columnHeader[$sortByAlias] = [
+                'title' => $columnInfo['title']
+            ];
+            // adding sort field to select clauses
+            $fieldName = ($columnInfo['op_group_alias']) ? 'label' : $columnInfo['name'];
+            $tableName = ($columnInfo['op_group_alias']) ? $columnInfo['table_name'].'_value' : $columnInfo['table_name'];
+            $select[] = $tableName . "." .  $fieldName ." as ". $sortByAlias;
+        }
+        $this->_select = array_merge( $this->_select, $select);
+        $this->_selectClauses = array_merge( $this->_selectClauses, $select);
+        $this->_columnHeaders = array_merge( $this->_columnHeaders, $columnHeader);
     }
     // manage display of resulting rows
     //TODO : try to replace campaign_id with the name it self in the query rather than performing additional alter display
