@@ -205,10 +205,8 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
       }
 
       if ($varType == 'rows') {
-        //Hide currency column from display result
-        $columnHeaders = $object->_columnHeaders;
-        unset($columnHeaders['currency']);
-        $object->_columnHeaders = $columnHeaders;
+         // remove unwanted columns from display
+         $reportInstance->alterColumnHeadersForDisplay($object->_columnHeaders);
 
         //manage display of result
         $reportInstance->alterDisplayRows($var);

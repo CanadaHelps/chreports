@@ -24,7 +24,7 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
             $entityName = $this->getEntity();
          }
         $columnInfo = $this->getFieldMapping( $entityName, $fieldName);
-        $columnNameInfo = ($columnInfo['op_group_alias']) ? 'name' : $columnInfo['name'];
+        $columnNameInfo = ($columnInfo['op_group_alias']) ? 'label' : $columnInfo['name'];
         $columnTableInfo = ($columnInfo['op_group_alias']) ? $columnInfo['table_name'].'_value' : $columnInfo['table_name'];
         $select[] = $columnTableInfo . "." .  $columnNameInfo . " AS $fieldName";
         //Adding columns to _columnHeaders for display purpose
@@ -51,11 +51,7 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
 
       // Combine everything
       $this->_selectClauses = $select;
-      $selectVal = "SELECT " . implode(', ', $select) . " ";
-      if ($this->_isPagination) {
-        $selectVal = preg_replace('/SELECT(\s+SQL_CALC_FOUND_ROWS)?\s+/i', 'SELECT SQL_CALC_FOUND_ROWS ', $selectVal);
-      }
-      $this->_select = $selectVal;
+      $this->_select = $select;
 
     }
 
@@ -73,7 +69,7 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
       
       $columnInfo = $this->getFieldMapping($this->getEntity(), $fieldName);
       $groupBy[] = $columnInfo['table_name'] . "." .  $columnInfo['name'];
-      
+
     } 
 
     if (!empty($groupBy)) {
@@ -96,6 +92,9 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
             $fieldName = ($orderBy['column'] == 'financial_type') ? $orderBy['column'] . '_id' : $orderBy['column'];
             $columnInfo = $this->getFieldMapping($this->getEntity(), $fieldName);
             $orderBys[] = $columnInfo['table_name'] . "." .  $columnInfo['name']." ".$orderBy['order'];
+            // assign order by fields which has section display checked
+            if($orderBy['section'])
+            $this->_orderByFields[$orderBy['column']] = $columnInfo['table_name'] . "." .  $columnInfo['name'];
           }
         }
       }
@@ -114,9 +113,10 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
       // Add defaults for entity
       $from[] = $this->getEntityTable();
       $from[] = "INNER JOIN " . $this->getEntityTable('contact') . " ON " . $this->getEntityTable('contact') . ".id = " . $this->getEntityTable() . ".contact_id";
+      $fieldsForFromClauses = array_merge($this->_columns,$this->_orderByFields);
 
       // Add columns joins (if needed)
-      foreach($this->_columns as $fieldName => $nodata) {
+      foreach($fieldsForFromClauses as $fieldName => $nodata) {
         switch ($fieldName) {
           //campaign
           case 'contribution_page_id':
