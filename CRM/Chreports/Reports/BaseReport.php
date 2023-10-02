@@ -184,6 +184,18 @@ class CRM_Chreports_Reports_BaseReport {
         $this->_isPagination = $addPage;
     }
     
+    //get type of the report from settings
+    public function getReportType(): string {
+        return $this->_settings['type'];
+    }
+    //get type of the report from settings
+    public function isMonthlyYearlyReport(): bool {
+        if($this->_settings['type'] == 'monthly' || $this->_settings['type'] == 'yearly')
+        {
+            return true; 
+        }
+        return false;
+    }
     //manage filters variable
     public function getFilters(): array {
         return $this->_filters;
@@ -299,6 +311,8 @@ class CRM_Chreports_Reports_BaseReport {
             
                 // We want this
                 } else {   
+                    //Modify field by adding 'select_clause_alias' param to retrieve tablename.fieldname value for select,section clause
+                    $this->modifyFieldParams($fieldName, $var[$entityName]);
                     //set default field
                     $this->setDefaultColumn($fieldName, $var[$entityName]);
                     // Fix empty / different titles
@@ -308,13 +322,19 @@ class CRM_Chreports_Reports_BaseReport {
                     // Assigning order bys options based on fields
                     // Adding missing title to order by options
                     $orderByFieldList = ["total_amount","currency","id"];
-                    if($this->_settings['type'] == 'detailed' && $this->_settings['entity'] == 'contribution'){
-                        array_shift($orderByFieldList);
-                    }
-                    if(!in_array($fieldName,$orderByFieldList)){
-                        $var[$entityName]['order_bys'][$fieldName] = [
-                            'title' => $var[$entityName]['fields'][$fieldName]['title']
-                        ];
+                    //Remove Sorting tab from reporting fields base upon orderByDisplay params from json
+                    if(isset($this->_settings['orderByDisplay']) && $this->_settings['orderByDisplay'] === false)
+                    {
+                        unset($var[$entityName]['order_bys'][$fieldName]);
+                    }else{
+                        if($this->_settings['type'] == 'detailed' && $this->_settings['entity'] == 'contribution'){
+                            array_shift($orderByFieldList);
+                        }
+                        if(!in_array($fieldName,$orderByFieldList)){
+                            $var[$entityName]['order_bys'][$fieldName] = [
+                                'title' => $var[$entityName]['fields'][$fieldName]['title']
+                            ];
+                        }
                     }
                 }
             }
@@ -336,6 +356,7 @@ class CRM_Chreports_Reports_BaseReport {
                      $fieldDetails = [
                                 'title' => E::ts('Financial Account'),
                                 'name' => 'name',
+                                'select_clause_alias' => $this->getEntityTable('financial_account').'.name',
                                 'table_name' => $this->getEntityTable('financial_account'),
                                 'dbAlias' => $this->getEntityTable('financial_account').'.name',
                             ];
@@ -354,7 +375,7 @@ class CRM_Chreports_Reports_BaseReport {
                     $fieldDetails = [
                         'title' => E::ts('Account Type'),
                         'name' => 'financial_account_type_id',
-                        'op_group_alias' => TRUE,
+                        'select_clause_alias' => $this->getEntityTable('financial_account').'_value.label',
                         'table_name' => $this->getEntityTable('financial_account'),
                         'dbAlias' => $this->getEntityTable('financial_account').'.financial_account_type_id',
                     ];
@@ -364,7 +385,7 @@ class CRM_Chreports_Reports_BaseReport {
                     $fieldDetails = [
                         'title' => E::ts('Payment Method'),
                         'name' => 'payment_instrument_id',
-                        'op_group_alias' => TRUE,
+                        'select_clause_alias' => $this->getEntityTable().'_value.label',
                         'table_name' => $this->getEntityTable(),
                         'dbAlias' => $this->getEntityTable().'.payment_instrument_id',
                     ];
@@ -374,6 +395,7 @@ class CRM_Chreports_Reports_BaseReport {
                     $fieldDetails = [
                         'title' => E::ts('Organization Name'),
                         'name' => 'organization_name',
+                        'select_clause_alias' => $this->getEntityTable('contact').'.organization_name',
                        // 'op_group_alias' => TRUE,
                         'table_name' => $this->getEntityTable('contact'),
                         'dbAlias' => $this->getEntityTable('contact').'.organization_name',
@@ -404,13 +426,24 @@ class CRM_Chreports_Reports_BaseReport {
         }
     }
 
+    //Add 'select_clause_alias' params to form fields so get the field alias in select clause rather than replacing value in alterDisplay  
+    private function modifyFieldParams($fieldName,&$var) {
+            switch ($fieldName) {
+                case 'contribution_page_id': //campaign
+                    $var['fields'][$fieldName]['select_clause_alias'] = $this->getEntityTable('contribution_page').'.title';
+                    break;
+                case 'campaign_id': //campaign group
+                    $var['fields'][$fieldName]['select_clause_alias'] = $this->getEntityTable('campaign').'.title';
+                    break;
+            }
+    }
     private function filteringReportGroupOptions(&$var) {
         foreach ($var as $entityName => $entityData) {
             foreach ($entityData['group_bys'] as $fieldName => $fieldData) {
-                if($this->_settings['type'] == 'detailed' && $this->_settings['entity'] == 'contribution')
-                {
-                    unset($var[$entityName]['group_bys'][$fieldName]);
-                }else{
+                if(isset($this->_settings['groupByDisplay']) && $this->_settings['groupByDisplay'] === false)
+                    {
+                        unset($var[$entityName]['group_bys'][$fieldName]);
+                    }else{
                     // We do not want to show this group_bys
                     if (!in_array($fieldName, $this->getReportingFields())) {
                         unset($var[$entityName]['group_bys'][$fieldName]);
@@ -504,7 +537,7 @@ class CRM_Chreports_Reports_BaseReport {
      * @param array  $var Array used to show columns.
      * @return void
      */
-    public function alterColumnHeadersForDisplay( &$columnHeaders ){
+    public function alterColumnHeadersForDisplay(&$var, &$columnHeaders ){
         //Hide currency column from display result
         unset($columnHeaders['currency']);
         // Remove Sort by Sections from column headers
@@ -518,6 +551,43 @@ class CRM_Chreports_Reports_BaseReport {
             $sortBySectionAlias = ($columnInfo['custom_alias'])? $columnInfo['custom_alias'] : $columnInfo['table_name'].'_'.$fieldName;
             unset($columnHeaders[$sortBySectionAlias]);
         }
+        //Modify column headers for monthly/yearly reports
+        if($this->isMonthlyYearlyReport()){
+            unset($columnHeaders['count']);
+            $reportType = $this->getReportType();
+            
+            //
+            foreach ($var as $rowId => $row) {
+                if($reportType == 'monthly')
+                {
+                    $columnTitle = date("M", mktime(0, 0, 0, (int) $row['month'], 10)) . ' ' . $row['year'];
+                    $columnKey = 'total_amount_'.$row['month'].'_'.$row['year'];
+                }else{
+                    $columnKey = 'total_amount_'.$row['year'];
+                    $columnTitle = $row['year'];
+                } 
+                $columnHeaders[$columnKey] = ['title' => $columnTitle,'type'=> CRM_Utils_Type::T_MONEY];
+             }
+             if($reportType == 'monthly')
+             {
+                unset($columnHeaders['month']);
+             }
+            unset($columnHeaders['year']);
+            //re arrange column headers, move 'total_amount' field at the last
+            $fieldsToBeAranged = ['total_amount'];
+            $this->rearrangeColumnHeaders($fieldsToBeAranged,$columnHeaders);
+          }
+        }
+
+    public function rearrangeColumnHeaders($fieldsToBeAranged,&$columnHeaders){
+        $arrangedColumns = [];
+        foreach ($fieldsToBeAranged as $name) {
+            if (array_key_exists($name, $columnHeaders)) {
+              $arrangedColumns[$name] = $columnHeaders[$name];
+              unset($columnHeaders[$name]);
+            }
+          }
+          $columnHeaders = array_merge($columnHeaders, $arrangedColumns);
     }
 
     /**
@@ -543,9 +613,8 @@ class CRM_Chreports_Reports_BaseReport {
                 'title' => $columnInfo['title']
             ];
             // adding sort field to select clauses
-            $fieldName = ($columnInfo['op_group_alias']) ? 'label' : $columnInfo['name'];
-            $tableName = ($columnInfo['op_group_alias']) ? $columnInfo['table_name'].'_value' : $columnInfo['table_name'];
-            $select[] = $tableName . "." .  $fieldName ." as ". $sortByAlias;
+            $selectStatement = ($columnInfo['select_clause_alias'] && $columnInfo['custom_alias']) ? $columnInfo['select_clause_alias'] : $columnInfo['table_name'] ."." . $columnInfo['name'];
+            $select[] = $selectStatement ." as ". $sortByAlias;
         }
         $this->_select = array_merge( $this->_select, $select);
         $this->_selectClauses = array_merge( $this->_selectClauses, $select);
@@ -554,23 +623,52 @@ class CRM_Chreports_Reports_BaseReport {
     // manage display of resulting rows
     //TODO : try to replace campaign_id with the name it self in the query rather than performing additional alter display
     public function alterDisplayRows(&$rows) {
-
-        $contributionPages = CRM_Contribute_PseudoConstant::contributionPage(NULL, TRUE);
-        $paymentInstruments = CRM_Contribute_PseudoConstant::paymentInstrument();
-        $getCampaigns = CRM_Campaign_BAO_Campaign::getPermissionedCampaigns(NULL, NULL, FALSE, FALSE, TRUE);
-        foreach ($rows as $rowNum => $row) {
-    
-          if ($value = CRM_Utils_Array::value('contribution_page_id', $row)) {
-            $rows[$rowNum]['contribution_page_id'] = $contributionPages[$value];
-            
-          }
-          // If using campaigns, convert campaign_id to campaign title
-          if (array_key_exists('campaign_id', $row)) {
-            if ($value = $row['campaign_id']) {
-              $rows[$rowNum]['campaign_id'] = $getCampaigns['campaigns'];
+        //change rows to display report results of monthly/yearly reports accordingly
+        if($this->isMonthlyYearlyReport()){
+        $resultingRow = [];
+        $finalDisplay = [];
+        $fieldName = array_key_first($this->_columns);
+        //Roll up row to be appended in the end
+        $rollupTotalRow = [$fieldName => 'Grand Total'];
+        //filtering out resulting rows by the column filedname key
+         foreach($rows as $rowNum => $row)
+         {
+            $fieldNameKey = ($row[$fieldName]!= NULL)? $row[$fieldName] : 'Unassigned';
+            $resultingRow[$fieldNameKey][] = $row;
+         }
+         foreach($resultingRow as $key => $rowValue)
+         {
+            $count = $total_amount = 0;
+            $columnHeaderValue = [];
+            //fieldName grouped by month/year
+            foreach($rowValue as $k=>$result)
+            {
+                //
+                $count += $result['count'];
+                $total_amount += $result['total_amount'];
+                $rollupTotalRow['total_amount'] += $result['total_amount'];
+                if($this->getReportType() == 'yearly' )
+                {
+                    $columnHeaderValue['total_amount_'.$result['year']] = $result['total_amount'];
+                    $rollupTotalRow['total_amount_'.$result['year']] += $result['total_amount'];
+                    
+                }else if($this->getReportType() == 'monthly')
+                {
+                    $columnHeaderValue['total_amount_'.$result['month'].'_'.$result['year']] = $result['total_amount'];
+                    $rollupTotalRow['total_amount_'.$result['month'].'_'.$result['year']] += $result['total_amount'];
+                }
+                
             }
-          }
-    
+            $displayRows = [
+                $fieldName => $key,
+                'count' => $count,
+                'total_amount' => $total_amount,
+              ];
+            $finalDisplay[] = array_merge($displayRows,$columnHeaderValue);
+         }
+         //Adding rollup row to Displayrow
+         $finalDisplay[] = $rollupTotalRow;
+         $rows = $finalDisplay;
         }
       }
       //manage statistics query 
@@ -797,7 +895,9 @@ class CRM_Chreports_Reports_BaseReport {
             switch ($entityName) {
                 case 'fields':
                 case 'group_bys':
-                    if($this->_settings['fields'][$fieldName]['default']){
+                    //if default field would llok like [x]
+                    //if preSelected then on page load field would be checked
+                    if($this->_settings['fields'][$fieldName]['default'] || $this->_settings['fields'][$fieldName]['preSelected']){
                         $field[$entityName][$fieldName]['default'] = TRUE;
                     }else{
                         unset($field[$entityName][$fieldName]['default']);  

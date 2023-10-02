@@ -1,0 +1,18 @@
+{ 
+    "name": "contribution_history_by_campaign_monthly",
+    "title": "Contribution History By Camapaign (Monthly)",
+    "type": "monthly",
+    "period": "monthly",
+    "entity": "contribution",
+    "fields":{
+        "contribution_source": {},
+        "campaign_id": {},
+        "financial_type": {},
+        "contribution_page_id": {
+            "preSelected" : true
+        }
+    },
+    "use_default_filters" : true,
+    "groupByDisplay" : false,
+    "orderByDisplay" : false
+}

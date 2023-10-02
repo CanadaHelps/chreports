@@ -148,13 +148,24 @@ function chreports_civicrm_buildForm($formName, &$form) {
     );
   }
   if ($formName == 'CRM_Chreports_Form_Report_ExtendSummary' || $formName == 'CRM_Chreports_Form_Report_GLSummaryReport') {
-    // pre-select the column and group by
+    //default pre-select the column and group by
     if (array_key_exists('fields', $form->_elementIndex)) {
       $reportInstance = $form->getReportInstance();
       foreach( ['fields','group_bys'] as $entity) {
         $elementField = $form->getElement($entity)->_elements;
         $reportInstance->setPreSelectField($elementField);
       }
+
+    //For  monthly and yearly report only one column should be checked at a time
+    if($reportInstance->isMonthlyYearlyReport()){
+      CRM_Core_Resources::singleton()->addScript(
+        "CRM.$(function($) {
+          $('.crm-report-criteria-field input:checkbox').on('change',function() {
+            $('.crm-form-checkbox').not(this).prop('checked', false);  
+          });
+        });"
+      );
+    }
     }
   }
   if ($formName == 'CRM_Chreports_Form_Report_ExtendSummary' || $formName == 'CRM_Report_Form_Contact_Summary'|| $formName == 'CRM_Chreports_Form_Report_GLSummaryReport') {
@@ -206,8 +217,7 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
 
       if ($varType == 'rows') {
          // remove unwanted columns from display
-         $reportInstance->alterColumnHeadersForDisplay($object->_columnHeaders);
-
+         $reportInstance->alterColumnHeadersForDisplay($var,$object->_columnHeaders);
         //manage display of result
         $reportInstance->alterDisplayRows($var);
         return;

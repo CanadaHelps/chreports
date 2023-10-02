@@ -43,5 +43,6 @@
         "payment_instrument_id",
         "campaign_type",
         "ch_fund"
-    ]
+    ],
+    "groupByDisplay" : false
 }
