@@ -15,6 +15,7 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
       // Add selected columns to SELECT clause
       foreach($this->_columns as $fieldName => $nodata) {
 
+        if($fieldName){
         if ($fieldName == 'total_amount')
             continue;
          else if($fieldName == 'financial_type')
@@ -24,13 +25,13 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
             $entityName = $this->getEntity();
          }
         $columnInfo = $this->getFieldMapping( $entityName, $fieldName);
-        $columnNameInfo = ($columnInfo['op_group_alias']) ? 'label' : $columnInfo['name'];
-        $columnTableInfo = ($columnInfo['op_group_alias']) ? $columnInfo['table_name'].'_value' : $columnInfo['table_name'];
-        $select[] = $columnTableInfo . "." .  $columnNameInfo . " AS $fieldName";
+        $selectStatement = ($columnInfo['select_clause_alias']) ? $columnInfo['select_clause_alias'] : $columnInfo['table_name']. "." . $columnInfo['name'];
+        //$columnTableInfo = ($columnInfo['op_group_alias']) ? $columnInfo['table_name'].'_value' : $columnInfo['table_name'];
+        $select[] = $selectStatement . " AS $fieldName";
         //Adding columns to _columnHeaders for display purpose
         $this->_columnHeaders[$fieldName]['title'] = $columnInfo['title'];
         $this->_columnHeaders[$fieldName]['type'] = $columnInfo['type'];
-
+        }
       }  
 
       // Add default fields such as total, sum and currency
@@ -42,12 +43,22 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
       $select[] = "SUM(".$this->getEntityTable().".`total_amount`) AS total_amount";
       $this->_columnHeaders['total_amount']['title'] = 'Total Amount';
       $this->_columnHeaders['total_amount']['type'] = CRM_Utils_Type::T_MONEY;
-
-      
-
+      //don't include currenct column for Monthly / Yerly report
+      if(!$this->isMonthlyYearlyReport()){
       $select[] = "GROUP_CONCAT(DISTINCT ".$this->getEntityTable().".currency) AS currency";
       $this->_columnHeaders['currency']['title'] = 'Currency';
       $this->_columnHeaders['currency']['type'] = CRM_Utils_Type::T_STRING;
+      }
+      //Monthly / Yerly report select clause
+      if($this->isMonthlyYearlyReport()){
+        if($this->getReportType() == 'monthly')
+        {
+          $select[] = "MONTH(".$this->getEntityTable().".`receive_date`) AS month";
+          $this->_columnHeaders['month']['title'] = 'Month Name';
+        }
+        $select[] = "YEAR(".$this->getEntityTable().".`receive_date`) AS year";
+        $this->_columnHeaders['year']['title'] = 'Year Name';
+      }
 
       // Combine everything
       $this->_selectClauses = $select;
@@ -60,8 +71,17 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
 
 
     $groupBy = [];
+     //Monthly / Yerly report group by clause
+    if($this->isMonthlyYearlyReport()){
+      if($this->getReportType() == 'monthly')
+      {
+        $groupBy[] = "MONTH(".$this->getEntityTable().".`receive_date`)";
+      }
+      $groupBy[] = "YEAR(".$this->getEntityTable().".`receive_date`)";
+    }
       //columns and group by selection are always same that's why using columns here
     foreach($this->_columns as $fieldName => $nodata) {
+      if($fieldName){
       $fieldName = ($fieldName == 'financial_type') ? $fieldName . '_id' : $fieldName;
 
       if ($fieldName == 'total_amount')
@@ -69,7 +89,7 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
       
       $columnInfo = $this->getFieldMapping($this->getEntity(), $fieldName);
       $groupBy[] = $columnInfo['table_name'] . "." .  $columnInfo['name'];
-
+      }
     } 
 
     if (!empty($groupBy)) {
@@ -96,6 +116,14 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
             if($orderBy['section'])
             $this->_orderByFields[$orderBy['column']] = $columnInfo['table_name'] . "." .  $columnInfo['name'];
           }
+        }
+      }
+      //Monthly / Yerly report order by clause
+      if($this->isMonthlyYearlyReport()){
+        $orderBys[] = "YEAR(".$this->getEntityTable().".`receive_date`)";
+        if($this->getReportType() == 'monthly')
+        {
+          $orderBys[] = "MONTH(".$this->getEntityTable().".`receive_date`)";
         }
       }
 
