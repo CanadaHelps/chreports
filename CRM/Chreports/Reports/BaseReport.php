@@ -626,6 +626,20 @@ class CRM_Chreports_Reports_BaseReport {
     // manage display of resulting rows
     //TODO : try to replace campaign_id with the name it self in the query rather than performing additional alter display
     public function alterDisplayRows(&$rows) {
+        foreach ($rows as $rowNum => $row) {
+            //CRM-2063 - Use "Unassigned" as value in summary/Detailed  reports for NULL values
+            foreach($this->_columns as $key=>$value)
+            {
+                if (array_key_exists($key, $row) )
+                {
+                    $fieldNameKey = ($row[$key]!= NULL)? $row[$key] : 'Unassigned';
+                    $rows[$rowNum][$key] = $fieldNameKey;
+                    //create function to convert field name to link for detailed report for sort_name and total_amount field
+                    $this->fieldWithLink($key,$rows,$row,$rowNum);
+                }
+               
+            }
+        }
         //change rows to display report results of monthly/yearly reports accordingly
         if($this->isMonthlyYearlyReport()){
         $resultingRow = [];
@@ -864,6 +878,43 @@ class CRM_Chreports_Reports_BaseReport {
         
                 return $statistics;
     }
+
+    private function fieldWithLink(string $fieldName,&$rows,$row,$rowNum){
+        $string = '';
+        switch ($fieldName) {
+            case 'sort_name':
+                if (array_key_exists('sort_name', $row) &&!empty($rows[$rowNum]['sort_name']) && array_key_exists('civicrm_contact_id', $row)) {
+                    $separator = ($this->_outputMode !== 'csv') ? "<br/>" : ' ';
+                    $url = CRM_Utils_System::url("civicrm/contact/view",
+                    'reset=1&cid=' . $row['civicrm_contact_id'],
+                    $this->_absoluteUrl);
+                    $value = CRM_Utils_Array::value('sort_name', $row);
+                    $string = $string . ($string ? $separator : '') ."<a href='{$url}'>{$value}</a> ";
+                    $rows[$rowNum]['sort_name'] = $string;
+                }
+                break;
+            case 'total_amount':
+                if($this->_settings['type'] == 'detailed' && $this->_settings['entity'] == 'contribution')
+                if ($value = CRM_Utils_Array::value('total_amount', $row)) {
+                    if (CRM_Core_Permission::check('access CiviContribute')) {
+                        $separator = ($this->_outputMode !== 'csv') ? "<br/>" : ' ';
+                        $url = CRM_Utils_System::url("civicrm/contact/view/contribution",
+                        [
+                            'reset' => 1,
+                            'id' => $row['civicrm_contribution_contribution_id'],
+                            'cid' => $row['civicrm_contact_id'],
+                            'action' => 'view',
+                            'context' => 'contribution',
+                            'selectedChild' => 'contribute',
+                        ],$this->_absoluteUrl);
+                        $string = $string . ($string ? $separator : '') .
+                        "<a href='{$url}'>".CRM_Utils_Money::format($value)."</a> ";
+                        $rows[$rowNum]['total_amount'] = $string;
+                    }
+                }
+                break;
+            }
+        }
 
     public function unsetEmptyFilterEntity($filters) {
         foreach($filters as $fk => $filter) {

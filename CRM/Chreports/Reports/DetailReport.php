@@ -27,9 +27,8 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
         $columnInfo = $this->getFieldMapping( $entityName, $fieldName);
         if($fieldName == 'financial_type_id')
       {
-        $columnInfo['table_name'] = 'civicrm_contribution_value';
-        $columnInfo['name'] = 'label';
-        $columnInfo['title'] = 'Fund';
+        $columnInfo['table_name'] = 'civicrm_financial_type';
+        $columnInfo['name'] = 'name';
       }
 
       if($fieldName == 'organization_name')
