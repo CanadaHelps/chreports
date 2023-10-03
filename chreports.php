@@ -147,7 +147,7 @@ function chreports_civicrm_buildForm($formName, &$form) {
       });"
     );
   }
-  if ($formName == 'CRM_Chreports_Form_Report_ExtendSummary' || $formName == 'CRM_Chreports_Form_Report_GLSummaryReport') {
+  if ($formName == 'CRM_Chreports_Form_Report_ExtendSummary' || $formName == 'CRM_Chreports_Form_Report_GLSummaryReport' || $formName == "CRM_Chreports_Form_Report_ExtendedDetail") {
     //default pre-select the column and group by
     if (array_key_exists('fields', $form->_elementIndex)) {
       $reportInstance = $form->getReportInstance();

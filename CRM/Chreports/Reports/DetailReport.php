@@ -17,7 +17,7 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
       foreach($this->_columns as $fieldName => $nodata) {
       if($fieldName == 'financial_type_id')
       {
-         $entityName = 'financial_type';
+         $entityName = $this->getEntity();
       }else if($fieldName == 'sort_name' || $fieldName == 'first_name' || $fieldName == 'last_name' || $fieldName == 'organization_name'|| $fieldName == 'exposed_id')
       {
          $entityName = 'contact';
@@ -33,21 +33,26 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
       }
 
       if($fieldName == 'organization_name')
-        $columnInfo['title'] = 'Organization Name';
-        $select[] = "GROUP_CONCAT(DISTINCT ".$columnInfo['table_name'] . "." .  $columnInfo['name'].") AS $fieldName";
+      $columnInfo['title'] = 'Organization Name';
+        $selectStatement = ($columnInfo['select_clause_alias']) ? $columnInfo['select_clause_alias'] : $columnInfo['table_name'] . "." .  $columnInfo['name'];
+        $select[] = $selectStatement . " AS $fieldName";
         //Adding columns to _columnHeaders for display purpose
         $this->_columnHeaders[$fieldName]['title'] = $columnInfo['title'];
         $this->_columnHeaders[$fieldName]['type'] = $columnInfo['type'];
 
-      }  
+      }
+      //Contribution Table ID details
+      $select[] = "(".$this->getEntityTable().".id) as civicrm_contribution_contribution_id";
+      $this->_columnHeaders['civicrm_contribution_contribution_id']['title'] = 'contribution_id';
+      $this->_columnHeaders['civicrm_contribution_contribution_id']['type'] = CRM_Utils_Type::T_INT;
+      //contact Table ID details
+      $select[] = "(".$this->getEntityTable('contact').".id) as civicrm_contact_id";
+      $this->_columnHeaders['civicrm_contact_id']['title'] = 'contact_id';
+      $this->_columnHeaders['civicrm_contact_id']['type'] = CRM_Utils_Type::T_INT;
 
       // Combine everything
       $this->_selectClauses = $select;
-      $selectVal = "SELECT " . implode(', ', $select) . " ";
-      if ($this->_isPagination) {
-        $selectVal = preg_replace('/SELECT(\s+SQL_CALC_FOUND_ROWS)?\s+/i', 'SELECT SQL_CALC_FOUND_ROWS ', $selectVal);
-      }
-      $this->_select = $selectVal;
+      $this->_select = $select;
     }
 
 
@@ -76,6 +81,9 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
             $fieldName = ($orderBy['column'] == 'financial_type') ? $orderBy['column'] . '_id' : $orderBy['column'];
             $columnInfo = $this->getFieldMapping($this->getEntity(), $fieldName);
             $orderBys[] = $columnInfo['table_name'] . "." .  $columnInfo['name']." ".$orderBy['order'];
+            // assign order by fields which has section display checked
+            if($orderBy['section'])
+            $this->_orderByFields[$orderBy['column']] = $columnInfo['table_name'] . "." .  $columnInfo['name'];
           }
         }
       }
@@ -92,9 +100,10 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
       // Add defaults for entity
       $from[] = $this->getEntityTable();
       $from[] = "INNER JOIN " . $this->getEntityTable('contact') . " ON " . $this->getEntityTable('contact') . ".id = " . $this->getEntityTable() . ".contact_id";
+      $fieldsForFromClauses = array_merge($this->_columns,$this->_orderByFields);
 
       // Add columns joins (if needed)
-      foreach($this->_columns as $fieldName => $nodata) {
+      foreach($fieldsForFromClauses as $fieldName => $nodata) {
         switch ($fieldName) {
          
           //campaign
@@ -109,9 +118,11 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
             break;
             //Fund
           case 'financial_type_id':
-            $fundName = $this->getOptionValueFundName($this->getEntityTable('option_group'),$fieldName);
-            $from[] = $this->fetchOptionLabel($fundName,"financial_type_id",$this->getEntityTable());
+            $from[] = " LEFT JOIN ".$this->getEntityTable('financial_type')."
+            ON ".$this->getEntityTable().".financial_type_id = ".$this->getEntityTable('financial_type').".id";
             break;
+          case 'payment_instrument_id': // Account Type
+            $from[] = $this->fetchOptionLabel("payment_instrument","payment_instrument_id",$this->getEntityTable());
         }
       }  
 

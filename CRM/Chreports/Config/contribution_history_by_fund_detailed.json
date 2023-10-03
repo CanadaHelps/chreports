@@ -1,6 +1,6 @@
 { 
-    "name": "contribution_history_by_campaign_detailed",
-    "title": "Contribution History by Campaign (Detailed)",
+    "name": "contribution_history_by_fund_detailed",
+    "title": "Contribution History by Fund (Detailed)",
     "type": "detailed",
     "entity": "contribution",
     "fields":{
@@ -11,10 +11,8 @@
         "exposed_id": {},
         "payment_instrument_id": {},
         "campaign_id": {},
-        "financial_type_id": {},
-        "contribution_page_id": {
-            "default" : true
-        },
+        "financial_type_id": {"preSelected" : true},
+        "contribution_page_id": {},
         "source": {},
         "receive_date": {},
         "total_amount": {

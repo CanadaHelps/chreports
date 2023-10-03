@@ -540,6 +540,9 @@ class CRM_Chreports_Reports_BaseReport {
     public function alterColumnHeadersForDisplay(&$var, &$columnHeaders ){
         //Hide currency column from display result
         unset($columnHeaders['currency']);
+        // Hide contact id and contribution id from display result
+        unset($columnHeaders['civicrm_contribution_contribution_id']);
+        unset($columnHeaders['civicrm_contact_id']);
         // Remove Sort by Sections from column headers
         foreach ($this->_orderByFields as $fieldName => $value) {
             if ($fieldName == 'financial_type') {

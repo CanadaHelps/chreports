@@ -72,6 +72,10 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
     $var->setVar('_select', $this->_reportInstance->getSelect());
     $var->setVar('_selectClauses', $this->_reportInstance->getSelectClauses());
     $var->setVar('_columnHeaders', $this->_reportInstance->getColumnHeaders());
+
+    // ORDER BY
+    $this->_reportInstance->buildOrderByQuery();
+    $var->setVar('_orderBy', $this->_reportInstance->getOrderBy());
     
     // FROM
     $this->_reportInstance->buildFromQuery();
@@ -79,9 +83,11 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
     // GROUP BY
     $this->_reportInstance->buildGroupByQuery();
     $var->setVar('_groupBy', $this->_reportInstance->getGroupBy());
-    // ORDER BY
-    $this->_reportInstance->buildOrderByQuery();
-    $var->setVar('_orderBy', $this->_reportInstance->getOrderBy());
+    // SORT BY SECTIONS
+    $this->_reportInstance->updateSelectWithSortBySections();
+    $var->setVar('_select', $this->_reportInstance->getSelect());
+    $var->setVar('_selectClauses', $this->_reportInstance->getSelectClauses());
+    $var->setVar('_columnHeaders', $this->_reportInstance->getColumnHeaders());
     
     // WHERE
     // requires access to form
