@@ -6,6 +6,7 @@ class CRM_Chreports_Reports_BaseReport {
     private $_id;
     private $_name;
     private $_settings = [];
+    private $_pagination = FALSE;
 
     private $_entity  = 'contribution';
     protected $_columns = [];
@@ -28,7 +29,7 @@ class CRM_Chreports_Reports_BaseReport {
    
     public $_filters = NULL;
 
-    protected $_isPagination = FALSE;
+    
     // Default filters for report
     protected $_defaultFilters = 
     [
@@ -66,7 +67,18 @@ class CRM_Chreports_Reports_BaseReport {
         $this->loadSettings();
     }
 
-    private function loadSettings() {
+    
+    
+    /**
+     * 
+     * Loads the report configuration from a JSON file
+     * 
+     * Template File: <report_id>.json
+     * Saved report: <report_id>_<id>.json
+     * 
+     * @return void
+     */
+    private function loadSettings(): void {
         //get the values from json file based upon the name of the report
         $jsonFileName = strtolower($this->_name);
         $jsonFileName = str_replace("(","", $jsonFileName);
@@ -79,45 +91,81 @@ class CRM_Chreports_Reports_BaseReport {
         }
     }
 
+    
+    
+    /**
+     * 
+     * Returns the main entity for the report
+     * As per the configuration file
+     * 
+     * @return string
+     */
     public function getEntity(): string {
         return $this->_entity;
     }
-    //get the name of the entity table. Default entity is contribution
+    
+    
+    /**
+     * 
+     * Returns the database table name
+     *
+     * @param string $entity Entity name. Default is main entity as defined in configuration file.
+     * @return string
+     */
     public function getEntityTable(string $entity = null): string {
         $entity = ($entity != NULL) ? $entity : $this->getEntity();
         return "civicrm_" . $entity;
     }
-    // access settings from extendedSummary
+    
+    /**
+     * 
+     * Returns the report configuration
+     *
+     * @return array
+     */
     public function getSettings(): array {
         return $this->_settings;
     }
-    // extract reporting fields from JSON file
-    public function getReportingFields(): array {
+    
+    /**
+     * 
+     * Returns a list of field names for the columns
+     * based on configuration file
+     *
+     * @return array
+     */
+    public function getColumnsFromConfig(): array {
         return array_keys($this->_settings['fields']);
     }
+
     // extract reporting filter fields from JSON file
-    public function getReportingFilters(): array {
+    // TODO: why do we have both getReportingFilters and getFilters
+    private function getReportingFilters(): array {
         $filterValues = [];
        
-        if($this->_settings['use_default_filters'] == TRUE)
-        {
+        if ($this->_settings['use_default_filters'] == TRUE) {
             $filterValues = $this->_defaultFilters;
         }
-        if(count($this->_settings['filters']) > 0)
-        {
+        if (count($this->_settings['filters']) > 0) {
             $filterValues = array_merge($filterValues, $this->_settings['filters']);
         }
         return $filterValues;
     }
-    // extract default reporting fields from JSON file
-    public function getReportingDefaultFields(): array {
+
+
+    /**
+     * Get default column(s) from configuration
+     * 
+     * @return array
+     */
+    public function getDefaultColumns(): array {
+        // TODO: use array_search 
         $defaultFields = [];
-        foreach($this->_settings['fields'] as $fieldKey => $value)
-            {
-                if($this->_settings['fields'][$fieldKey]['default']){
-                    $defaultFields[] = $fieldKey;
-                }
+        foreach($this->_settings['fields'] as $fieldKey => $value) {
+            if($this->_settings['fields'][$fieldKey]['default']){
+                $defaultFields[] = $fieldKey;
             }
+        }
         return $defaultFields;
     }
 
@@ -148,11 +196,11 @@ class CRM_Chreports_Reports_BaseReport {
 
     // manage select clause variables
     public function getSelect(): string {
-        $selectVal = "SELECT " . implode(', ', $this->_select) . " ";
-        if ($this->_isPagination) {
-          $selectVal = preg_replace('/SELECT(\s+SQL_CALC_FOUND_ROWS)?\s+/i', 'SELECT SQL_CALC_FOUND_ROWS ', $selectVal);
+        $selectStatement = "SELECT " . implode(', ', $this->_select) . " ";
+        if ($this->hasPagination()) {
+          $selectStatement = preg_replace('/SELECT(\s+SQL_CALC_FOUND_ROWS)?\s+/i', 'SELECT SQL_CALC_FOUND_ROWS ', $selectStatement);
         }
-        return $selectVal;
+        return $selectStatement;
     }
 
     public function getSelectClauses(): array {
@@ -179,9 +227,23 @@ class CRM_Chreports_Reports_BaseReport {
         $this->_where = $where;
     }
 
-    // to access pagination variable to alter select clause
-    public function isPagination(bool $addPage) {
-        $this->_isPagination = $addPage;
+    /**
+     * Set pagination mode
+     * 
+     * @param bool $pagination
+     * @return void
+     */
+    public function setPagination(bool $pagination) {
+        $this->_pagination = $pagination;
+    }
+
+    /**
+     * Whether the results should be paginated
+     * 
+     * @return bool
+     */
+    public function hasPagination() : bool {
+        return $this->_pagination;
     }
     
     //get type of the report from settings
@@ -277,22 +339,27 @@ class CRM_Chreports_Reports_BaseReport {
     }
 
 
-    /* 
-    *
-    */
+    /**
+     * Updates the search form of the report based on configuration
+     * 
+     * @param array  $var Array used to show columns.
+     * @return void
+     */
     public function filteringReportOptions(&$var) {
-        //set form values for mapping for columns
-       $this->setFieldsMapping($var);
-        // Fields
+        // stores field configuration so we can use it later on
+        $this->setFieldsMapping($var);
+        
+        // Columns
         $this->filteringReportFields($var);
-        //custom fields
+        // Columns: Custom fields
         $this->filteringReportAddCustomField('ch_fund',$var); //CH Fund 
+        
         // Grouping
         $this->filteringReportGroupOptions($var);
 
         // Filters
         $this->filteringReportFilterOptions($var);
-        //custom filter field
+        // Filters: Custom Fields
         $this->filteringReportAddCustomFilter('contribution_source',$var); //Contribution Source
         $this->filteringReportAddCustomFilter('payment_instrument_id',$var); //Payment Method
         $this->filteringReportAddCustomFilter('campaign_type',$var); //Campaign Type
@@ -304,7 +371,7 @@ class CRM_Chreports_Reports_BaseReport {
             foreach ($entityData['fields'] as $fieldName => $fieldData) {
                     
                 // We do not want to show this field
-                if (!in_array($fieldName, $this->getReportingFields())) {
+                if (!in_array($fieldName, $this->getColumnsFromConfig())) {
                     unset($var[$entityName]['fields'][$fieldName]);
                     if($this->_settings['type'] == 'detailed' && $this->_settings['entity'] == 'contribution')
                     unset($var[$entityName]['order_bys'][$fieldName]);
@@ -342,7 +409,7 @@ class CRM_Chreports_Reports_BaseReport {
     }
     //Add Custom fields to fields and group by and order by section
     private function filteringReportAddCustomField($fieldName,&$var) {
-            foreach($this->getReportingFields() as $key => $fieldName){
+            foreach($this->getColumnsFromConfig() as $key => $fieldName){
             switch ($fieldName) {
                 case 'ch_fund':
                     $fieldDetails = [];
@@ -445,7 +512,7 @@ class CRM_Chreports_Reports_BaseReport {
                         unset($var[$entityName]['group_bys'][$fieldName]);
                     }else{
                     // We do not want to show this group_bys
-                    if (!in_array($fieldName, $this->getReportingFields())) {
+                    if (!in_array($fieldName, $this->getColumnsFromConfig())) {
                         unset($var[$entityName]['group_bys'][$fieldName]);
                     }
                 }
@@ -963,18 +1030,21 @@ class CRM_Chreports_Reports_BaseReport {
     public function setPreSelectField(array $elementObj) {
             foreach( $elementObj as $elementIndex => $elements) {
                 
-                if ( isset( $elements->_attributes ) && in_array($elements->_attributes['name'],$this->getReportingDefaultFields())) {
+                if ( isset( $elements->_attributes ) && in_array($elements->_attributes['name'],$this->getDefaultColumns())) {
                     $elementObj[$elementIndex]->_flagFrozen = 1;
                 }
             }
         return $elementObj;
     }
+
     //set default option value to Sort by section
+    // TODO: explain + rename?
     public function setDefaultOptionSortBy(array $defaults) {
-        if(!empty($this->getReportingDefaultFields()))
+        // TODO: optimize
+        if(!empty($this->getDefaultColumns()))
         {
             unset($defaults['order_bys']);
-            foreach($this->getReportingDefaultFields() as $value)
+            foreach($this->getDefaultColumns() as $value)
             {
                 $defaults['order_bys'][] = ['column'=>$value,'order'=>'ASC'];
             }
@@ -982,10 +1052,14 @@ class CRM_Chreports_Reports_BaseReport {
         return $defaults;
     }
 
+    // TODO: explain + rename
     private function fixFieldStatistics(string $fieldName, &$statistics) {
         switch ($fieldName) {
             case 'total_amount':
-                $statistics['statistics'] = ['count' => ts('Number of Contributions'), 'sum' => ts('Total Amount')];
+                $statistics['statistics'] = [
+                    'count' => ts('Number of Contributions'), 
+                    'sum' => ts('Total Amount')
+                ];
                 break;
         }
     }
@@ -994,16 +1068,21 @@ class CRM_Chreports_Reports_BaseReport {
     static function fixFilterOption(string $fieldName, &$filterData) {
         switch ($fieldName) {
             case 'contribution_page_id':
+                // TODO: deprecated
                 $filterData = CRM_Contribute_PseudoConstant::contributionPage(NULL, TRUE);
                 break;
         
         }
     }
 
-    /* 
-    *
-    */
-    static function getReportInstanceDetails( $id ) {
+    /**
+     * 
+     * Returns Get info for a report instance
+     *
+     * @param int $id ID of the report 
+     * @return array
+     */
+    static function getReportInstanceDetails( $id ): array {
         $result = civicrm_api3('ReportInstance', 'get', [
             'sequential' => 1,
             'return' => ["name", "title"],
@@ -1019,14 +1098,36 @@ class CRM_Chreports_Reports_BaseReport {
         // ->execute()
         // ->itemAt(1);
     }
-    /* 
-    * Returns SQL JOIN statement to retrieve data for OptionValue 
-    */
+
+    /**
+     * 
+     * Returns SQL JOIN statement to retrieve data for OptionValue
+     *
+     * @param string $groupName  Name of the Option Group
+     * @param string $fieldName  Name of the Option Value field
+     * @param string $tableName  Name of the Option Value database table
+     * @return string
+     */
     protected function getSQLJoinForOptionValue($groupName, $fieldName, $tableName): string {
       return " 
       LEFT JOIN civicrm_option_group as ".$tableName."_group ON ".$tableName."_group.name = '".$groupName."' 
       LEFT JOIN civicrm_option_value as ".$tableName."_value ON ".$tableName."_value.option_group_id = ".$tableName."_group.id 
       AND ".$tableName."_value.value = ".$tableName.".".$fieldName;
+    }
+
+    /**
+     * 
+     * Returns SQL JOIN statement to retrieve data for a field
+     *
+     * @param string $fieldName  Name of the field
+     * @param string $tableName  Name of the database table to join
+     * @param string $entityTableName  Name of the main entity database table on which to do the join
+     * @param string $tableFieldName Name of the field on which to do the join. Default is `id`
+     * @return string
+     */
+    protected function getSQLJoinForField($fieldName, $tableName, $entityTableName = NULL, $tableFieldName = "id", $joinType = "LEFT"): string {
+        $entityTableName = ($entityTableName == NULL) ? $this->getEntityTable() : $entityTableName;
+        return "$joinType JOIN $tableName ON $tableName.$tableFieldName = $entityTableName.$fieldName";
     }
 }
 

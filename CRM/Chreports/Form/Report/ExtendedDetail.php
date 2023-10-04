@@ -60,7 +60,7 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
     $this->_reportInstance->setFormParams($params);
     $this->_reportInstance->setColumns($params['fields']);
     $this->_reportInstance->setFilters();
-    $this->_reportInstance->isPagination($this->addPaging);
+    $this->_reportInstance->setPagination($this->addPaging);
    
     // Report Instance
     // _entity => Contribution, Contact, etc
