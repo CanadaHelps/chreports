@@ -690,6 +690,7 @@ class CRM_Chreports_Reports_BaseReport {
         $this->_selectClauses = array_merge( $this->_selectClauses, $select);
         $this->_columnHeaders = array_merge( $this->_columnHeaders, $columnHeader);
     }
+
     // manage display of resulting rows
     //TODO : try to replace campaign_id with the name it self in the query rather than performing additional alter display
     public function alterDisplayRows(&$rows) {
@@ -755,195 +756,139 @@ class CRM_Chreports_Reports_BaseReport {
          $rows = $finalDisplay;
         }
       }
-      //manage statistics query 
-      public function alterStatistics(array $rows):array {
+    
+    
+
+    /**
+     * 
+     * Retrieve statistics information for the report
+     *
+     * @param array $rows Results of the initial query
+     * @param bool $showDetailed Whether to also display average, net amount and fees 
+     * @return array
+     */
+    public function alterStatistics(array $rows, bool $showDetailed = false): array {
         $statistics = [];
 
+        // Check if we have multiple currencies
         $groupByCurrency = false;
-
         foreach ($rows as $rowNum => $row) {
-            if(count(explode(',', $row['currency'])) > 1)
-            {
+            if (count(explode(',', $row['currency'])) > 1) {
                 $groupByCurrency = true;
-            }
-        }
-        //if result has multiple currencies then add group by currency clause to statistics query
-        if($groupByCurrency)
-        {
-            if($this->_groupBy)
-            {
-                $this->_groupBy .= ', '.$this->getEntityTable().'.currency';
-            }else{
-                $this->_groupBy .= ' GROUP BY ' .$this->getEntityTable().'.currency';
+                break;
             }
         }
 
-    $contriQuery = 'COUNT(DISTINCT '.$this->getEntityTable().'.id ) as count,
-        SUM('.$this->getEntityTable().'.total_amount) as total_amount,
-        '.$this->getEntityTable().'.currency as currency '.$this->_from.' '.$this->_where;
+        // if result has multiple currencies then add group by currency clause to statistics query
+        if ($groupByCurrency) {
+            if (empty($this->_groupBy))
+                $this->_groupBy =  ' GROUP BY 1';
+            $this->_groupBy .= ', '.$this->getEntityTable('contribution').'.currency';
+        }
 
-    $contriSQL = "SELECT {$contriQuery} {$this->_groupBy}";
+        // Add statistics to SELECT statement
+        $select   = [];
+        $select[] = "COUNT(DISTINCT ".$this->getEntityTable('contribution').".id ) as count";
+        $select[] = "SUM(".$this->getEntityTable('contribution').".total_amount) as total_amount";
+        $select[] = $this->getEntityTable('contribution').".currency as currency";
 
-    $contriDAO = CRM_Core_DAO::executeQuery($contriSQL);
-    $currencies = $currAmount = $currCount = $totalAmount = [];
+        if ($showDetailed) {
+            $select[] = "ROUND(AVG(".$this->getEntityTable().".`total_amount`), 2) as avg";
+            $select[] = "SUM(".$this->getEntityTable('contribution').".fee_amount) as fee_amount";
+            $select[] = "SUM(".$this->getEntityTable('contribution').".net_amount) as net_amount";
+        }
 
-        while ($contriDAO->fetch()) {
+        // Update SQL Query
+        $query    = "SELECT " 
+            . implode(', ', $select) 
+            . " " . $this->_from 
+            . " " . $this->_where 
+            . " " . $this->_groupBy;
+
+        $dao = CRM_Core_DAO::executeQuery($query);
+        $currencies = $currAmount = $currCount = $totalAmount = [];
+        $totalCount = 0;
+
+        $currFees = $currNet = $currAvg = $feeAmount = $netAmount = $avgAmount = [];
+
+        while ($dao->fetch()) {
         
-            if (!isset($currAmount[$contriDAO->currency])) {
-                $currAmount[$contriDAO->currency] = 0;
-            }
-            if (!isset($currCount[$contriDAO->currency])) {
-                $currCount[$contriDAO->currency] = 0;
-            }
+            $currAmount[$dao->currency] = $currAmount[$dao->currency]   ?? 0;
+            $currCount[$dao->currency]  = $currCount[$dao->currency]    ?? 0;
+
             //defining currency amount and count based upon currency
-            $currAmount[$contriDAO->currency] += $contriDAO->total_amount;
-            $currCount[$contriDAO->currency] += $contriDAO->count;
+            $currAmount[$dao->currency] += $dao->total_amount;
+            $currCount[$dao->currency]  += $dao->count;
         
-            $count += $contriDAO->count;
+            $totalCount += $dao->count;
 
-            if (!in_array($contriDAO->currency, $currencies)) {
-                $currencies[] = $contriDAO->currency;
+            if (!in_array($dao->currency, $currencies)) {
+                $currencies[] = $dao->currency;
             } 
+
+            if ($showDetailed) {
+                $currFees[$dao->currency]   = $currFees[$dao->currency]     ?? 0;
+                $currNet[$dao->currency]    = $currNet[$dao->currency]      ?? 0;
+                $currAvg[$dao->currency]    = $currAvg[$dao->currency]      ?? 0;
+            
+                //defining currency fees,Net and avg based upon currency
+                $currFees[$dao->currency] += $dao->fees;
+                $currNet[$dao->currency] += $dao->net;
+                $currAvg[$dao->currency] += $dao->avg;
+            }
         }
 
         foreach ($currencies as $currency) {
-            if (empty($currency)) {
-            continue;
+            if (empty($currency))
+                continue;
+        
+            $currencyCountText = " (" . $currCount[$currency] . ") (".$currency.")";    
+            $totalAmount[]  = CRM_Utils_Money::format($currAmount[$currency], $currency) . $currencyCountText;
+            
+            if ($showDetailed) {
+                $feeAmount[]    = CRM_Utils_Money::format($currFees[$currency], $currency) . $currencyCountText;
+                $netAmount[]    = CRM_Utils_Money::format($currNet[$currency], $currency) . $currencyCountText;
+                $predetermine   = ($currAvg[$currency]/$currCount[$currency]);
+                $avgAmount[]    = CRM_Utils_Money::format($predetermine, $currency) .$currencyCountText;
             }
-            $totalAmount[] = CRM_Utils_Money::format($currAmount[$currency], $currency) .
-            " (" . $currCount[$currency] . ") (".$currency.")";
         }
         // total amount
         $statistics['counts']['amount'] = [
             'title' => ts('Total Amount'),
-            'value' => implode(',  ', $totalAmount),
-            'type' => CRM_Utils_Type::T_STRING,
+            'value' => implode(', ', $totalAmount),
+            'type'  => CRM_Utils_Type::T_STRING,
         ];
 
         // total contribution count
         $statistics['counts']['count'] = [
             'title' => ts('Total Contributions'),
-            'value' => $count,
+            'value' => $totalCount,
         ];
 
+        if ($showDetailed) {
+            // total Average count
+            $statistics['counts']['avg'] = [
+                'title' => ts('Average'),
+                'value' => implode(', ', $avgAmount),
+                'type' => CRM_Utils_Type::T_STRING,
+            ];
+            
+            // total fees count
+            $statistics['counts']['fees'] = [
+                'title' => ts('Fees'),
+                'value' => implode(', ', $feeAmount),
+                'type' => CRM_Utils_Type::T_STRING,
+            ];
+            
+            // total Net count
+            $statistics['counts']['net'] = [
+                'title' => ts('Net'),
+                'value' => implode(',  ', $netAmount),
+                'type' => CRM_Utils_Type::T_STRING,
+            ];
+        }
+
         return $statistics;
-      }
-      public function alterStatisticsDetailed(array $rows):array {
-        $statistics = [];
-        $groupByCurrency = false;
-        foreach ($rows as $rowNum => $row) {
-            if(count(explode(',', $row['currency'])) > 1)
-            {$groupByCurrency = true;
-            }
-        }
-        //if result has multiple currencies then add group by currency clause to statistics query
-        if($groupByCurrency)
-        {
-            if($this->_groupBy)
-            {
-                $this->_groupBy .= ', '.$this->getEntityTable().'.currency';
-            }else{
-                $this->_groupBy .= ' GROUP BY ' .$this->getEntityTable().'.currency';
-            }
-        }
-        $contriQuery = 'COUNT('.$this->getEntityTable().'.total_amount) AS count,
-            SUM('.$this->getEntityTable().'.`total_amount`) AS total_amount,
-            ROUND(AVG('.$this->getEntityTable().'.`total_amount`), 2) as avg,
-            '.$this->getEntityTable().'.currency as currency ,
-            SUM( '.$this->getEntityTable().'.`fee_amount` ) as fees,
-            SUM( '.$this->getEntityTable().'.`net_amount` ) as net '.$this->_from.' '.$this->_where;
-            $contriSQL = "SELECT {$contriQuery} {$this->_groupBy}";
-        
-            
-            $contriDAO = CRM_Core_DAO::executeQuery($contriSQL);
-            $currencies = $currAmount = $currCount = $totalAmount =$currFees=$currNet=$currAvg= $FeeAmount=$NetAmount=$AvgAmount=[];
-        
-                while ($contriDAO->fetch()) {
-                
-
-                 
-                    if (!isset($currAmount[$contriDAO->currency])) {
-                        $currAmount[$contriDAO->currency] = 0;
-                    }
-                    if (!isset($currCount[$contriDAO->currency])) {
-                        $currCount[$contriDAO->currency] = 0;
-                    }
-
-                    if (!isset($currFees[$contriDAO->currency])) {
-                        $currFees[$contriDAO->currency] = 0;
-                    }
-                    if (!isset($currNet[$contriDAO->currency])) {
-                        $currNet[$contriDAO->currency] = 0;
-                    }
-                    if (!isset($currAvg[$contriDAO->currency])) {
-                        $currAvg[$contriDAO->currency] = 0;
-                    }
-            
-                    //defining currency amount and count based upon currency
-                    $currAmount[$contriDAO->currency] += $contriDAO->total_amount;
-                    $currCount[$contriDAO->currency] += $contriDAO->count;
-                    //defining currency fees,Net and avg based upon currency
-                    $currFees[$contriDAO->currency] += $contriDAO->fees;
-                    $currNet[$contriDAO->currency] += $contriDAO->net;
-                    $currAvg[$contriDAO->currency] += $contriDAO->avg;
-                   
-                
-                    $count += $contriDAO->count;
-        
-                    if (!in_array($contriDAO->currency, $currencies)) {
-                        $currencies[] = $contriDAO->currency;
-                    } 
-                }
-                foreach ($currencies as $currency) {
-                    if (empty($currency)) {
-                    continue;
-                    }
-                    $totalAmount[] = CRM_Utils_Money::format($currAmount[$currency], $currency) .
-                    " (" . $currCount[$currency] . ") (".$currency.")";
-
-                    $FeeAmount[] = CRM_Utils_Money::format($currFees[$currency], $currency) .
-                    " (" . $currCount[$currency] . ") (".$currency.")";
-                    $NetAmount[] = CRM_Utils_Money::format($currNet[$currency], $currency) .
-                    " (" . $currCount[$currency] . ") (".$currency.")";
-                    $predetermine = ($currAvg[$currency]/$currCount[$currency]);
-                    $AvgAmount[] = CRM_Utils_Money::format($predetermine, $currency) .
-                    " (" . $currCount[$currency] . ") (".$currency.")";
-                }
-        
-                $statistics['counts']['amount'] = [
-                    'title' => ts('Total Amount'),
-                    'value' => implode(',  ', $totalAmount),
-                    'type' => CRM_Utils_Type::T_STRING,
-                ];
-        
-                // total contribution count
-                $statistics['counts']['count'] = [
-                    'title' => ts('Total Contributions'),
-                    'value' => $count,
-                ];
-                // total Average count
-                $statistics['counts']['avg'] = [
-                    'title' => ts('Average'),
-                    'value' => implode(',  ', $AvgAmount),
-                     'type' => CRM_Utils_Type::T_STRING,
-                ];
-        
-                // total fees count
-                $statistics['counts']['fees'] = [
-                    'title' => ts('Fees'),
-                    'value' => implode(',  ', $FeeAmount),
-                     'type' => CRM_Utils_Type::T_STRING,
-                ];
-        
-                // total Net count
-                $statistics['counts']['net'] = [
-                    'title' => ts('Net'),
-                    'value' => implode(',  ', $NetAmount),
-                     'type' => CRM_Utils_Type::T_STRING,
-                ];
-        
-        
-                return $statistics;
     }
 
     private function fieldWithLink(string $fieldName,&$rows,$row,$rowNum){

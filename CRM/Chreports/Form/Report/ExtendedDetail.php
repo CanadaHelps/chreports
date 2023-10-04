@@ -18,8 +18,8 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
   }
 
   public function statistics(&$rows) {
-    $statistics = $this->_reportInstance->alterStatisticsDetailed($rows);
-    if($statistics){
+    $statistics = $this->_reportInstance->alterStatistics($rows, true);
+    if ($statistics) {
       $count = count($rows);
       // requires access to form
       //set Row(s) Listed and Total rows statistics
