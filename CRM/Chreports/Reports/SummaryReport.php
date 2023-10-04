@@ -184,10 +184,10 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
               ON ".$this->getEntityTable('financial_item').".financial_account_id = ".$this->getEntityTable('financial_account').".id";
             break;
           case 'account_type': // Account Type
-           $from[] = $this->fetchOptionLabel("financial_account_type","financial_account_type_id",$this->getEntityTable('financial_account'));
+           $from[] = $this->getSQLJoinForOptionValue("financial_account_type","financial_account_type_id",$this->getEntityTable('financial_account'));
             break;
           case 'payment_instrument_id': // Account Type
-            $from[] = $this->fetchOptionLabel("payment_instrument","payment_instrument_id",$this->getEntityTable());
+            $from[] = $this->getSQLJoinForOptionValue("payment_instrument","payment_instrument_id",$this->getEntityTable());
             break;
         }
       }  
@@ -209,15 +209,6 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
       $this->_from = "FROM " . implode(' ', $from) . " ";
     
     } 
- 
-    public function fetchOptionLabel($groupName,$fieldName,$tableName){
-      $tableName_group = $tableName.'_group';
-      $tableName_value = $tableName.'_value';
-      $optionValueLabel = " LEFT JOIN civicrm_option_group as ".$tableName_group." ON ".$tableName_group.".name = '".$groupName."' 
-      LEFT JOIN civicrm_option_value as $tableName_value ON $tableName_value.option_group_id = $tableName_group.id 
-      AND $tableName_value.value = ".$tableName.".".$fieldName;
-      return $optionValueLabel;
-    }
 }
 
 ?>

@@ -1019,6 +1019,15 @@ class CRM_Chreports_Reports_BaseReport {
         // ->execute()
         // ->itemAt(1);
     }
+    /* 
+    * Returns SQL JOIN statement to retrieve data for OptionValue 
+    */
+    protected function getSQLJoinForOptionValue($groupName, $fieldName, $tableName): string {
+      return " 
+      LEFT JOIN civicrm_option_group as ".$tableName."_group ON ".$tableName."_group.name = '".$groupName."' 
+      LEFT JOIN civicrm_option_value as ".$tableName."_value ON ".$tableName."_value.option_group_id = ".$tableName."_group.id 
+      AND ".$tableName."_value.value = ".$tableName.".".$fieldName;
+    }
 }
 
 ?>

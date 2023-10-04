@@ -121,7 +121,7 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
             ON ".$this->getEntityTable().".financial_type_id = ".$this->getEntityTable('financial_type').".id";
             break;
           case 'payment_instrument_id': // Account Type
-            $from[] = $this->fetchOptionLabel("payment_instrument","payment_instrument_id",$this->getEntityTable());
+            $from[] = $this->getSQLJoinForOptionValue("payment_instrument","payment_instrument_id",$this->getEntityTable());
         }
       }  
 
@@ -142,15 +142,6 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
     public function getOptionValueFundName($tableName,$fieldName)
     {
       return CRM_Core_DAO::singlevalueQuery("SELECT name FROM $tableName WHERE title = 'Fund'");
-    }
-
-    public function fetchOptionLabel($groupName,$fieldName,$tableName){
-      $tableName_group = $tableName.'_group';
-      $tableName_value = $tableName.'_value';
-      $optionValueLabel = " LEFT JOIN civicrm_option_group as ".$tableName_group." ON ".$tableName_group.".name = '".$groupName."'
-      LEFT JOIN civicrm_option_value as $tableName_value ON $tableName_value.option_group_id = $tableName_group.id 
-      AND $tableName_value.value = ".$tableName.".".$fieldName;
-      return $optionValueLabel;
     }
 }
 
