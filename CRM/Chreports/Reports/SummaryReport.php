@@ -155,10 +155,8 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
           case 'contribution_page_id':  // Campaign
           case 'campaign_id':           // Campaign group
           case 'financial_type':        // Fund
-          case 'payment_instrument_id': // Payment Method
-          case 'account_type':          // Account Type
             if ($fieldName == "financial_type")     $fieldName = $fieldName . "_id";                // financial_type_id
-            else if ($fieldName == "account_type")  $fieldName = "financial_". $fieldName . "_id";  // financial_account_type_id
+            else if ($fieldName == "account_type")  $fieldName = "financial_". $fieldName . "_id";  // financial_account_type_id //discuss to remove
             
             $fieldEntity = str_replace("_id", "", $fieldName);
             $from[] = $this->getSQLJoinForField($fieldName, $this->getEntityTable($fieldEntity), $this->getEntityTable('contribution'));
@@ -183,6 +181,12 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
               AND ".$this->getEntityTable('financial_item').".entity_id = ".$this->getEntityTable('line_item').".id) ";
 
             $from[] = $this->getSQLJoinForField('financial_account_id', $this->getEntityTable('financial_account'), $this->getEntityTable('financial_item'));
+            break;
+          case 'payment_instrument_id': // Payment Method
+            $from[] = $this->getSQLJoinForOptionValue("payment_instrument","payment_instrument_id",$this->getEntityTable(),$fieldName);
+            break;
+          case 'account_type':          // Account Type
+            $from[] = $this->getSQLJoinForOptionValue("financial_account_type","financial_account_type_id",$this->getEntityTable('financial_account'),$fieldName);
             break;
         }
       }  

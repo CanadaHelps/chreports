@@ -17,10 +17,13 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
       foreach($this->_columns as $fieldName => $nodata) {
       if($fieldName == 'financial_type_id')
       {
-         $entityName = $this->getEntity();
-      }else if($fieldName == 'sort_name' || $fieldName == 'first_name' || $fieldName == 'last_name' || $fieldName == 'organization_name'|| $fieldName == 'exposed_id')
+         $entityName = 'financial_type';
+      }else if($fieldName == 'sort_name' || $fieldName == 'first_name' || $fieldName == 'last_name' || $fieldName == 'organization_name'|| $fieldName == 'exposed_id' || $fieldName == 'display_name' || $fieldName == 'contact_sub_type' || $fieldName == 'contact_type' || $fieldName == 'contact_type' )
       {
          $entityName = 'contact';
+      }else if($fieldName == 'phone' || $fieldName == 'email')
+      {
+         $entityName = $fieldName; //civicrm_phone or civicrm_email
       }else{
          $entityName = $this->getEntity();
       }
@@ -35,6 +38,11 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
       $columnInfo['title'] = 'Organization Name';
         $selectStatement = ($columnInfo['select_clause_alias']) ? $columnInfo['select_clause_alias'] : $columnInfo['table_name'] . "." .  $columnInfo['name'];
         $select[] = $selectStatement . " AS $fieldName";
+        //for boolean data value display directly 'Yes' or 'No' rather than 1 or 0
+        if($fieldName == 'application_submitted')
+        {
+          $select[] = "case when ".$columnInfo['table_name'] . "." .  $columnInfo['name']." then 'Yes' else 'No' end AS $fieldName";
+        }
         //Adding columns to _columnHeaders for display purpose
         $this->_columnHeaders[$fieldName]['title'] = $columnInfo['title'];
         $this->_columnHeaders[$fieldName]['type'] = $columnInfo['type'];
@@ -101,6 +109,12 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
       $from[] = "INNER JOIN " . $this->getEntityTable('contact') . " ON " . $this->getEntityTable('contact') . ".id = " . $this->getEntityTable() . ".contact_id";
       $fieldsForFromClauses = array_merge($this->_columns,$this->_orderByFields);
 
+      if($this->isOpportunityReport())
+        {
+          $customTablename = EU::getTableNameByName('Grant');
+            $from[] = " LEFT JOIN ".$customTablename."
+            ON ".$this->getEntityTable().".id = ".$customTablename.".entity_id";
+        }
       // Add columns joins (if needed)
       foreach($fieldsForFromClauses as $fieldName => $nodata) {
         switch ($fieldName) {
@@ -121,7 +135,23 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
             ON ".$this->getEntityTable().".financial_type_id = ".$this->getEntityTable('financial_type').".id";
             break;
           case 'payment_instrument_id': // Account Type
-            $from[] = $this->getSQLJoinForOptionValue("payment_instrument","payment_instrument_id",$this->getEntityTable());
+          case 'grant_type_id': //opportunity type
+          case 'status_id': //opportunity status
+            if ($fieldName == "payment_instrument_id")     $groupName = 'payment_instrument';                // financial_type_id
+            else if ($fieldName == "grant_type_id")  $groupName = 'grant_type'; 
+            else if ($fieldName == "status_id")  $groupName = 'grant_status'; 
+            $from[] = $this->getSQLJoinForOptionValue($groupName,$fieldName,$this->getEntityTable(),$fieldName);
+            break;
+          case 'probability':
+            $columnName =  E::getColumnNameByName('probability');
+            $customTablename = EU::getTableNameByName('Grant');
+            $optionGroupName = E::getOptionGroupNameByColumnName($columnName);
+            $from[] = $this->getSQLJoinForOptionValue($optionGroupName,$columnName,$customTablename,$fieldName);
+            break;
+          case 'phone':
+          case 'email':
+            $from[] = $this->getSQLJoinForField('id', $this->getEntityTable($fieldName), $this->getEntityTable('contact'),'contact_id');
+            break;
         }
       }  
 
@@ -134,7 +164,7 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
           break;
         }
       }
-      
+
       $this->_from = "FROM " . implode(' ', $from) . " ";
     
     } 

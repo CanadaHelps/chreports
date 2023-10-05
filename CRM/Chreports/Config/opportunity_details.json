@@ -1,0 +1,41 @@
+{ 
+    "name": "opportunity_details",
+    "title": "Opportunity Details",
+    "type": "detailed",
+    "entity": "grant",
+    "fields":{
+        "display_name": {"preSelected" : true},
+        "contact_type": {},
+        "contact_sub_type": {},
+        "exposed_id": {},
+        "email": {},
+        "phone": {},
+        "grant_type_id": {},
+        "status_id": {},
+        "amount_total": {"default" : true},
+        "amount_granted": {},
+        "application_received_date": {"preSelected" : true},
+        "grant_due_date": {"preSelected" : true},
+        "decision_date": {"preSelected" : true},
+        "application_submitted": {"preSelected" : true},
+        "probability": {"preSelected" : true},
+        "Opportunity_Name": {"preSelected" : true},
+        "Opportunity_Owner": {"preSelected" : true}
+        
+    },
+    "use_default_filters" : false,
+    "filters":[
+        "grant_type",
+        "status_id",
+        "amount_granted",
+        "amount_total",
+        "application_received_date",
+        "grant_due_date",
+        "decision_date",
+        "application_submitted",
+        "probability",
+        "Opportunity_Name",
+        "Opportunity_Owner"
+    ],
+    "groupByDisplay" : false
+}
