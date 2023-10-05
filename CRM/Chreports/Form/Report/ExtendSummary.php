@@ -32,7 +32,7 @@ class CRM_Chreports_Form_Report_ExtendSummary extends CRM_Report_Form_Contribute
     $this->_reportInstance->setFieldsMapping($var->getVar('_columns'));
     $this->_reportInstance->setFormParams($params);
     //TO DO need to make changes
-    $settings = $this->_reportInstance->getReportingDefaultFields();
+    $settings = $this->_reportInstance->getDefaultColumns();
     if(empty($params['fields']))
     {
       $params['fields'] = [
@@ -44,9 +44,9 @@ class CRM_Chreports_Form_Report_ExtendSummary extends CRM_Report_Form_Contribute
     //Remove limit, pagination parameter from query for monthly/yearly reports
     if($this->_reportInstance->isMonthlyYearlyReport()){
       $var->setVar('_limit','');
-      $this->_reportInstance->isPagination(FALSE);
+      $this->_reportInstance->setPagination(FALSE);
     }else{
-      $this->_reportInstance->isPagination($this->addPaging);
+      $this->_reportInstance->setPagination($this->addPaging);
     }
 
     // Report Instance

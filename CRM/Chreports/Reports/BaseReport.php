@@ -6,6 +6,7 @@ class CRM_Chreports_Reports_BaseReport {
     private $_id;
     private $_name;
     private $_settings = [];
+    private $_pagination = FALSE;
 
     private $_entity  = 'contribution';
     protected $_columns = [];
@@ -28,7 +29,7 @@ class CRM_Chreports_Reports_BaseReport {
    
     public $_filters = NULL;
 
-    protected $_isPagination = FALSE;
+    
     // Default filters for report
     protected $_defaultFilters = 
     [
@@ -66,7 +67,18 @@ class CRM_Chreports_Reports_BaseReport {
         $this->loadSettings();
     }
 
-    private function loadSettings() {
+    
+    
+    /**
+     * 
+     * Loads the report configuration from a JSON file
+     * 
+     * Template File: <report_id>.json
+     * Saved report: <report_id>_<id>.json
+     * 
+     * @return void
+     */
+    private function loadSettings(): void {
         //get the values from json file based upon the name of the report
         $jsonFileName = strtolower($this->_name);
         $jsonFileName = str_replace("(","", $jsonFileName);
@@ -78,49 +90,86 @@ class CRM_Chreports_Reports_BaseReport {
             $this->_settings = json_decode(file_get_contents($sourcePath),true); 
         }
     }
+
     //set entity value externally
     public function setEntity(string $entity) {
         $this->_entity = strtolower($entity);
     }
+    
+    
+    /**
+     * 
+     * Returns the main entity for the report
+     * As per the configuration file
+     * 
+     * @return string
+     */
     public function getEntity(): string {
         return $this->_entity;
     }
-    //get the name of the entity table. Default entity is contribution
+    
+    
+    /**
+     * 
+     * Returns the database table name
+     *
+     * @param string $entity Entity name. Default is main entity as defined in configuration file.
+     * @return string
+     */
     public function getEntityTable(string $entity = null): string {
         $entity = ($entity != NULL) ? $entity : $this->getEntity();
         return "civicrm_" . $entity;
     }
-    // access settings from extendedSummary
+    
+    /**
+     * 
+     * Returns the report configuration
+     *
+     * @return array
+     */
     public function getSettings(): array {
         return $this->_settings;
     }
-    // extract reporting fields from JSON file
-    public function getReportingFields(): array {
+    
+    /**
+     * 
+     * Returns a list of field names for the columns
+     * based on configuration file
+     *
+     * @return array
+     */
+    public function getColumnsFromConfig(): array {
         return array_keys($this->_settings['fields']);
     }
+
     // extract reporting filter fields from JSON file
-    public function getReportingFilters(): array {
+    // TODO: why do we have both getReportingFilters and getFilters
+    private function getReportingFilters(): array {
         $filterValues = [];
        
-        if($this->_settings['use_default_filters'] == TRUE)
-        {
+        if ($this->_settings['use_default_filters'] == TRUE) {
             $filterValues = $this->_defaultFilters;
         }
-        if(count($this->_settings['filters']) > 0)
-        {
+        if (count($this->_settings['filters']) > 0) {
             $filterValues = array_merge($filterValues, $this->_settings['filters']);
         }
         return $filterValues;
     }
-    // extract default reporting fields from JSON file
-    public function getReportingDefaultFields(): array {
+
+
+    /**
+     * Get default column(s) from configuration
+     * 
+     * @return array
+     */
+    public function getDefaultColumns(): array {
+        // TODO: use array_search 
         $defaultFields = [];
-        foreach($this->_settings['fields'] as $fieldKey => $value)
-            {
-                if($this->_settings['fields'][$fieldKey]['default']){
-                    $defaultFields[] = $fieldKey;
-                }
+        foreach($this->_settings['fields'] as $fieldKey => $value) {
+            if($this->_settings['fields'][$fieldKey]['default']){
+                $defaultFields[] = $fieldKey;
             }
+        }
         return $defaultFields;
     }
 
@@ -151,11 +200,11 @@ class CRM_Chreports_Reports_BaseReport {
 
     // manage select clause variables
     public function getSelect(): string {
-        $selectVal = "SELECT " . implode(', ', $this->_select) . " ";
-        if ($this->_isPagination) {
-          $selectVal = preg_replace('/SELECT(\s+SQL_CALC_FOUND_ROWS)?\s+/i', 'SELECT SQL_CALC_FOUND_ROWS ', $selectVal);
+        $selectStatement = "SELECT " . implode(', ', $this->_select) . " ";
+        if ($this->hasPagination()) {
+          $selectStatement = preg_replace('/SELECT(\s+SQL_CALC_FOUND_ROWS)?\s+/i', 'SELECT SQL_CALC_FOUND_ROWS ', $selectStatement);
         }
-        return $selectVal;
+        return $selectStatement;
     }
 
     public function getSelectClauses(): array {
@@ -182,9 +231,23 @@ class CRM_Chreports_Reports_BaseReport {
         $this->_where = $where;
     }
 
-    // to access pagination variable to alter select clause
-    public function isPagination(bool $addPage) {
-        $this->_isPagination = $addPage;
+    /**
+     * Set pagination mode
+     * 
+     * @param bool $pagination
+     * @return void
+     */
+    public function setPagination(bool $pagination) {
+        $this->_pagination = $pagination;
+    }
+
+    /**
+     * Whether the results should be paginated
+     * 
+     * @return bool
+     */
+    public function hasPagination() : bool {
+        return $this->_pagination;
     }
     
     //Opportunity array defined for fields, orderby, filters
@@ -430,25 +493,31 @@ class CRM_Chreports_Reports_BaseReport {
     }
 
 
-    /* 
-    *
-    */
+    /**
+     * Updates the search form of the report based on configuration
+     * 
+     * @param array  $var Array used to show columns.
+     * @return void
+     */
     public function filteringReportOptions(&$var) {
         // merge opportunity array defined in BaseReport class with the existing
         if($this->isOpportunityReport())
         $this->setOpportunityFields($var);
-        //set form values for mapping for columns
-       $this->setFieldsMapping($var);
-        // Fields
+
+        // stores field configuration so we can use it later on
+        $this->setFieldsMapping($var);
+        
+        // Columns
         $this->filteringReportFields($var);
-        //custom fields
+        // Columns: Custom fields
         $this->filteringReportAddCustomField('ch_fund',$var); //CH Fund 
+        
         // Grouping
         $this->filteringReportGroupOptions($var);
 
         // Filters
         $this->filteringReportFilterOptions($var);
-        //custom filter field
+        // Filters: Custom Fields
         $this->filteringReportAddCustomFilter('contribution_source',$var); //Contribution Source
         $this->filteringReportAddCustomFilter('payment_instrument_id',$var); //Payment Method
         $this->filteringReportAddCustomFilter('campaign_type',$var); //Campaign Type
@@ -466,7 +535,7 @@ class CRM_Chreports_Reports_BaseReport {
             foreach ($entityData['fields'] as $fieldName => $fieldData) {
                     
                 // We do not want to show this field
-                if (!in_array($fieldName, $this->getReportingFields())) {
+                if (!in_array($fieldName, $this->getColumnsFromConfig())) {
                     unset($var[$entityName]['fields'][$fieldName]);
                     if($this->_settings['type'] == 'detailed' && $this->_settings['entity'] == 'contribution')
                     unset($var[$entityName]['order_bys'][$fieldName]);
@@ -504,7 +573,7 @@ class CRM_Chreports_Reports_BaseReport {
     }
     //Add Custom fields to fields and group by and order by section
     private function filteringReportAddCustomField($fieldName,&$var) {
-            foreach($this->getReportingFields() as $key => $fieldName){
+            foreach($this->getColumnsFromConfig() as $key => $fieldName){
             switch ($fieldName) {
                 case 'ch_fund':
                     $fieldDetails = [];
@@ -662,7 +731,7 @@ class CRM_Chreports_Reports_BaseReport {
                         unset($var[$entityName]['group_bys'][$fieldName]);
                     }else{
                     // We do not want to show this group_bys
-                    if (!in_array($fieldName, $this->getReportingFields())) {
+                    if (!in_array($fieldName, $this->getColumnsFromConfig())) {
                         unset($var[$entityName]['group_bys'][$fieldName]);
                     }
                 }
@@ -891,6 +960,7 @@ class CRM_Chreports_Reports_BaseReport {
         $this->_selectClauses = array_merge( $this->_selectClauses, $select);
         $this->_columnHeaders = array_merge( $this->_columnHeaders, $columnHeader);
     }
+
     // manage display of resulting rows
     //TODO : try to replace campaign_id with the name it self in the query rather than performing additional alter display
     public function alterDisplayRows(&$rows) {
@@ -956,205 +1026,142 @@ class CRM_Chreports_Reports_BaseReport {
          $rows = $finalDisplay;
         }
       }
-      //manage statistics query 
-      public function alterStatistics(array $rows):array {
+    
+    
+
+    /**
+     * 
+     * Retrieve statistics information for the report
+     *
+     * @param array $rows Results of the initial query
+     * @param bool $showDetailed Whether to also display average, net amount and fees 
+     * @return array
+     */
+    public function alterStatistics(array $rows, bool $showDetailed = false): array {
         $statistics = [];
 
+        // Check if we have multiple currencies
         $groupByCurrency = false;
-
         foreach ($rows as $rowNum => $row) {
-            if(count(explode(',', $row['currency'])) > 1)
-            {
+            if (count(explode(',', $row['currency'])) > 1) {
                 $groupByCurrency = true;
-            }
-        }
-        //if result has multiple currencies then add group by currency clause to statistics query
-        if($groupByCurrency)
-        {
-            if($this->_groupBy)
-            {
-                $this->_groupBy .= ', '.$this->getEntityTable().'.currency';
-            }else{
-                $this->_groupBy .= ' GROUP BY ' .$this->getEntityTable().'.currency';
+                break;
             }
         }
 
-    $contriQuery = 'COUNT(DISTINCT '.$this->getEntityTable().'.id ) as count,
-        SUM('.$this->getEntityTable().'.total_amount) as total_amount,
-        '.$this->getEntityTable().'.currency as currency '.$this->_from.' '.$this->_where;
+        // if result has multiple currencies then add group by currency clause to statistics query
+        if ($groupByCurrency) {
+            if (empty($this->_groupBy))
+                $this->_groupBy =  ' GROUP BY 1';
+            $this->_groupBy .= ', '.$this->getEntityTable('contribution').'.currency';
+        }
 
-    $contriSQL = "SELECT {$contriQuery} {$this->_groupBy}";
+        $statEntity = $this->isOpportunityReport() ? $this->getEntity():'contribution';
+        $statTotalAmountField = $this->isOpportunityReport() ? 'amount_total':'total_amount';
+    
+        // Add statistics to SELECT statement
+        $select   = [];
+        $select[] = "COUNT(DISTINCT ".$this->getEntityTable($statEntity).".id ) as count";
+        $select[] = "SUM(".$this->getEntityTable($statEntity).".".$statTotalAmountField.") as total_amount";
+        $select[] = $this->getEntityTable($statEntity).".currency as currency";
 
-    $contriDAO = CRM_Core_DAO::executeQuery($contriSQL);
-    $currencies = $currAmount = $currCount = $totalAmount = [];
+        if ($showDetailed) {
+            $select[] = "ROUND(AVG(".$this->getEntityTable().".`total_amount`), 2) as avg";
+            $select[] = "SUM(".$this->getEntityTable('contribution').".fee_amount) as fee_amount";
+            $select[] = "SUM(".$this->getEntityTable('contribution').".net_amount) as net_amount";
+        }
 
-        while ($contriDAO->fetch()) {
+        // Update SQL Query
+        $query    = "SELECT " 
+            . implode(', ', $select) 
+            . " " . $this->_from 
+            . " " . $this->_where 
+            . " " . $this->_groupBy;
+
+        $dao = CRM_Core_DAO::executeQuery($query);
+        $currencies = $currAmount = $currCount = $totalAmount = [];
+        $totalCount = 0;
+
+        $currFees = $currNet = $currAvg = $feeAmount = $netAmount = $avgAmount = [];
+
+        while ($dao->fetch()) {
         
-            if (!isset($currAmount[$contriDAO->currency])) {
-                $currAmount[$contriDAO->currency] = 0;
-            }
-            if (!isset($currCount[$contriDAO->currency])) {
-                $currCount[$contriDAO->currency] = 0;
-            }
+            $currAmount[$dao->currency] = $currAmount[$dao->currency]   ?? 0;
+            $currCount[$dao->currency]  = $currCount[$dao->currency]    ?? 0;
+
             //defining currency amount and count based upon currency
-            $currAmount[$contriDAO->currency] += $contriDAO->total_amount;
-            $currCount[$contriDAO->currency] += $contriDAO->count;
+            $currAmount[$dao->currency] += $dao->total_amount;
+            $currCount[$dao->currency]  += $dao->count;
         
-            $count += $contriDAO->count;
+            $totalCount += $dao->count;
 
-            if (!in_array($contriDAO->currency, $currencies)) {
-                $currencies[] = $contriDAO->currency;
+            if (!in_array($dao->currency, $currencies)) {
+                $currencies[] = $dao->currency;
             } 
+
+            if ($showDetailed) {
+                $currFees[$dao->currency]   = $currFees[$dao->currency]     ?? 0;
+                $currNet[$dao->currency]    = $currNet[$dao->currency]      ?? 0;
+                $currAvg[$dao->currency]    = $currAvg[$dao->currency]      ?? 0;
+            
+                //defining currency fees,Net and avg based upon currency
+                $currFees[$dao->currency] += $dao->fees;
+                $currNet[$dao->currency] += $dao->net;
+                $currAvg[$dao->currency] += $dao->avg;
+            }
         }
 
         foreach ($currencies as $currency) {
-            if (empty($currency)) {
-            continue;
+            if (empty($currency))
+                continue;
+        
+            $currencyCountText = " (" . $currCount[$currency] . ") (".$currency.")";    
+            $totalAmount[]  = CRM_Utils_Money::format($currAmount[$currency], $currency) . $currencyCountText;
+            
+            if ($showDetailed) {
+                $feeAmount[]    = CRM_Utils_Money::format($currFees[$currency], $currency) . $currencyCountText;
+                $netAmount[]    = CRM_Utils_Money::format($currNet[$currency], $currency) . $currencyCountText;
+                $predetermine   = ($currAvg[$currency]/$currCount[$currency]);
+                $avgAmount[]    = CRM_Utils_Money::format($predetermine, $currency) .$currencyCountText;
             }
-            $totalAmount[] = CRM_Utils_Money::format($currAmount[$currency], $currency) .
-            " (" . $currCount[$currency] . ") (".$currency.")";
         }
         // total amount
         $statistics['counts']['amount'] = [
             'title' => ts('Total Amount'),
-            'value' => implode(',  ', $totalAmount),
-            'type' => CRM_Utils_Type::T_STRING,
+            'value' => implode(', ', $totalAmount),
+            'type'  => CRM_Utils_Type::T_STRING,
         ];
 
         // total contribution count
         $statistics['counts']['count'] = [
             'title' => ts('Total Contributions'),
-            'value' => $count,
+            'value' => $totalCount,
         ];
 
+        if ($showDetailed) {
+            // total Average count
+            $statistics['counts']['avg'] = [
+                'title' => ts('Average'),
+                'value' => implode(', ', $avgAmount),
+                'type' => CRM_Utils_Type::T_STRING,
+            ];
+            
+            // total fees count
+            $statistics['counts']['fees'] = [
+                'title' => ts('Fees'),
+                'value' => implode(', ', $feeAmount),
+                'type' => CRM_Utils_Type::T_STRING,
+            ];
+            
+            // total Net count
+            $statistics['counts']['net'] = [
+                'title' => ts('Net'),
+                'value' => implode(',  ', $netAmount),
+                'type' => CRM_Utils_Type::T_STRING,
+            ];
+        }
+
         return $statistics;
-      }
-      public function alterStatisticsDetailed(array $rows):array {
-        $statistics = [];
-        $groupByCurrency = false;
-        foreach ($rows as $rowNum => $row) {
-            if(count(explode(',', $row['currency'])) > 1)
-            {$groupByCurrency = true;
-            }
-        }
-        //if result has multiple currencies then add group by currency clause to statistics query
-        if($groupByCurrency)
-        {
-            if($this->_groupBy)
-            {
-                $this->_groupBy .= ', '.$this->getEntityTable().'.currency';
-            }else{
-                $this->_groupBy .= ' GROUP BY ' .$this->getEntityTable().'.currency';
-            }
-        }
-        $contriQuery = 'COUNT('.$this->getEntityTable().'.total_amount) AS count,
-            SUM('.$this->getEntityTable().'.`total_amount`) AS total_amount,
-            ROUND(AVG('.$this->getEntityTable().'.`total_amount`), 2) as avg,
-            '.$this->getEntityTable().'.currency as currency ,
-            SUM( '.$this->getEntityTable().'.`fee_amount` ) as fees,
-            SUM( '.$this->getEntityTable().'.`net_amount` ) as net '.$this->_from.' '.$this->_where;
-            //custom query for opportunity detailed report where fees, net and avg columns won't be there
-            if($this->isOpportunityReport())
-            {
-        $contriQuery = 'COUNT('.$this->getEntityTable().'.amount_total) AS count,
-            SUM('.$this->getEntityTable().'.`amount_total`) AS total_amount,
-            '.$this->getEntityTable().'.currency as currency '.$this->_from.' '.$this->_where;
-            }
-            $contriSQL = "SELECT {$contriQuery} {$this->_groupBy}";
-        
-            
-            $contriDAO = CRM_Core_DAO::executeQuery($contriSQL);
-            $currencies = $currAmount = $currCount = $totalAmount =$currFees=$currNet=$currAvg= $FeeAmount=$NetAmount=$AvgAmount=[];
-        
-                while ($contriDAO->fetch()) {
-                
-
-                 
-                    if (!isset($currAmount[$contriDAO->currency])) {
-                        $currAmount[$contriDAO->currency] = 0;
-                    }
-                    if (!isset($currCount[$contriDAO->currency])) {
-                        $currCount[$contriDAO->currency] = 0;
-                    }
-
-                    if (!isset($currFees[$contriDAO->currency])) {
-                        $currFees[$contriDAO->currency] = 0;
-                    }
-                    if (!isset($currNet[$contriDAO->currency])) {
-                        $currNet[$contriDAO->currency] = 0;
-                    }
-                    if (!isset($currAvg[$contriDAO->currency])) {
-                        $currAvg[$contriDAO->currency] = 0;
-                    }
-            
-                    //defining currency amount and count based upon currency
-                    $currAmount[$contriDAO->currency] += $contriDAO->total_amount;
-                    $currCount[$contriDAO->currency] += $contriDAO->count;
-                    //defining currency fees,Net and avg based upon currency
-                    $currFees[$contriDAO->currency] += $contriDAO->fees;
-                    $currNet[$contriDAO->currency] += $contriDAO->net;
-                    $currAvg[$contriDAO->currency] += $contriDAO->avg;
-                   
-                
-                    $count += $contriDAO->count;
-        
-                    if (!in_array($contriDAO->currency, $currencies)) {
-                        $currencies[] = $contriDAO->currency;
-                    } 
-                }
-                foreach ($currencies as $currency) {
-                    if (empty($currency)) {
-                    continue;
-                    }
-                    $totalAmount[] = CRM_Utils_Money::format($currAmount[$currency], $currency) .
-                    " (" . $currCount[$currency] . ") (".$currency.")";
-
-                    $FeeAmount[] = CRM_Utils_Money::format($currFees[$currency], $currency) .
-                    " (" . $currCount[$currency] . ") (".$currency.")";
-                    $NetAmount[] = CRM_Utils_Money::format($currNet[$currency], $currency) .
-                    " (" . $currCount[$currency] . ") (".$currency.")";
-                    $predetermine = ($currAvg[$currency]/$currCount[$currency]);
-                    $AvgAmount[] = CRM_Utils_Money::format($predetermine, $currency) .
-                    " (" . $currCount[$currency] . ") (".$currency.")";
-                }
-        
-                $statistics['counts']['amount'] = [
-                    'title' => ts('Total Amount'),
-                    'value' => implode(',  ', $totalAmount),
-                    'type' => CRM_Utils_Type::T_STRING,
-                ];
-        
-                // total contribution count
-                $statistics['counts']['count'] = [
-                    'title' => ts('Total Contributions'),
-                    'value' => $count,
-                ];
-                //don't display avg,fees and net statistics for opportunity report
-                if(!$this->isOpportunityReport())
-            {
-                // total Average count
-                $statistics['counts']['avg'] = [
-                    'title' => ts('Average'),
-                    'value' => implode(',  ', $AvgAmount),
-                     'type' => CRM_Utils_Type::T_STRING,
-                ];
-        
-                // total fees count
-                $statistics['counts']['fees'] = [
-                    'title' => ts('Fees'),
-                    'value' => implode(',  ', $FeeAmount),
-                     'type' => CRM_Utils_Type::T_STRING,
-                ];
-        
-                // total Net count
-                $statistics['counts']['net'] = [
-                    'title' => ts('Net'),
-                    'value' => implode(',  ', $NetAmount),
-                     'type' => CRM_Utils_Type::T_STRING,
-                ];
-            }
-        
-                return $statistics;
     }
 
     private function fieldWithLink(string $fieldName,&$rows,$row,$rowNum){
@@ -1250,18 +1257,21 @@ class CRM_Chreports_Reports_BaseReport {
     public function setPreSelectField(array $elementObj) {
             foreach( $elementObj as $elementIndex => $elements) {
                 
-                if ( isset( $elements->_attributes ) && in_array($elements->_attributes['name'],$this->getReportingDefaultFields())) {
+                if ( isset( $elements->_attributes ) && in_array($elements->_attributes['name'],$this->getDefaultColumns())) {
                     $elementObj[$elementIndex]->_flagFrozen = 1;
                 }
             }
         return $elementObj;
     }
+
     //set default option value to Sort by section
+    // TODO: explain + rename?
     public function setDefaultOptionSortBy(array $defaults) {
-        if(!empty($this->getReportingDefaultFields()))
+        // TODO: optimize
+        if(!empty($this->getDefaultColumns()))
         {
             unset($defaults['order_bys']);
-            foreach($this->getReportingDefaultFields() as $value)
+            foreach($this->getDefaultColumns() as $value)
             {
                 $defaults['order_bys'][] = ['column'=>$value,'order'=>'ASC'];
             }
@@ -1269,10 +1279,14 @@ class CRM_Chreports_Reports_BaseReport {
         return $defaults;
     }
 
+    // TODO: explain + rename
     private function fixFieldStatistics(string $fieldName, &$statistics) {
         switch ($fieldName) {
             case 'total_amount':
-                $statistics['statistics'] = ['count' => ts('Number of Contributions'), 'sum' => ts('Total Amount')];
+                $statistics['statistics'] = [
+                    'count' => ts('Number of Contributions'), 
+                    'sum' => ts('Total Amount')
+                ];
                 break;
         }
     }
@@ -1281,16 +1295,21 @@ class CRM_Chreports_Reports_BaseReport {
     static function fixFilterOption(string $fieldName, &$filterData) {
         switch ($fieldName) {
             case 'contribution_page_id':
+                // TODO: deprecated
                 $filterData = CRM_Contribute_PseudoConstant::contributionPage(NULL, TRUE);
                 break;
         
         }
     }
 
-    /* 
-    *
-    */
-    static function getReportInstanceDetails( $id ) {
+    /**
+     * 
+     * Returns Get info for a report instance
+     *
+     * @param int $id ID of the report 
+     * @return array
+     */
+    static function getReportInstanceDetails( $id ): array {
         $result = civicrm_api3('ReportInstance', 'get', [
             'sequential' => 1,
             'return' => ["name", "title"],
@@ -1305,6 +1324,39 @@ class CRM_Chreports_Reports_BaseReport {
         // ->addWhere('id', '=', $reportId)
         // ->execute()
         // ->itemAt(1);
+    }
+
+    /**
+     * 
+     * Returns SQL JOIN statement to retrieve data for OptionValue
+     *
+     * @param string $groupName  Name of the Option Group
+     * @param string $fieldName  Name of the Option Value field
+     * @param string $tableName  Name of the Option Value database table
+     * @return string
+     */
+    protected function getSQLJoinForOptionValue($groupName, $fieldName, $tableName,$columnName): string {
+        $tableName_group = $tableName.'_'.$columnName.'_group';
+        $tableName_value = $tableName.'_'.$columnName.'_value';
+      return " 
+      LEFT JOIN civicrm_option_group as ".$tableName_group." ON ".$tableName_group.".name = '".$groupName."' 
+      LEFT JOIN civicrm_option_value as ".$tableName_value." ON ".$tableName_value.".option_group_id = ".$tableName_group.".id 
+      AND ".$tableName_value.".value = ".$tableName.".".$fieldName;
+    }
+
+    /**
+     * 
+     * Returns SQL JOIN statement to retrieve data for a field
+     *
+     * @param string $fieldName  Name of the field
+     * @param string $tableName  Name of the database table to join
+     * @param string $entityTableName  Name of the main entity database table on which to do the join
+     * @param string $tableFieldName Name of the field on which to do the join. Default is `id`
+     * @return string
+     */
+    protected function getSQLJoinForField($fieldName, $tableName, $entityTableName = NULL, $tableFieldName = "id", $joinType = "LEFT"): string {
+        $entityTableName = ($entityTableName == NULL) ? $this->getEntityTable() : $entityTableName;
+        return "$joinType JOIN $tableName ON $tableName.$tableFieldName = $entityTableName.$fieldName";
     }
 }
 

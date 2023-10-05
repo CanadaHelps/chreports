@@ -135,26 +135,23 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
             ON ".$this->getEntityTable().".financial_type_id = ".$this->getEntityTable('financial_type').".id";
             break;
           case 'payment_instrument_id': // Account Type
-            $from[] = $this->fetchOptionLabel("payment_instrument","payment_instrument_id",$this->getEntityTable(),'payment_instrument_id');
+          case 'grant_type_id': //opportunity type
+          case 'status_id': //opportunity status
+            if ($fieldName == "payment_instrument_id")     $groupName = 'payment_instrument';                // financial_type_id
+            else if ($fieldName == "grant_type_id")  $groupName = 'grant_type'; 
+            else if ($fieldName == "status_id")  $groupName = 'grant_status'; 
+            $from[] = $this->getSQLJoinForOptionValue($groupName,$fieldName,$this->getEntityTable(),$fieldName);
             break;
           case 'probability':
             $columnName =  E::getColumnNameByName('probability');
             $customTablename = EU::getTableNameByName('Grant');
             $optionGroupName = E::getOptionGroupNameByColumnName($columnName);
-            $from[] = $this->fetchOptionLabel($optionGroupName,$columnName,$customTablename,'probability');
+            $from[] = $this->getSQLJoinForOptionValue($optionGroupName,$columnName,$customTablename,$fieldName);
             break;
           case 'phone':
           case 'email':
-            $from[] = " LEFT JOIN ".$this->getEntityTable($fieldName)."
-            ON ".$this->getEntityTable('contact').".id = ".$this->getEntityTable($fieldName).".contact_id";
+            $from[] = $this->getSQLJoinForField('id', $this->getEntityTable($fieldName), $this->getEntityTable('contact'),'contact_id');
             break;
-          case 'grant_type_id': //opportunity type
-            $from[] = $this->fetchOptionLabel('grant_type',$fieldName,$this->getEntityTable(),$fieldName);
-            break;
-          case 'status_id': //opportunity status
-            $from[] = $this->fetchOptionLabel('grant_status',$fieldName,$this->getEntityTable(),$fieldName);
-            break;
-
         }
       }  
 
@@ -175,16 +172,6 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
     public function getOptionValueFundName($tableName,$fieldName)
     {
       return CRM_Core_DAO::singlevalueQuery("SELECT name FROM $tableName WHERE title = 'Fund'");
-    }
-
-    //Added new parameter at the last to distinguish group and value alias in case of same tablename
-    public function fetchOptionLabel($groupName,$fieldName,$tableName,$columnName){
-      $tableName_group = $tableName.'_'.$columnName.'_group';
-      $tableName_value = $tableName.'_'.$columnName.'_value';
-      $optionValueLabel = " LEFT JOIN civicrm_option_group as ".$tableName_group." ON ".$tableName_group.".name = '".$groupName."'
-      LEFT JOIN civicrm_option_value as $tableName_value ON $tableName_value.option_group_id = $tableName_group.id 
-      AND $tableName_value.value = ".$tableName.".".$fieldName;
-      return $optionValueLabel;
     }
 }
 

@@ -140,39 +140,39 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
       
       // Add defaults for entity
       $from[] = $this->getEntityTable();
-      $from[] = "INNER JOIN " . $this->getEntityTable('contact') . " ON " . $this->getEntityTable('contact') . ".id = " . $this->getEntityTable() . ".contact_id";
+  
+      // Automatically join on Contact for reports that are not Contact reports, such Contribution reports 
+      if ($this->getEntity() != 'contact') {
+        $from[] = $this->getSQLJoinForField('contact_id', $this->getEntityTable('contact'), $this->getEntityTable(), 'id', "INNER");
+      }
+      
+      
       $fieldsForFromClauses = array_merge($this->_columns,$this->_orderByFields);
 
       // Add columns joins (if needed)
       foreach($fieldsForFromClauses as $fieldName => $nodata) {
         switch ($fieldName) {
-          //campaign
-          case 'contribution_page_id':
-            $from[] = " LEFT JOIN ".$this->getEntityTable('contribution_page')."
-            ON ".$this->getEntityTable().".contribution_page_id = ".$this->getEntityTable('contribution_page').".id";
+          case 'contribution_page_id':  // Campaign
+          case 'campaign_id':           // Campaign group
+          case 'financial_type':        // Fund
+            if ($fieldName == "financial_type")     $fieldName = $fieldName . "_id";                // financial_type_id
+            else if ($fieldName == "account_type")  $fieldName = "financial_". $fieldName . "_id";  // financial_account_type_id //discuss to remove
+            
+            $fieldEntity = str_replace("_id", "", $fieldName);
+            $from[] = $this->getSQLJoinForField($fieldName, $this->getEntityTable($fieldEntity), $this->getEntityTable('contribution'));
             break;
-            //campaign group
-          case 'campaign_id':
-            $from[] = " LEFT JOIN ".$this->getEntityTable('campaign')."
-            ON ".$this->getEntityTable().".campaign_id = ".$this->getEntityTable('campaign').".id";
-            break;
-            //Fund
-          case 'financial_type':
-            $from[] = " LEFT JOIN ".$this->getEntityTable('financial_type')."
-            ON ".$this->getEntityTable().".financial_type_id = ".$this->getEntityTable('financial_type').".id";
-            break;
-          case 'ch_fund': // fund_13
+            
+          case 'ch_fund': // CH Fund (fund_13)
             if(!array_key_exists('ch_fund',$this->_filters)){
               $entityTable = EU::getTableNameByName('Additional_info');
-              $from[] = " LEFT JOIN ".$entityTable." 
-              ON ".$entityTable.".entity_id = ".$this->getEntityTable().".id";
+              $from[] = $this->getSQLJoinForField("id", $entityTable, $this->getEntityTable('contribution'), "entity_id");
             }
             break;
-          case 'gl_account': // fund_13
-              $from[] = " LEFT JOIN ".$this->getEntityTable('line_item')." 
-              ON ".$this->getEntityTable('line_item').".contribution_id = ".$this->getEntityTable().".id";
 
-              $from[] = " LEFT JOIN (
+          case 'gl_account': // GL Account
+            $from[] = $this->getSQLJoinForField("id", $this->getEntityTable('line_item'), $this->getEntityTable('contribution'), "contribution_id");
+
+            $from[] = "LEFT JOIN (
                 SELECT financial_account_id,entity_id,entity_table 
                 FROM ".$this->getEntityTable('financial_item')."  
                 GROUP BY entity_id,financial_account_id HAVING SUM(amount)>0
@@ -180,45 +180,34 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
               ON ( ".$this->getEntityTable('financial_item').".entity_table = 'civicrm_line_item' 
               AND ".$this->getEntityTable('financial_item').".entity_id = ".$this->getEntityTable('line_item').".id) ";
 
-              $from[] = " INNER JOIN ".$this->getEntityTable('financial_account')." 
-              ON ".$this->getEntityTable('financial_item').".financial_account_id = ".$this->getEntityTable('financial_account').".id";
+            $from[] = $this->getSQLJoinForField('financial_account_id', $this->getEntityTable('financial_account'), $this->getEntityTable('financial_item'));
             break;
-          case 'account_type': // Account Type
-           $from[] = $this->fetchOptionLabel("financial_account_type","financial_account_type_id",$this->getEntityTable('financial_account'),$fieldName);
+          case 'payment_instrument_id': // Payment Method
+            $from[] = $this->getSQLJoinForOptionValue("payment_instrument","payment_instrument_id",$this->getEntityTable(),$fieldName);
             break;
-          case 'payment_instrument_id': // Account Type
-            $from[] = $this->fetchOptionLabel("payment_instrument","payment_instrument_id",$this->getEntityTable(),$fieldName);
+          case 'account_type':          // Account Type
+            $from[] = $this->getSQLJoinForOptionValue("financial_account_type","financial_account_type_id",$this->getEntityTable('financial_account'),$fieldName);
             break;
         }
       }  
 
+      
+     
       // Add filter joins (if needed)
       foreach($this->_filters as $fieldName => $fieldInfo) {
         switch ($fieldName) {
-        case 'ch_fund': // fund_13
-          $from[] = " LEFT JOIN ".$fieldInfo['table_name']."
-          ON ".$fieldInfo['table_name'].".entity_id = ".$this->getEntityTable().".id";
-          break;
-        case 'campaign_type': 
-          $from[] = " LEFT JOIN ".$fieldInfo['table_name']."
-          ON ".$fieldInfo['table_name'].".entity_id = ".$this->getEntityTable().".contribution_page_id";
-          break;
+          case 'ch_fund': // fund_13
+            $from[] = $this->getSQLJoinForField("id", $fieldInfo['table_name'], $this->getEntityTable('contribution'), "entity_id");
+            break;
+          case 'campaign_type': 
+            $from[] = $this->getSQLJoinForField("contribution_page_id", $fieldInfo['table_name'], $this->getEntityTable('contribution'), "entity_id");
+            break;
         }
       }
       
       $this->_from = "FROM " . implode(' ', $from) . " ";
     
     } 
- 
-    //Added new parameter at the last to distinguish group and value alias in case of same tablename
-    public function fetchOptionLabel($groupName,$fieldName,$tableName,$columnName){
-      $tableName_group = $tableName.'_'.$columnName.'_group';
-      $tableName_value = $tableName.'_'.$columnName.'_value';
-      $optionValueLabel = " LEFT JOIN civicrm_option_group as ".$tableName_group." ON ".$tableName_group.".name = '".$groupName."' 
-      LEFT JOIN civicrm_option_value as $tableName_value ON $tableName_value.option_group_id = $tableName_group.id 
-      AND $tableName_value.value = ".$tableName.".".$fieldName;
-      return $optionValueLabel;
-    }
 }
 
 ?>
