@@ -78,7 +78,10 @@ class CRM_Chreports_Reports_BaseReport {
             $this->_settings = json_decode(file_get_contents($sourcePath),true); 
         }
     }
-
+    //set entity value externally
+    public function setEntity(string $entity) {
+        $this->_entity = strtolower($entity);
+    }
     public function getEntity(): string {
         return $this->_entity;
     }
@@ -184,6 +187,146 @@ class CRM_Chreports_Reports_BaseReport {
         $this->_isPagination = $addPage;
     }
     
+    //Opportunity array defined for fields, orderby, filters
+    public function setOpportunityFields(&$var) {
+        $specificCols = [
+          'civicrm_grant' => [
+            'dao' => 'CRM_Grant_DAO_Grant',
+            'fields' => [
+              'grant_type_id' => [
+                'name' => 'grant_type_id',
+                'title' => ts('Grant Type'),
+              ],
+              'status_id' => [
+                'name' => 'status_id',
+                'title' => ts('Grant Status'),
+              ],
+              'amount_total' => [
+                'name' => 'amount_total',
+                'title' => ts('Opportunity Amount'),
+                'type' => CRM_Utils_Type::T_MONEY,
+              ],
+              'amount_granted' => [
+                'name' => 'amount_granted',
+                'title' => ts('Amount Received'),
+              ],
+              'application_received_date' => [
+                'name' => 'application_received_date',
+                'title' => ts('Application Deadline'),
+                'default' => TRUE,
+                'type' => CRM_Utils_Type::T_DATE,
+              ],
+              'money_transfer_date' => [
+                'name' => 'money_transfer_date',
+                'title' => ts('Money Transfer Date'),
+                'type' => CRM_Utils_Type::T_DATE,
+              ],
+              'grant_due_date' => [
+                'name' => 'grant_due_date',
+                'title' => ts('Report Due'),
+                'type' => CRM_Utils_Type::T_DATE,
+              ],
+              'decision_date' => [
+                'name' => 'decision_date',
+                'title' => ts('Decision Date'),
+                'type' => CRM_Utils_Type::T_DATE,
+              ],
+              'rationale' => [
+                'name' => 'rationale',
+                'title' => ts('Rationale'),
+              ],
+              'grant_report_received' => [
+                'name' => 'grant_report_received',
+                'title' => ts('Grant Report Received'),
+              ],
+            ],
+            'filters' => [
+              'grant_type' => [
+                'name' => 'grant_type_id',
+                'title' => ts('Grant Type'),
+                'operatorType' => CRM_Report_Form::OP_MULTISELECT,
+                'options' => CRM_Core_PseudoConstant::get('CRM_Grant_DAO_Grant', 'grant_type_id'),
+              ],
+              'status_id' => [
+                'name' => 'status_id',
+                'title' => ts('Grant Status'),
+                'type' => CRM_Utils_Type::T_INT,
+                'operatorType' => CRM_Report_Form::OP_MULTISELECT,
+                'options' => CRM_Core_PseudoConstant::get('CRM_Grant_DAO_Grant', 'status_id'),
+              ],
+              'amount_granted' => [
+                'title' => ts('Amount Received'),
+                'operatorType' => CRM_Report_Form::OP_INT,
+              ],
+              'amount_total' => [
+                'title' => ts('Opportunity Amount'),
+                'operatorType' => CRM_Report_Form::OP_INT,
+              ],
+              'application_received_date' => [
+                'title' => ts('Application Deadline'),
+                'operatorType' => CRM_Report_Form::OP_DATE,
+                'type' => CRM_Utils_Type::T_DATE,
+              ],
+              'money_transfer_date' => [
+                'title' => ts('Money Transfer Date'),
+                'operatorType' => CRM_Report_Form::OP_DATE,
+                'type' => CRM_Utils_Type::T_DATE,
+              ],
+              'grant_due_date' => [
+                'title' => ts('Report Due'),
+                'operatorType' => CRM_Report_Form::OP_DATE,
+                'type' => CRM_Utils_Type::T_DATE,
+              ],
+              'decision_date' => [
+                'title' => ts('Decision Date'),
+                'operatorType' => CRM_Report_Form::OP_DATE,
+                'type' => CRM_Utils_Type::T_DATE,
+              ],
+            ],
+            'group_bys' => [
+              'grant_type_id' => [
+                'title' => ts('Grant Type'),
+              ],
+              'status_id' => [
+                'title' => ts('Grant Status'),
+              ],
+              'application_received_date' => [
+                'title' => ts('Application Deadline'),
+              ],
+              'money_transfer_date' => [
+                'title' => ts('Money Transfer Date'),
+              ],
+              'decision_date' => [
+                'title' => ts('Decision Date'),
+              ],
+            ],
+            'order_bys' => [
+              'grant_type_id' => [
+                'title' => ts('Grant Type'),
+              ],
+              'status_id' => [
+                'title' => ts('Grant Status'),
+              ],
+              'amount_total' => [
+                'title' => ts('Opportunity Amount'),
+              ],
+              'amount_granted' => [
+                'title' => ts('Amount Received'),
+              ],
+              'application_received_date' => [
+                'title' => ts('Application Deadline'),
+              ],
+              'money_transfer_date' => [
+                'title' => ts('Money Transfer Date'),
+              ],
+              'decision_date' => [
+                'title' => ts('Decision Date'),
+              ],
+            ],
+          ],
+        ];
+        $var = array_merge($var, $specificCols);
+      }
     //get type of the report from settings
     public function getReportType(): string {
         return $this->_settings['type'];
@@ -192,6 +335,16 @@ class CRM_Chreports_Reports_BaseReport {
     public function isMonthlyYearlyReport(): bool {
         if($this->_settings['type'] == 'monthly' || $this->_settings['type'] == 'yearly')
         {
+            return true; 
+        }
+        return false;
+    }
+
+    //check if report is opportunity report
+    public function isOpportunityReport(): bool {
+        if($this->_settings['name'] == 'opportunity_details' && $this->_settings['entity'] == 'grant')
+        {
+            $this->setEntity($this->_settings['entity']);
             return true; 
         }
         return false;
@@ -281,6 +434,9 @@ class CRM_Chreports_Reports_BaseReport {
     *
     */
     public function filteringReportOptions(&$var) {
+        // merge opportunity array defined in BaseReport class with the existing
+        if($this->isOpportunityReport())
+        $this->setOpportunityFields($var);
         //set form values for mapping for columns
        $this->setFieldsMapping($var);
         // Fields
@@ -297,10 +453,16 @@ class CRM_Chreports_Reports_BaseReport {
         $this->filteringReportAddCustomFilter('payment_instrument_id',$var); //Payment Method
         $this->filteringReportAddCustomFilter('campaign_type',$var); //Campaign Type
         $this->filteringReportAddCustomFilter('ch_fund',$var); //CH Fund
+        $this->filteringReportAddCustomFilter('application_submitted',$var); //Application Submitted
+        $this->filteringReportAddCustomFilter('probability',$var); //Probability
+        $this->filteringReportAddCustomFilter('Opportunity_Name',$var); //Opportunity Name
+        $this->filteringReportAddCustomFilter('Opportunity_Owner',$var); //Opportunity Owner
     }
 
     private function filteringReportFields(&$var) {
         foreach ($var as $entityName => $entityData) {
+            if($this->isOpportunityReport())
+            unset($var[$entityName]['order_bys']);
             foreach ($entityData['fields'] as $fieldName => $fieldData) {
                     
                 // We do not want to show this field
@@ -375,7 +537,7 @@ class CRM_Chreports_Reports_BaseReport {
                     $fieldDetails = [
                         'title' => E::ts('Account Type'),
                         'name' => 'financial_account_type_id',
-                        'select_clause_alias' => $this->getEntityTable('financial_account').'_value.label',
+                        'select_clause_alias' => $this->getEntityTable('financial_account').'_'.$fieldName.'_value.label',
                         'table_name' => $this->getEntityTable('financial_account'),
                         'dbAlias' => $this->getEntityTable('financial_account').'.financial_account_type_id',
                     ];
@@ -385,7 +547,7 @@ class CRM_Chreports_Reports_BaseReport {
                     $fieldDetails = [
                         'title' => E::ts('Payment Method'),
                         'name' => 'payment_instrument_id',
-                        'select_clause_alias' => $this->getEntityTable().'_value.label',
+                        'select_clause_alias' => $this->getEntityTable().'_'.$fieldName.'_value.label',
                         'table_name' => $this->getEntityTable(),
                         'dbAlias' => $this->getEntityTable().'.payment_instrument_id',
                     ];
@@ -396,9 +558,55 @@ class CRM_Chreports_Reports_BaseReport {
                         'title' => E::ts('Organization Name'),
                         'name' => 'organization_name',
                         'select_clause_alias' => $this->getEntityTable('contact').'.organization_name',
-                       // 'op_group_alias' => TRUE,
+                        // 'op_group_alias' => TRUE,
                         'table_name' => $this->getEntityTable('contact'),
                         'dbAlias' => $this->getEntityTable('contact').'.organization_name',
+                    ];
+                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
+                    break;
+                case 'application_submitted':
+                    $customFieldName =  E::getColumnNameByName('application_submitted');
+                    $customTablename = EU::getTableNameByName('Grant');
+                    $fieldDetails = [
+                        'title' => E::ts('Application Submitted'),
+                        'name' => $customFieldName,
+                        'table_name' => $customTablename,
+                        'dbAlias' => $customTablename.$customFieldName,
+                    ];
+                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
+                    break;
+                case 'probability':
+                    $customFieldName =  E::getColumnNameByName('probability');
+                    $customTablename = EU::getTableNameByName('Grant');
+                    $fieldDetails = [
+                        'title' => E::ts('Probability'),
+                        'name' => $customFieldName,
+                        'table_name' => $customTablename,
+                        'select_clause_alias' => $customTablename.'_'.$fieldName.'_value.label',
+                        'dbAlias' => $customTablename.$customFieldName,
+                    ];
+                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
+                    break;
+                case 'Opportunity_Name':
+                    $customFieldName =  E::getColumnNameByName('Opportunity_Name');
+                    $customTablename = EU::getTableNameByName('Grant');
+                    $fieldDetails = [
+                        'title' => E::ts('Opportunity Name'),
+                        'name' => $customFieldName,
+                        'table_name' => $customTablename,
+                        'dbAlias' => $customTablename.$customFieldName,
+                    ];
+                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
+                    break;
+                case 'Opportunity_Owner':
+                    $customFieldName =  E::getColumnNameByName('Opportunity_Owner');
+                    $customTablename = EU::getTableNameByName('Grant');
+                    $fieldDetails = [
+                        'title' => E::ts('Opportunity Owner'),
+                        'name' => $customFieldName,
+                        'table_name' => $customTablename,
+                        'select_clause_alias' => $this->getEntityTable('contact').'.display_name',
+                        'dbAlias' => $customTablename.$customFieldName,
                     ];
                     $this->customFieldCreation($fieldName,$var,$fieldDetails);
                     break;
@@ -434,6 +642,15 @@ class CRM_Chreports_Reports_BaseReport {
                     break;
                 case 'campaign_id': //campaign group
                     $var['fields'][$fieldName]['select_clause_alias'] = $this->getEntityTable('campaign').'.title';
+                    break;
+                case 'email':
+                case 'phone': 
+                    $var['fields'][$fieldName]['select_clause_alias'] = $this->getEntityTable($fieldName).'.'.$fieldName;
+                    break;
+                case 'grant_type_id': //Opportunity type
+                case 'status_id': //Opportunity status
+                    $var['fields'][$fieldName]['select_clause_alias'] = $this->getEntityTable().'_'.$fieldName.'_value.label';
+                    $var['fields'][$fieldName]['custom_alias'] = $this->getEntityTable().'_'.$fieldName;
                     break;
             }
     }
@@ -523,6 +740,57 @@ class CRM_Chreports_Reports_BaseReport {
                         'type' => CRM_Utils_Type::T_STRING,
                         'operatorType' => CRM_Report_Form::OP_MULTISELECT,
                         'options' => CRM_Core_OptionGroup::values($optionGroupName),
+                        'dbAlias' => $customTablename.".".$columnName,
+                        ];
+                    }
+                    break;
+                case 'application_submitted';
+                    if ($columnName = E::getColumnNameByName('application_submitted')) {
+                        $customTablename = EU::getTableNameByName('Grant');
+                        $var[$this->getEntityTable('grant')]['filters'][$fieldName] = [
+                        'title' => ts('Application Submitted'),
+                        'column_name' => $columnName,
+                        'table_name' => $customTablename,
+                        'type' => CRM_Utils_Type::T_BOOLEAN,
+                        'dbAlias' => $customTablename.".".$columnName,
+                        ];
+                    }
+                    break;
+                case 'probability';
+                    if ($columnName = E::getColumnNameByName('probability')) {
+                        $optionGroupName = E::getOptionGroupNameByColumnName($columnName);
+                        $customTablename = EU::getTableNameByName('Grant');
+                        $var[$this->getEntityTable('grant')]['filters'][$fieldName] = [
+                        'title' => ts('Probability'),
+                        'column_name' => $columnName,
+                        'table_name' => $customTablename,
+                        'type' => CRM_Utils_Type::T_STRING,
+                        'options' => CRM_Core_OptionGroup::values($optionGroupName),
+                        'operatorType' => CRM_Report_Form::OP_MULTISELECT,
+                        'dbAlias' => $customTablename.".".$columnName,
+                        ];
+                    }
+                    break;
+                case 'Opportunity_Name';
+                    if ($columnName = E::getColumnNameByName('Opportunity_Name')) {
+                        $customTablename = EU::getTableNameByName('Grant');
+                        $var[$this->getEntityTable('grant')]['filters'][$fieldName] = [
+                        'title' => ts('Opportunity Name'),
+                        'column_name' => $columnName,
+                        'table_name' => $customTablename,
+                        'type' => CRM_Utils_Type::T_STRING,
+                        'dbAlias' => $customTablename.".".$columnName,
+                        ];
+                    }
+                    break;
+                case 'Opportunity_Owner';
+                    if ($columnName = E::getColumnNameByName('Opportunity_Owner')) {
+                        $customTablename = EU::getTableNameByName('Grant');
+                        $var[$this->getEntityTable('grant')]['filters'][$fieldName] = [
+                        'title' => ts('Opportunity Owner'),
+                        'column_name' => $columnName,
+                        'table_name' => $customTablename,
+                        'type' => CRM_Utils_Type::T_STRING,
                         'dbAlias' => $customTablename.".".$columnName,
                         ];
                     }
@@ -785,6 +1053,13 @@ class CRM_Chreports_Reports_BaseReport {
             '.$this->getEntityTable().'.currency as currency ,
             SUM( '.$this->getEntityTable().'.`fee_amount` ) as fees,
             SUM( '.$this->getEntityTable().'.`net_amount` ) as net '.$this->_from.' '.$this->_where;
+            //custom query for opportunity detailed report where fees, net and avg columns won't be there
+            if($this->isOpportunityReport())
+            {
+        $contriQuery = 'COUNT('.$this->getEntityTable().'.amount_total) AS count,
+            SUM('.$this->getEntityTable().'.`amount_total`) AS total_amount,
+            '.$this->getEntityTable().'.currency as currency '.$this->_from.' '.$this->_where;
+            }
             $contriSQL = "SELECT {$contriQuery} {$this->_groupBy}";
         
             
@@ -854,6 +1129,9 @@ class CRM_Chreports_Reports_BaseReport {
                     'title' => ts('Total Contributions'),
                     'value' => $count,
                 ];
+                //don't display avg,fees and net statistics for opportunity report
+                if(!$this->isOpportunityReport())
+            {
                 // total Average count
                 $statistics['counts']['avg'] = [
                     'title' => ts('Average'),
@@ -874,7 +1152,7 @@ class CRM_Chreports_Reports_BaseReport {
                     'value' => implode(',  ', $NetAmount),
                      'type' => CRM_Utils_Type::T_STRING,
                 ];
-        
+            }
         
                 return $statistics;
     }
@@ -882,15 +1160,16 @@ class CRM_Chreports_Reports_BaseReport {
     private function fieldWithLink(string $fieldName,&$rows,$row,$rowNum){
         $string = '';
         switch ($fieldName) {
+            case 'display_name':
             case 'sort_name':
-                if (array_key_exists('sort_name', $row) &&!empty($rows[$rowNum]['sort_name']) && array_key_exists('civicrm_contact_id', $row)) {
+                if (array_key_exists($fieldName, $row) &&!empty($rows[$rowNum][$fieldName]) && array_key_exists('civicrm_contact_id', $row)) {
                     $separator = ($this->_outputMode !== 'csv') ? "<br/>" : ' ';
                     $url = CRM_Utils_System::url("civicrm/contact/view",
                     'reset=1&cid=' . $row['civicrm_contact_id'],
                     $this->_absoluteUrl);
-                    $value = CRM_Utils_Array::value('sort_name', $row);
+                    $value = CRM_Utils_Array::value($fieldName, $row);
                     $string = $string . ($string ? $separator : '') ."<a href='{$url}'>{$value}</a> ";
-                    $rows[$rowNum]['sort_name'] = $string;
+                    $rows[$rowNum][$fieldName] = $string;
                 }
                 break;
             case 'total_amount':
@@ -940,7 +1219,15 @@ class CRM_Chreports_Reports_BaseReport {
             case 'financial_type_id':
                 $title = ts('Fund');
                 break;
-        
+            case 'email':
+                $title = ts('Email');
+                break;
+            case 'phone':
+                $title = ts('Phone');
+                break;
+            case 'display_name':
+                $title = ts('Prospect');
+                break;
         }
     }
     //set default fields and group by checkbox checked according to default field defined

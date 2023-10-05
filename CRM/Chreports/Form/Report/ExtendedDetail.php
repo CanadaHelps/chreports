@@ -53,10 +53,12 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
     return $this->_reportInstance;
   }
   public function buildSQLQuery(&$var) {
-    $params = $var->getVar('_params');
-        
+    // merge opportunity fields from array defined in BaseReport class
+    if($this->_reportInstance->isOpportunityReport())
+    $this->_reportInstance->setOpportunityFields($var->getVar('_columns'));
     // setting out columns, filters, params,mapping from report object
     $this->_reportInstance->setFieldsMapping($var->getVar('_columns'));
+    $params = $var->getVar('_params');
     $this->_reportInstance->setFormParams($params);
     $this->_reportInstance->setColumns($params['fields']);
     $this->_reportInstance->setFilters();
@@ -105,7 +107,8 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
     $clauses = [];
       
     //-- DEFAULT: NOT a test contribution
-    $clauses[] = $this->_reportInstance->getEntityTable().'.is_test = 0';
+    if(!$this->_reportInstance->isOpportunityReport())
+    $clauses[] = $this->_reportInstance->getEntityTable('contribution').'.is_test = 0';
     
     //-- DEFAULT: Contact is not deleted (trash)
     $clauses[] = $this->_reportInstance->getEntityTable('contact').'.is_deleted = 0';
