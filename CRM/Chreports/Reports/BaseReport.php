@@ -130,6 +130,21 @@ class CRM_Chreports_Reports_BaseReport {
     public function getSettings(): array {
         return $this->_settings;
     }
+
+    /**
+     *
+     * Returns the report action
+     *
+     * @return string
+     */
+    public function getAction(): string {
+        return $this->_action;
+    }
+
+    // Set Form Action
+    public function setAction(string $action) {
+        $this->_action = $action;
+    }
     
     /**
      * 
@@ -442,28 +457,72 @@ class CRM_Chreports_Reports_BaseReport {
         $filterNames = [];
         $params = $this->getFormParams();
         foreach ($params as $key => $value) {
-        preg_match('/(.+)_(op|from|relative)$/i', $key, $matches);
-        
-        if ( count($matches) > 0 ) {
-            $fieldName = $matches[1];
-            
-            if ($matches[2] == "op") {
-            // IN (value1, value 2)
-            if ( is_array($params[$fieldName.'_value']) && count($params[$fieldName.'_value']) > 0) {
-                $filterNames[] = $fieldName;
-            // Regular clause
-            } else if (!empty($params[$fieldName.'_value'])) {
-                $filterNames[] = $fieldName;
-            }
-            // Date Range  
-            } else if ($matches[2] == "from" && !empty($value)) {
-            $filterNames[] = $matches[1];
-            
-            // Relative Date
-            } else if ($matches[2] == "relative" && !empty($value)) {
-            $filterNames[] = $matches[1];
+            preg_match('/(.+)_(op|from|relative)$/i', $key, $matches);
+            if ( count($matches) > 0 ) {
+                $fieldName = $matches[1];
+                if ($matches[2] == "op") {
+                    // IN (value1, value 2)
+                    if ( is_array($params[$fieldName.'_value']) && count($params[$fieldName.'_value']) > 0) {
+                        $filterNames[] = $fieldName;
+                    // Regular clause
+                    } else if (!empty($params[$fieldName.'_value'])) {
+                        $filterNames[] = $fieldName;
+                    }
+                    // Date Range
+                } else if ($matches[2] == "from" && !empty($value)) {
+                $filterNames[] = $matches[1];
+
+                // Relative Date
+                } else if ($matches[2] == "relative" && !empty($value)) {
+                $filterNames[] = $matches[1];
+                }
             }
         }
+        return $filterNames;
+    }
+
+
+    // Get filter mapping for the custom jSON file
+    private function getCustomFilterValues(): array {
+        $filterNames = [];
+        $params = $this->getFormParams();
+        foreach ($params as $key => $value) {
+            // Check if the current key ends with "op," "relative," "from," or "to"
+            preg_match('/(.+)_(op|from|relative)$/i', $key, $matches);
+            if (empty($matches)) {
+                continue; // Skip keys that don't match the pattern
+            }
+
+            $fieldName = $matches[1];
+            $operation = $params[$matches[0]];
+
+            switch ($operation) {
+                case 'bw':
+                    $filterNames[$fieldName][$operation] = [
+                        'min' => $params[$fieldName.'_min'],
+                        'max' => $params[$fieldName.'_max']
+                    ];
+                    break;
+
+                case 'nll':
+                    $filterNames[$fieldName] = 'nll';
+                    break;
+
+                case 'nnll':
+                    $filterNames[$fieldName] = 'nnll';
+                    break;
+
+                default:
+                    if ($matches[2] == 'from' && $params[$fieldName.'_from']) {
+                        $filterNames[$fieldName] = [
+                            'from' => $params[$fieldName.'_from'],
+                            'to' => $params[$fieldName.'_to']
+                        ];
+                    } elseif ($matches[2] == 'relative' && $params[$matches[0]]) {
+                        $filterNames[$fieldName]['relative'] = $params[$matches[0]];
+                    }
+                    break;
+            }
         }
         return $filterNames;
     }
@@ -1357,6 +1416,117 @@ class CRM_Chreports_Reports_BaseReport {
     protected function getSQLJoinForField($fieldName, $tableName, $entityTableName = NULL, $tableFieldName = "id", $joinType = "LEFT"): string {
         $entityTableName = ($entityTableName == NULL) ? $this->getEntityTable() : $entityTableName;
         return "$joinType JOIN $tableName ON $tableName.$tableFieldName = $entityTableName.$fieldName";
+    }
+
+    /**
+     *
+     * Build Json File from all report params and values
+     * @param string $action The task action coming from the form
+     * @return array
+     */
+    public function buildJsonConfigFile(string $action): array {
+        if($action == 'copy') {
+            $config = [];
+            $params = $this->getFormParams();
+            $fields = $this->_columns;
+            $filters = $this->getCustomFilterValues();
+            //Load Base template settings to get default Values
+            $baseTemplateSettings = $this->_settings;
+            $config['name'] = $params['title'];
+            $config['title'] = $params['name'] ?? $params['title'];
+            $config['fields'] = $fields;
+            $config['filters'] = $filters;
+
+            foreach($baseTemplateSettings as $k => $v) {
+                if (!isset($config[$k])) {
+                    $config[$k] = $baseTemplateSettings[$k];
+                }
+            }
+            return $config;
+        }
+        return $config;
+    }
+
+    /**
+     *
+     * Get json config filename from the title/name of the report instance
+     *
+     * @return string
+     */
+    public static function getFileFromReportName(string $fileName): string {
+        $jsonFileName = strtolower($fileName);
+        $jsonFileName = str_replace("(","", $jsonFileName);
+        $jsonFileName = str_replace(")","", $jsonFileName);
+        $jsonFileName = str_replace(" ","_", $jsonFileName);
+        return $jsonFileName;
+    }
+
+    /**
+     *
+     * Write the newly or edited JSON for the custom report
+     * Save the entry to DB & Redirect to the newly created report
+     * @param array $config contains the pre-compiled config array that has to be saved as it is
+     * @param string $redirect Default set to true, redirect to the newly created report
+     * @return void
+     */
+    public function writeJsonConfigFile(array $config, $redirect = 'true'): void {
+        $params = $this->getFormParams();
+
+        // Do Not update the name if already present
+        $params['name'] = $params['name'] ?? $params['title'];
+
+        // Save Report Instance to DB without formvalues
+        $params['owner_id'] = 'null';
+        if (!empty($params['add_to_my_reports'])) {
+            $params['owner_id'] = CRM_Core_Session::getLoggedInContactID();
+        }
+        // Make Form Values, header and footer empty, not needed for custom reports
+        unset($params['formValues']);
+        unset($params['report_header']);
+        unset($params['report_footer']);
+
+        //Set Report ID
+        $params['report_id'] = CRM_Report_Utils_Report::getValueFromUrl($this->_id);
+
+        // Create the report
+        $instance = CRM_Report_BAO_ReportInstance::create($params);
+
+        // Create the filename and make sure to append the ID to the name
+        $instance->name =  trim($instance->name). ' '. $instance->id;
+        $fileName = self::getFileFromReportName($instance->name);
+
+        $basePath = dirname(__DIR__, 1)  . "/Config/";
+
+        // Ensure the directory exists, create it if necessary
+        if (!is_dir($basePath)) {
+            return;
+        }
+
+        $filePath = $basePath . $fileName .'.json';
+
+        // Encode the $config array as JSON
+        $config['name'] = $instance->name;
+        $jsonConfig = json_encode($config, JSON_PRETTY_PRINT);
+
+        // Write the JSON data to the file
+        if (file_put_contents($filePath, $jsonConfig) !== false) {
+            // Append Report Instance ID in the name of the newly created report
+            civicrm_api3('ReportInstance', 'create', json_decode(json_encode($instance), true));
+
+            // Set status, check for _createNew param to identify new report
+            $statusMsg = ts('Your report has been successfully copied as "%1". You are currently viewing the new copy.', [1 => $instance->title]);
+            CRM_Core_Session::setStatus($statusMsg, '', 'success');
+
+            // Redirect to the new report
+            if($redirect) {
+                $urlParams = ['reset' => 1, 'force' => 1];
+                CRM_Utils_System::redirect(CRM_Utils_System::url("civicrm/report/instance/{$instance->id}", $urlParams));
+            }
+        } else {
+            // Error writing the file
+            CRM_Core_Session::setStatus(ts("Cannot Create ".$instance->title." Report. Check Permission."), ts('Report Save Error'), 'error');
+            return;
+        }
     }
 }
 

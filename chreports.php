@@ -711,8 +711,26 @@ function chreports_civicrm_preProcess($formName, &$form) {
     $defaults = $form->getVar('_defaults');
     $defaults = $reportInstance->setDefaultOptionSortBy($defaults);
     $form->setVar('_defaults', $defaults);
+    if($form->getVar('_submitValues')['task'] == 'report_instance.copy') {
+      // Get all Submit Values
+      $params = $form->getVar('_submitValues');
+      $reportInstance->setFormParams($params);
+
+      // Set Columns
+      if($params['fields'])
+        $reportInstance->setColumns($params['fields']);
+
+      // Build the Json File Config
+      $config = $reportInstance->buildJsonConfigFile('copy');
+
+      // Save and create the JSON File
+      // Redirect is set to TRUE by default
+      if($config)
+        $reportInstance->writeJsonConfigFile($config);
+    }
   }
 } // */
+
 
 /**
  * Implements hook_civicrm_navigationMenu().
