@@ -1559,16 +1559,12 @@ class CRM_Chreports_Reports_BaseReport {
         // Create the report
         $instance = CRM_Report_BAO_ReportInstance::create($params);
 
-        // Create the filename and make sure to append the ID to the name
-        $instance->name =  trim($instance->name). ' '. $instance->id;
-
         $basePath = CRM_Core_Config::singleton()->uploadDir;
         $report_id = self::escapeFileName($instance->report_id);
         $filePath = $basePath. 'reports/saved/'. $instance->created_id. '_' . $report_id . '_' . $instance->id. '.json';
 
         // Ensure the directory exists, create it if necessary
         if (!is_dir($basePath)) {
-            print_r('here');die;
             return;
         }
 
@@ -1578,9 +1574,6 @@ class CRM_Chreports_Reports_BaseReport {
 
         // Write the JSON data to the file
         if (file_put_contents($filePath, $jsonConfig) !== false) {
-            // Append Report Instance ID in the name of the newly created report
-            civicrm_api3('ReportInstance', 'create', json_decode(json_encode($instance), true));
-
             // Set status, check for _createNew param to identify new report
             $statusMsg = ts('Your report has been successfully copied as "%1". You are currently viewing the new copy.', [1 => $instance->title]);
             CRM_Core_Session::setStatus($statusMsg, '', 'success');
