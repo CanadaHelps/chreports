@@ -1480,37 +1480,38 @@ class CRM_Chreports_Reports_BaseReport {
      * @return array
      */
     public function buildJsonConfigSettings(string $action): array {
+        $config = [];
+
+        //Set Default Params
+        $params = $this->getFormParams();
+        $fields = $this->getColumns();
+        $filters = $this->getCustomFilterValues();
+
+        //Load Base template settings to get default Values
+        $baseTemplateSettings = $this->_settings;
+        $config['name'] = $params['title'];
+        $config['title'] = $params['name'] ?? $params['title'];
+        $config['preset_filter_values'] = $filters;
+
+        // Copy Columns with preSelected and Default Values
+        foreach ($baseTemplateSettings['fields'] as $fieldKey => $fieldValue) {
+            if(isset($fieldValue['default'])) {
+                $config['fields'][$fieldKey] = $fieldValue;
+            } elseif ($fields[$fieldKey]) {
+                $config['fields'][$fieldKey] = ['preSelected' => true];
+            } else {
+                $config['fields'][$fieldKey] = [];
+            }
+        }
+
+        // Copy rest of the leftover settings if applicable
+        foreach($baseTemplateSettings as $k => $v) {
+            if (!isset($config[$k])) {
+                $config[$k] = $baseTemplateSettings[$k];
+            }
+        }
         if($action == 'copy') {
-            $config = [];
-            $params = $this->getFormParams();
-            $fields = $this->getColumns();
-            $filters = $this->getCustomFilterValues();
-
-            //Load Base template settings to get default Values
-            $baseTemplateSettings = $this->_settings;
-            $config['name'] = $params['title'];
-            $config['title'] = $params['name'] ?? $params['title'];
-            $config['preset_filter_values'] = $filters;
-
-            // Copy Columns with preSelected and Default Values
-            foreach ($baseTemplateSettings['fields'] as $fieldKey => $fieldValue) {
-                if(isset($fieldValue['default'])) {
-                    $config['fields'][$fieldKey] = $fieldValue;
-                } elseif ($fields[$fieldKey]) {
-                    $config['fields'][$fieldKey] = ['preSelected' => true];
-                } else {
-                    $config['fields'][$fieldKey] = [];
-                }
-            }
-
-            // Copy rest of the leftover settings if applicable
-            foreach($baseTemplateSettings as $k => $v) {
-                if (!isset($config[$k])) {
-                    $config[$k] = $baseTemplateSettings[$k];
-                }
-            }
             $config['is_copy'] = (int) 1;
-            return $config;
         }
         return $config;
     }
