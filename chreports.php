@@ -155,18 +155,18 @@ function chreports_civicrm_buildForm($formName, &$form) {
         $elementField = $form->getElement($entity)->_elements;
         $reportInstance->setPreSelectField($elementField);
       }
+      //For monthly and yearly report only one column should be checked at a time
+      if($reportInstance->isMonthlyYearlyReport()){
+        CRM_Core_Resources::singleton()->addScript(
+          "CRM.$(function($) {
+            $('.crm-report-criteria-field input:checkbox').on('change',function() {
+              $('.crm-form-checkbox').not(this).prop('checked', false);
+            });
+          });"
+        );
+      }
+    }
 
-    //For  monthly and yearly report only one column should be checked at a time
-    if($reportInstance->isMonthlyYearlyReport()){
-      CRM_Core_Resources::singleton()->addScript(
-        "CRM.$(function($) {
-          $('.crm-report-criteria-field input:checkbox').on('change',function() {
-            $('.crm-form-checkbox').not(this).prop('checked', false);  
-          });
-        });"
-      );
-    }
-    }
   }
   if ($formName == 'CRM_Chreports_Form_Report_ExtendSummary' || $formName == 'CRM_Report_Form_Contact_Summary'|| $formName == 'CRM_Chreports_Form_Report_GLSummaryReport') {
     CRM_Core_Resources::singleton()->addScript(
@@ -710,7 +710,18 @@ function chreports_civicrm_preProcess($formName, &$form) {
     //make the default field selected for sort by option
     $defaults = $form->getVar('_defaults');
     $defaults = $reportInstance->setDefaultOptionSortBy($defaults);
+
+    // if there are any Preselect Filters in Json, prepopulare on form load
+    if($reportInstance->getSettings()['preset_filter_values']) {
+      $filterParams = $reportInstance->createCustomFilterParams();
+      foreach($filterParams as $filterKey => $filterValue) {
+        $defaults[$filterKey] = $filterValue;
+      }
+    }
+
     $form->setVar('_defaults', $defaults);
+
+    //CRM-2097: For Save/Copy bypass the post Process
     if($form->getVar('_submitValues')['task'] == 'report_instance.copy') {
       // Get all Submit Values
       $params = $form->getVar('_submitValues');
@@ -721,7 +732,7 @@ function chreports_civicrm_preProcess($formName, &$form) {
         $reportInstance->setColumns($params['fields']);
 
       // Build the Json File Config
-      $config = $reportInstance->buildJsonConfigFile('copy');
+      $config = $reportInstance->buildJsonConfigSettings('copy');
 
       // Save and create the JSON File
       // Redirect is set to TRUE by default

@@ -80,15 +80,8 @@ class CRM_Chreports_Reports_BaseReport {
      */
     private function loadSettings(): void {
         //get the values from json file based upon the name of the report
-        $jsonFileName = strtolower($this->_name);
-        $jsonFileName = str_replace("(","", $jsonFileName);
-        $jsonFileName = str_replace(")","", $jsonFileName);
-        $jsonFileName = str_replace(" ","_", $jsonFileName);
-
-        $sourcePath = dirname(__DIR__, 1)  . "/Config/" . $jsonFileName.'.json';
-        if (is_file($sourcePath)) {
-            $this->_settings = json_decode(file_get_contents($sourcePath),true); 
-        }
+        $reportInstanceDetails = $this->getReportInstanceDetails($this->_id);
+        $this->_settings = $this->_fetchConfigSettings($reportInstanceDetails);
     }
 
     //set entity value externally
@@ -452,6 +445,29 @@ class CRM_Chreports_Reports_BaseReport {
 
         $this->_filters = $filters;
     }
+
+    /**
+     * Fetch the JSON Config from different paths depending on the Report Instance & Report ID type
+     *
+     * @param array $reportInstanceDetails Contains name, title, id, report_id and created_id
+     * @return void
+     */
+    private function _fetchConfigSettings($reportInstanceDetails) {
+        $fileName = self::escapeFileName($reportInstanceDetails['name']);
+        $sourcePath = dirname(__DIR__, 1)  . "/Templates/" . $fileName.'.json';
+
+        //For the Custom Saved reports, fetch it from Files folder instead
+        if($reportInstanceDetails['created_id']) {
+            $basePath = CRM_Core_Config::singleton()->uploadDir;
+            $report_id = self::escapeFileName($reportInstanceDetails['report_id']);
+            $sourcePath = $basePath. 'reports/saved/'. $reportInstanceDetails['created_id']. '_' . $report_id . '_' . $reportInstanceDetails['id']. '.json';
+        }
+        if (is_file($sourcePath)) {
+            return json_decode(file_get_contents($sourcePath),true);
+        }
+    }
+
+
     //to identify FieldNames from selected filters
     private function getFieldNamesForFilters() {
         $filterNames = [];
@@ -479,6 +495,43 @@ class CRM_Chreports_Reports_BaseReport {
             }
         }
         return $filterNames;
+    }
+
+    /**
+     * Create Filter Params and preset values with JSON config file
+     *
+     * @return array
+     */
+    public function createCustomFilterParams(): array {
+        $filterParams = [];
+        $filterPresets = $this->getSettings()['preset_filter_values'];
+
+        foreach ($filterPresets as $fieldName => $data) {
+            // Handle the 'null' and 'not null' cases
+            if (in_array($data, ['nll', 'nnll'])) {
+                $filterParams[$fieldName.'_op'] = $data;
+            } elseif (is_array($data)) {
+                // Handle the 'bw' and date range cases
+                if (isset($data['bw'])) {
+                    $filterParams[$fieldName . '_op'] = 'bw';
+                    $filterParams[$fieldName . '_min'] = $data['bw']['min'];
+                    $filterParams[$fieldName . '_max'] = $data['bw']['max'];
+                } elseif (isset($data['from']) && isset($data['to'])) {
+                    $filterParams[$fieldName . '_relative'] = 0;
+                    $filterParams[$fieldName . '_from'] = $data['from'];
+                    $filterParams[$fieldName . '_to'] = $data['to'];
+                } elseif (isset($data['relative'])) {
+                    $filterParams[$fieldName . '_relative'] = $data['relative'];
+                } else {
+                    // Handle other cases
+                    foreach ($data as $operation => $value) {
+                        $filterParams[$fieldName . '_op'] = $operation;
+                        $filterParams[$fieldName . '_value'] = $value;
+                    }
+                }
+            }
+        }
+        return $filterParams;
     }
 
 
@@ -520,6 +573,8 @@ class CRM_Chreports_Reports_BaseReport {
                         ];
                     } elseif ($matches[2] == 'relative' && $params[$matches[0]]) {
                         $filterNames[$fieldName]['relative'] = $params[$matches[0]];
+                    } elseif($params[$fieldName.'_value']) {
+                        $filterNames[$matches[1]][$params[$matches[0]]] = $params[$fieldName.'_value'];
                     }
                     break;
             }
@@ -1371,7 +1426,7 @@ class CRM_Chreports_Reports_BaseReport {
     static function getReportInstanceDetails( $id ): array {
         $result = civicrm_api3('ReportInstance', 'get', [
             'sequential' => 1,
-            'return' => ["name", "title"],
+            'return' => ["name", "title", "created_id", "report_id"],
             'id' => $id,
             ]);
     
@@ -1424,24 +1479,37 @@ class CRM_Chreports_Reports_BaseReport {
      * @param string $action The task action coming from the form
      * @return array
      */
-    public function buildJsonConfigFile(string $action): array {
+    public function buildJsonConfigSettings(string $action): array {
         if($action == 'copy') {
             $config = [];
             $params = $this->getFormParams();
-            $fields = $this->_columns;
+            $fields = $this->getColumns();
             $filters = $this->getCustomFilterValues();
+
             //Load Base template settings to get default Values
             $baseTemplateSettings = $this->_settings;
             $config['name'] = $params['title'];
             $config['title'] = $params['name'] ?? $params['title'];
-            $config['fields'] = $fields;
-            $config['filters'] = $filters;
+            $config['preset_filter_values'] = $filters;
 
+            // Copy Columns with preSelected and Default Values
+            foreach ($baseTemplateSettings['fields'] as $fieldKey => $fieldValue) {
+                if(isset($fieldValue['default'])) {
+                    $config['fields'][$fieldKey] = $fieldValue;
+                } elseif ($fields[$fieldKey]) {
+                    $config['fields'][$fieldKey] = ['preSelected' => true];
+                } else {
+                    $config['fields'][$fieldKey] = [];
+                }
+            }
+
+            // Copy rest of the leftover settings if applicable
             foreach($baseTemplateSettings as $k => $v) {
                 if (!isset($config[$k])) {
                     $config[$k] = $baseTemplateSettings[$k];
                 }
             }
+            $config['is_copy'] = (int) 1;
             return $config;
         }
         return $config;
@@ -1449,15 +1517,14 @@ class CRM_Chreports_Reports_BaseReport {
 
     /**
      *
-     * Get json config filename from the title/name of the report instance
+     * Convert Any strng into save compliant filename
      *
      * @return string
      */
-    public static function getFileFromReportName(string $fileName): string {
-        $jsonFileName = strtolower($fileName);
-        $jsonFileName = str_replace("(","", $jsonFileName);
+    public static function escapeFileName(string $fileName): string {
+        $jsonFileName = str_replace("(","", $fileName);
         $jsonFileName = str_replace(")","", $jsonFileName);
-        $jsonFileName = str_replace(" ","_", $jsonFileName);
+        $jsonFileName = strtolower(preg_replace('/[^a-zA-Z0-9]+/', '_', trim($jsonFileName)));
         return $jsonFileName;
     }
 
@@ -1493,16 +1560,16 @@ class CRM_Chreports_Reports_BaseReport {
 
         // Create the filename and make sure to append the ID to the name
         $instance->name =  trim($instance->name). ' '. $instance->id;
-        $fileName = self::getFileFromReportName($instance->name);
 
-        $basePath = dirname(__DIR__, 1)  . "/Config/";
+        $basePath = CRM_Core_Config::singleton()->uploadDir;
+        $report_id = self::escapeFileName($instance->report_id);
+        $filePath = $basePath. 'reports/saved/'. $instance->created_id. '_' . $report_id . '_' . $instance->id. '.json';
 
         // Ensure the directory exists, create it if necessary
         if (!is_dir($basePath)) {
+            print_r('here');die;
             return;
         }
-
-        $filePath = $basePath . $fileName .'.json';
 
         // Encode the $config array as JSON
         $config['name'] = $instance->name;
@@ -1524,7 +1591,7 @@ class CRM_Chreports_Reports_BaseReport {
             }
         } else {
             // Error writing the file
-            CRM_Core_Session::setStatus(ts("Cannot Create ".$instance->title." Report. Check Permission."), ts('Report Save Error'), 'error');
+            CRM_Core_Session::setStatus(ts("Cannot Create ".$instance->title." Report. Check Write Permission to Uploads directory."), ts('Report Save Error'), 'error');
             return;
         }
     }
