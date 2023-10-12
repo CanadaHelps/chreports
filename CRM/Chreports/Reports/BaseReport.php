@@ -1,11 +1,9 @@
 <?php
 use CRM_Canadahelps_ExtensionUtils as EU;
 use CRM_Chreports_ExtensionUtil as E;
-class CRM_Chreports_Reports_BaseReport {
+class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfiguration {
 
-    private $_id;
     private $_name;
-    private $_settings = [];
     private $_pagination = FALSE;
 
     private $_entity  = 'contribution';
@@ -59,44 +57,16 @@ class CRM_Chreports_Reports_BaseReport {
     ];
 
     public function __construct( string $entity, int $id, string $name ) {
-
-        $this->_entity = strtolower($entity);
-        $this->_id = $id;
+        parent::__construct($id);
         $this->_name = $name;
-        
-        $this->loadSettings();
-    }
-
-    
-    
-    /**
-     * 
-     * Loads the report configuration from a JSON file
-     * 
-     * Template File: <report_id>.json
-     * Saved report: <report_id>_<id>.json
-     * 
-     * @return void
-     */
-    private function loadSettings(): void {
-        //get the values from json file based upon the name of the report
-        $jsonFileName = strtolower($this->_name);
-        $jsonFileName = str_replace("(","", $jsonFileName);
-        $jsonFileName = str_replace(")","", $jsonFileName);
-        $jsonFileName = str_replace(" ","_", $jsonFileName);
-
-        $sourcePath = dirname(__DIR__, 1)  . "/Config/" . $jsonFileName.'.json';
-        if (is_file($sourcePath)) {
-            $this->_settings = json_decode(file_get_contents($sourcePath),true); 
-        }
+        $this->_entity = strtolower($entity);
     }
 
     //set entity value externally
     public function setEntity(string $entity) {
         $this->_entity = strtolower($entity);
     }
-    
-    
+
     /**
      * 
      * Returns the main entity for the report
@@ -119,16 +89,6 @@ class CRM_Chreports_Reports_BaseReport {
     public function getEntityTable(string $entity = null): string {
         $entity = ($entity != NULL) ? $entity : $this->getEntity();
         return "civicrm_" . $entity;
-    }
-    
-    /**
-     * 
-     * Returns the report configuration
-     *
-     * @return array
-     */
-    public function getSettings(): array {
-        return $this->_settings;
     }
     
     /**
@@ -437,33 +397,118 @@ class CRM_Chreports_Reports_BaseReport {
 
         $this->_filters = $filters;
     }
+
+
     //to identify FieldNames from selected filters
     private function getFieldNamesForFilters() {
         $filterNames = [];
         $params = $this->getFormParams();
         foreach ($params as $key => $value) {
-        preg_match('/(.+)_(op|from|relative)$/i', $key, $matches);
-        
-        if ( count($matches) > 0 ) {
-            $fieldName = $matches[1];
-            
-            if ($matches[2] == "op") {
-            // IN (value1, value 2)
-            if ( is_array($params[$fieldName.'_value']) && count($params[$fieldName.'_value']) > 0) {
-                $filterNames[] = $fieldName;
-            // Regular clause
-            } else if (!empty($params[$fieldName.'_value'])) {
-                $filterNames[] = $fieldName;
-            }
-            // Date Range  
-            } else if ($matches[2] == "from" && !empty($value)) {
-            $filterNames[] = $matches[1];
-            
-            // Relative Date
-            } else if ($matches[2] == "relative" && !empty($value)) {
-            $filterNames[] = $matches[1];
+            preg_match('/(.+)_(op|from|relative)$/i', $key, $matches);
+            if ( count($matches) > 0 ) {
+                $fieldName = $matches[1];
+                if ($matches[2] == "op") {
+                    // IN (value1, value 2)
+                    if ( is_array($params[$fieldName.'_value']) && count($params[$fieldName.'_value']) > 0) {
+                        $filterNames[] = $fieldName;
+                    // Regular clause
+                    } else if (!empty($params[$fieldName.'_value'])) {
+                        $filterNames[] = $fieldName;
+                    }
+                    // Date Range
+                } else if ($matches[2] == "from" && !empty($value)) {
+                $filterNames[] = $matches[1];
+
+                // Relative Date
+                } else if ($matches[2] == "relative" && !empty($value)) {
+                $filterNames[] = $matches[1];
+                }
             }
         }
+        return $filterNames;
+    }
+
+    /**
+     * Create Filter Params and preset values with JSON config file
+     *
+     * @return array
+     */
+    public function createCustomFilterParams(): array {
+        $filterParams = [];
+        $filterPresets = $this->getSettings()['preset_filter_values'];
+
+        foreach ($filterPresets as $fieldName => $data) {
+            // Handle the 'null' and 'not null' cases
+            if (in_array($data, ['nll', 'nnll'])) {
+                $filterParams[$fieldName.'_op'] = $data;
+            } elseif (is_array($data)) {
+                // Handle the 'bw' and date range cases
+                if (isset($data['bw'])) {
+                    $filterParams[$fieldName . '_op'] = 'bw';
+                    $filterParams[$fieldName . '_min'] = $data['bw']['min'];
+                    $filterParams[$fieldName . '_max'] = $data['bw']['max'];
+                } elseif (isset($data['from']) && isset($data['to'])) {
+                    $filterParams[$fieldName . '_relative'] = 0;
+                    $filterParams[$fieldName . '_from'] = $data['from'];
+                    $filterParams[$fieldName . '_to'] = $data['to'];
+                } elseif (isset($data['relative'])) {
+                    $filterParams[$fieldName . '_relative'] = $data['relative'];
+                } else {
+                    // Handle other cases
+                    foreach ($data as $operation => $value) {
+                        $filterParams[$fieldName . '_op'] = $operation;
+                        $filterParams[$fieldName . '_value'] = $value;
+                    }
+                }
+            }
+        }
+        return $filterParams;
+    }
+
+
+    // Get filter mapping for the custom jSON file
+    public function getCustomFilterValues(): array {
+        $filterNames = [];
+        $params = $this->getFormParams();
+        foreach ($params as $key => $value) {
+            // Check if the current key ends with "op," "relative," "from," or "to"
+            preg_match('/(.+)_(op|from|relative)$/i', $key, $matches);
+            if (empty($matches)) {
+                continue; // Skip keys that don't match the pattern
+            }
+
+            $fieldName = $matches[1];
+            $operation = $params[$matches[0]];
+
+            switch ($operation) {
+                case 'bw':
+                    $filterNames[$fieldName][$operation] = [
+                        'min' => $params[$fieldName.'_min'],
+                        'max' => $params[$fieldName.'_max']
+                    ];
+                    break;
+
+                case 'nll':
+                    $filterNames[$fieldName] = 'nll';
+                    break;
+
+                case 'nnll':
+                    $filterNames[$fieldName] = 'nnll';
+                    break;
+
+                default:
+                    if ($matches[2] == 'from' && $params[$fieldName.'_from']) {
+                        $filterNames[$fieldName] = [
+                            'from' => $params[$fieldName.'_from'],
+                            'to' => $params[$fieldName.'_to']
+                        ];
+                    } elseif ($matches[2] == 'relative' && $params[$matches[0]]) {
+                        $filterNames[$fieldName]['relative'] = $params[$matches[0]];
+                    } elseif($params[$fieldName.'_value']) {
+                        $filterNames[$matches[1]][$params[$matches[0]]] = $params[$fieldName.'_value'];
+                    }
+                    break;
+            }
         }
         return $filterNames;
     }
@@ -1300,30 +1345,6 @@ class CRM_Chreports_Reports_BaseReport {
                 break;
         
         }
-    }
-
-    /**
-     * 
-     * Returns Get info for a report instance
-     *
-     * @param int $id ID of the report 
-     * @return array
-     */
-    static function getReportInstanceDetails( $id ): array {
-        $result = civicrm_api3('ReportInstance', 'get', [
-            'sequential' => 1,
-            'return' => ["name", "title"],
-            'id' => $id,
-            ]);
-    
-        return $result['values'][0];
-
-        // todo: use API4 after upgrade
-        // $reportInstance = \Civi\Api4\ReportInstance::get(TRUE)
-        // ->addSelect('name', 'title')
-        // ->addWhere('id', '=', $reportId)
-        // ->execute()
-        // ->itemAt(1);
     }
 
     /**
