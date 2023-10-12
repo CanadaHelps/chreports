@@ -723,6 +723,7 @@ function chreports_civicrm_preProcess($formName, &$form) {
 
     //CRM-2097: For Save/Copy bypass the post Process
     if($form->getVar('_submitValues')['task'] == 'report_instance.copy') {
+      $reportInstance->setAction('copy');
       // Get all Submit Values
       $params = $form->getVar('_submitValues');
       $reportInstance->setFormParams($params);
@@ -732,7 +733,7 @@ function chreports_civicrm_preProcess($formName, &$form) {
         $reportInstance->setColumns($params['fields']);
 
       // Build the Json File Config
-      $config = $reportInstance->buildJsonConfigSettings('copy');
+      $config = $reportInstance->buildJsonConfigSettings();
 
       // Save and create the JSON File
       // Redirect is set to TRUE by default
