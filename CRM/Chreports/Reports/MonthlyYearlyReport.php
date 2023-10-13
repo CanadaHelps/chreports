@@ -1,8 +1,8 @@
 <?php
 use CRM_Chreports_ExtensionUtil as E;
 use CRM_Canadahelps_ExtensionUtils as EU;
-class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseReport {
-
+class CRM_Chreports_Reports_MonthlyYearlyReport extends CRM_Chreports_Reports_BaseReport {
+    
 
     public function __construct( string $entity, int $id, string $name ) {
         parent::__construct( $entity, $id, $name);

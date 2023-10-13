@@ -1,0 +1,13 @@
+{ 
+    "name": "past_year_quarterly",
+    "title": "Last Year inc. Today",
+    "type": "quarterly",
+    "entity": "contribution",
+    "fields":{
+        "receive_date_start": {"default" : true},
+        "total_amount": {},
+        "no_of_contributions": {}
+    },
+    "use_default_filters" : true,
+    "groupByDisplay" : false
+}

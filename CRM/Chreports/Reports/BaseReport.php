@@ -5,6 +5,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
 
     private $_name;
     private $_pagination = FALSE;
+    private $_entityTableMapping = [];
 
     private $_entity  = 'contribution';
     protected $_columns = [];
@@ -24,6 +25,8 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     protected $_orderByFields = [];
 
     protected $_where = NULL;
+    protected $_having = NULL;
+    protected $_limit = NULL;
    
     public $_filters = NULL;
 
@@ -209,6 +212,14 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     public function hasPagination() : bool {
         return $this->_pagination;
     }
+    //manage limit from extendedClasses
+    public function getLimit(): string {
+        return $this->_limit;
+    }
+     // manage columns from extendedSummary
+     public function setLimit(string $limit) {
+        $this->_limit = $limit;
+    }
     
     //Opportunity array defined for fields, orderby, filters
     public function setOpportunityFields(&$var) {
@@ -350,14 +361,95 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         ];
         $var = array_merge($var, $specificCols);
       }
+
+    public function setAddressField(&$var)
+    {
+        $addressCols = [
+            'civicrm_address' => [
+                'dao' => 'CRM_Core_DAO_Address',
+                'fields' => [
+                    'address_name' => [
+                        'title' => ts('Address Name'),
+                        'default' => FALSE,
+                        'name' => 'name',
+                    ],
+                'street_address' => [
+                    'title' => ts('Address'),
+                    'default' => FALSE,
+                ],
+                'supplemental_address_1' => [
+                    'title' => ts('Supplementary Address Field 1'),
+                    'default' => FALSE,
+                ],
+                'supplemental_address_2' => [
+                    'title' => ts('Supplementary Address Field 2'),
+                    'default' => FALSE,
+                ],
+                'supplemental_address_3' => [
+                    'title' => ts('Supplementary Address Field 3'),
+                    'default' => FALSE,
+                ],
+                'street_number' => [
+                    'title' => ts('Street Number'),
+                    'default' => FALSE,
+                ],
+                'street_name' => [
+                    'title' => ts('Street Name'),
+                    'default' => FALSE,
+                ],
+                'street_unit' => [
+                    'title' => ts('Street Unit'),
+                    'default' => FALSE,
+                ],
+                'city' => [
+                    'title' => 'City',
+                    'default' => FALSE,
+                ],
+                'state_province_id' => [
+                    'title' => 'Province',
+                    'default' => FALSE,
+                    'alter_display' => 'alterStateProvinceID',
+                ],
+                'postal_code' => [
+                    'title' => 'Postal Code',
+                    'default' => FALSE,
+                ],
+                'postal_code_suffix' => [
+                    'title' => 'Postal Code Suffix',
+                    'default' => FALSE,
+                ],
+                'country_id' => [
+                    'title' => 'Country',
+                    'default' => FALSE,
+                    'alter_display' => 'alterCountryID',
+                ],
+                ],
+                'grouping' => 'location-fields',
+            ],
+        ];
+        $var = array_merge($var, $addressCols);
+    }
     //get type of the report from settings
     public function getReportType(): string {
         return $this->_settings['type'];
+    }
+    //get name of the report
+    public function getReportName(): string {
+        return $this->_settings['name'];
+    }
+     //get type of the report from settings
+     public function isFiscalQuarterReport(): bool {
+        if($this->_settings['type'] == 'fiscal' || $this->_settings['type'] == 'quarterly')
+        {
+            return true; 
+        }
+        return false;
     }
     //get type of the report from settings
     public function isMonthlyYearlyReport(): bool {
         if($this->_settings['type'] == 'monthly' || $this->_settings['type'] == 'yearly')
         {
+            $this->_limit = '';
             return true; 
         }
         return false;
@@ -367,11 +459,19 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     public function isOpportunityReport(): bool {
         if($this->_settings['name'] == 'opportunity_details' && $this->_settings['entity'] == 'grant')
         {
-            $this->setEntity($this->_settings['entity']);
             return true; 
         }
         return false;
     }
+    //check if report is opportunity report
+    public function isLYBNTSYBNTReport(): bool {
+        if($this->_settings['name'] == 'sybunt' || $this->_settings['name'] == 'lybunt')
+        {
+            return true; 
+        }
+        return false;
+    }
+    
     //manage filters variable
     public function getFilters(): array {
         return $this->_filters;
@@ -516,13 +616,25 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     
     //get field details from array
     public function getFieldMapping(string $fieldEntity, string $fieldName): array {
-        $entityTable = $this->getEntityTable($fieldEntity);
-       
+        //$entityTable = $this->getEntityTable($fieldEntity);
+        $entityTable = ($this->_entityTableMapping[$fieldName] == NULL) ? $this->getEntityTable() : $this->_entityTableMapping[$fieldName];
         if ( !array_key_exists($entityTable, $this->_mapping) 
             || !array_key_exists($fieldName, $this->_mapping[$entityTable]['fields']) ) {
                 return ['name' => $fieldName, 'title' => $fieldName, 'table_name' => $entityTable];
             }
         return $this->_mapping[$entityTable]['fields'][$fieldName];
+    }
+
+    public function setEntityTableForFields(): void {
+    $fieldTable = [];
+        foreach ($this->_mapping as $entityName =>  $entityDetails)
+        {
+            foreach ( $entityDetails['fields'] as $fieldName => $fieldValue)
+            {
+                $fieldTable[$fieldName] = $entityName;
+            }
+        }
+        $this->_entityTableMapping = $fieldTable;
     }
 
     public function buildSelectQuery() {
@@ -549,6 +661,10 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         if($this->isOpportunityReport())
         $this->setOpportunityFields($var);
 
+        if($this->getEntity() == 'contact')
+        {
+            $this->setAddressField($var);
+        }
         // stores field configuration so we can use it later on
         $this->setFieldsMapping($var);
         
@@ -571,6 +687,11 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         $this->filteringReportAddCustomFilter('probability',$var); //Probability
         $this->filteringReportAddCustomFilter('Opportunity_Name',$var); //Opportunity Name
         $this->filteringReportAddCustomFilter('Opportunity_Owner',$var); //Opportunity Owner
+        //SYBNT fields
+        $this->filteringReportAddCustomFilter('on_hold',$var); //Opportunity Owner
+        $this->filteringReportAddCustomFilter('yid',$var); //Opportunity Owner
+        //top contributors
+        $this->filteringReportAddCustomFilter('total_range',$var); //Opportunity Owner
     }
 
     private function filteringReportFields(&$var) {
@@ -724,6 +845,62 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                     ];
                     $this->customFieldCreation($fieldName,$var,$fieldDetails);
                     break;
+                case 'receive_date_start': //for fiscal, quarterly report
+                        if($this->isFiscalQuarterReport())
+                        {
+                            $title =($this->getReportType() == 'fiscal')? E::ts('Month') : E::ts('Quarter');
+                        }
+                    $fieldDetails = [
+                        'title' => $title,
+                        'name' => 'receive_date',
+                        'table_name' => $this->getEntityTable(),
+                        //'select_clause_alias' => $this->getEntityTable('contact').'.display_name',
+                        'dbAlias' => $this->getEntityTable().'receive_date',
+                        'type' => CRM_Utils_Type::T_STRING,
+                    ];
+                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
+                    break;
+                case 'last_four_year_total_amount':
+                    $fieldDetails = [
+                        'title' => E::ts('Last 4rth Year Total'),
+                        'type' => CRM_Utils_Type::T_MONEY,
+                    ];
+                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
+                    break;   
+                case 'last_three_year_total_amount':
+                    $fieldDetails = [
+                        'title' => E::ts('Last 3 Years total'),
+                        'type' => CRM_Utils_Type::T_MONEY,
+                    ];
+                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
+                    break; 
+                case 'last_two_year_total_amount':
+                    $fieldDetails = [
+                        'title' => E::ts('Last 2 Years total'),
+                        'type' => CRM_Utils_Type::T_MONEY,
+                    ];
+                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
+                    break; 
+                case 'on_hold':
+                    $fieldDetails = [
+                        'title' => E::ts('Email on hold'),
+                    ];
+                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
+                    break; 
+                case 'last_year_total_amount':
+                    $fieldDetails = [
+                        'title' => ts('Last Year Total'),
+                        'type' => CRM_Utils_Type::T_MONEY,
+                    ];
+                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
+                    break; 
+                case 'civicrm_life_time_total':
+                    $fieldDetails = [
+                        'title' => ts('Lifetime Total'),
+                        'type' => CRM_Utils_Type::T_MONEY,
+                    ];
+                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
+                    break; 
             }
         }
     }
@@ -792,13 +969,25 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                     case 'non_deductible_amount':
                        $var[$entityName]['filters'][$fieldName]['title'] = 'Advantage amount';
                        break;
+                    case 'receive_date':
+                        if($this->isFiscalQuarterReport())
+                        {
+                            $defaultVal =($this->getReportType() == 'fiscal')? 'this.fiscal_year' : 'ending.year';
+                            $var[$entityName]['filters'][$fieldName]['default'] = $defaultVal;
+                        }
+                        if($this->getReportName() == 'top_donors')
+                        {
+                            $defaultVal = 'ending.year';
+                            $var[$entityName]['filters'][$fieldName]['default'] = $defaultVal;
+                        }
+                        break;
                     }
                 // We do not want to show this filters
                 if (!in_array($fieldName, $this->getReportingFilters())) {
                     unset($var[$entityName]['filters'][$fieldName]);
                 } else{
                     //modify filter option values if required
-                    $this->fixFilterOption($fieldName, $var[$entityName]['filters'][$fieldName]['options']);
+                    $this->fixFilterOption($fieldName, $var[$entityName]['filters'][$fieldName]);
                     
                 }
             }
@@ -909,6 +1098,39 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                         ];
                     }
                     break;
+                case 'on_hold';
+                    $var[$this->getEntityTable()]['filters'][$fieldName] = [
+                        'title' => ts('On Hold'),
+                        'type' => CRM_Utils_Type::T_INT,
+                        'operatorType' => CRM_Report_Form::OP_MULTISELECT,
+                        'options' => ['' => ts('Any')] + CRM_Core_PseudoConstant::emailOnHoldOptions(),
+                    ];
+                    break;
+                case 'yid':
+                    $yearsInPast = 10;
+                    $yearsInFuture = 1;
+                    $date = CRM_Core_SelectValues::date('custom', NULL, $yearsInPast, $yearsInFuture);
+                        $count = $date['maxYear'];
+                        while ($date['minYear'] <= $count) {
+                        $optionYear[$date['minYear']] = $date['minYear'];
+                        $date['minYear']++;
+                        }
+                        $var[$this->getEntityTable()]['filters'][$fieldName] = [
+                        //'name' => 'receive_date',
+                        'title' => ts('This Year'),
+                        'operatorType' => CRM_Report_Form::OP_SELECT,
+                        'options' => $optionYear,
+                        'default' => date('Y'),
+                        'type' => CRM_Utils_Type::T_INT,
+                    ];
+                    break; 
+                case 'total_range':
+                        $var[$this->getEntityTable()]['filters'][$fieldName] = [
+                            'title' => ts('Show no. of Top Donors'),
+                            'type' => CRM_Utils_Type::T_INT,
+                            'default_op' => 'eq',
+                    ];
+                    break; 
             }
         }
     }
@@ -1009,6 +1231,51 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     // manage display of resulting rows
     //TODO : try to replace campaign_id with the name it self in the query rather than performing additional alter display
     public function alterDisplayRows(&$rows) {
+        if($this->isFiscalQuarterReport()){
+            $rollupTotalRow = ['receive_date_start' => 'Grand Total'];
+            $resultingRow = [];
+            foreach($rows as $rowNum => $row)
+            {
+                if($this->getReportType() == 'quarterly')
+                {
+                    $year = date('Y', strtotime($row['receive_date_start']));
+                    $resultingRow[$year][] = $row;
+                }
+                $rollupTotalRow['total_amount'] += $row['total_amount'];
+                $rollupTotalRow['count'] += $row['count'];
+            }
+            if($this->getReportType() == 'quarterly'){
+                $finalDisplay = [];
+                foreach($resultingRow as $key => $rowValue)
+                {
+                    $subTotal = ['receive_date_start' => 'Total'];
+                    foreach($rowValue as $k=>$result)
+                    {
+                        $subTotal['total_amount'] += $result['total_amount'];
+                        $subTotal['count'] += $result['count'];
+                        $finalDisplay[] = $result;
+                    }
+                $finalDisplay[] = $subTotal;
+                }
+                $rows = $finalDisplay;
+            }
+            $rows[] = $rollupTotalRow;
+        }
+        if($this->_settings['name'] == "SYBNT"){
+            $rollupTotalRow = ['exposed_id' => 'Grand Total'];
+           
+            foreach($rows as $rowNum => $row)
+            {
+                foreach($row as $key=>$value)
+            {
+                if($key == 'civicrm_life_time_total' || $key == 'last_year_total_amount' || $key == 'last_four_year_total_amount' || $key == 'last_three_year_total_amount' || $key == 'last_two_year_total_amount')
+                {
+                    $rollupTotalRow[$key] += $row[$key];
+                }
+            }
+            }
+            $rows[] = $rollupTotalRow;
+        }
         foreach ($rows as $rowNum => $row) {
             //CRM-2063 - Use "Unassigned" as value in summary/Detailed  reports for NULL values
             foreach($this->_columns as $key=>$value)
@@ -1111,7 +1378,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         $select[] = $this->getEntityTable($statEntity).".currency as currency";
 
         if ($showDetailed) {
-            $select[] = "ROUND(AVG(".$this->getEntityTable().".`total_amount`), 2) as avg";
+            $select[] = "ROUND(AVG(".$this->getEntityTable('contribution').".`total_amount`), 2) as avg";
             $select[] = "SUM(".$this->getEntityTable('contribution').".fee_amount) as fee_amount";
             $select[] = "SUM(".$this->getEntityTable('contribution').".net_amount) as net_amount";
         }
@@ -1244,6 +1511,29 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                     }
                 }
                 break;
+            case 'receive_date_start':
+                if($this->isFiscalQuarterReport()){
+                    if(!in_array($row['receive_date_start'],['Total','Grand Total'])){
+                    $latestContribReport = $this->getReportInstanceDetailsByName('Latest Contributions (Dashlet)');
+                    $dateReformat=date("F Y",strtotime($row['receive_date_start']));
+                    if($this->getReportType() == 'fiscal')
+                    {
+                        $dateStart = date('Ym01', strtotime($row['receive_date_start']));
+                        $dateEnd = date('Ymt', strtotime($row['receive_date_start']));
+                    }else{
+                        $year = date('Y', strtotime($row['receive_date_start']));
+                        $month = 3 * $row['quartername'] -2;
+                        $dateStart = date('Ym01', strtotime($year.'-'.$month.'-01'));
+                        $dateEnd = date("Ymd", mktime(0, 0, 0, $month + 3,1 - 1, $year));
+                    }
+                    $url = CRM_Report_Utils_Report::getNextUrl('instance/'.$latestContribReport['id'],
+                    "reset=1&force=1&receive_date_from={$dateStart}&receive_date_to={$dateEnd}");
+                        $string = $string . ($string ? $separator : '') .
+                        "<a href='{$url}'>".$dateReformat."</a> ";
+                        $rows[$rowNum]['receive_date_start'] = $string;
+                    }
+                }
+                break;
             }
         }
 
@@ -1279,6 +1569,33 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                 break;
             case 'display_name':
                 $title = ts('Prospect');
+                break;
+            case 'do_not_phone':
+                $title = ts('Do Not Phone');
+                break;
+            case 'is_opt_out':
+                $title = ts('Is Opt Out');
+                break;
+            case 'do_not_mail':
+                $title = ts('Do Not Mail');
+                break;
+            case 'is_deceased':
+                $title = ts('Is Deceased');
+                break;
+            case 'do_not_sms':
+                $title = ts('Do Not SMS');
+                break;
+            case 'preferred_language':
+                $title = ts('Preffered Language');
+                break;
+            case 'do_not_email':
+                $title = ts('Do Not Mail');
+                break;
+            case 'do_not_trade':
+                $title = ts('Do Not Trade');
+                break;
+            case 'job_title':
+                $title = ts('Job Title');
                 break;
         }
     }
@@ -1341,7 +1658,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         switch ($fieldName) {
             case 'contribution_page_id':
                 // TODO: deprecated
-                $filterData = CRM_Contribute_PseudoConstant::contributionPage(NULL, TRUE);
+                $filterData['options'] = CRM_Contribute_PseudoConstant::contributionPage(NULL, TRUE);
                 break;
         
         }
@@ -1378,6 +1695,76 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     protected function getSQLJoinForField($fieldName, $tableName, $entityTableName = NULL, $tableFieldName = "id", $joinType = "LEFT"): string {
         $entityTableName = ($entityTableName == NULL) ? $this->getEntityTable() : $entityTableName;
         return "$joinType JOIN $tableName ON $tableName.$tableFieldName = $entityTableName.$fieldName";
+    }
+
+    //having clause
+    public function whereClauseLast4Year($fieldName) {
+      return "$fieldName BETWEEN '" . $this->getFirstDateOfPriorRangeNYears(4) . "' AND '" . $this->getLastDateOfPriorRange() . "'";
+    }
+    public function whereClauseLastNYears($fieldName, $count) {
+      return "$fieldName BETWEEN '" . $this->getFirstDateOfPriorRangeNYears($count) . "' AND '" . $this->getLastDateOfPriorRangeNYears($count) . "'";
+    }
+
+    public function getFirstDateOfPriorRangeNYears($count) {
+      return date('YmdHis', strtotime("- $count years", strtotime($this->getFirstDateOfCurrentRange())));
+    }
+
+    public function getFirstDateOfCurrentRange() {
+      $current_year = $this->_params['yid_value'];
+      if (CRM_Utils_Array::value('yid_op', $this->_params, 'calendar') == 'calendar') {
+        return "{$current_year }-01-01";
+      }
+      else {
+        $fiscalYear = CRM_Core_Config::singleton()->fiscalYearStart;
+        return "{$current_year}-{$fiscalYear['M']}-{$fiscalYear['d']}";
+      }
+    }
+
+    public function getLastDateOfPriorRange() {
+      return date('YmdHis', strtotime('- 1 second', strtotime($this->getFirstDateOfCurrentRange())));
+    }
+
+    public function getLastDateOfPriorRangeNYears($count) {
+      return date('YmdHis', strtotime("+ 1 years - 1 second", strtotime($this->getFirstDateOfPriorRangeNYears($count))));
+    }
+
+    public function whereClauseLastYear($fieldName) {
+      return "$fieldName BETWEEN '" . $this->getFirstDateOfPriorRange() . "' AND '" . $this->getLastDateOfPriorRange() . "'";
+    }
+
+    public function getFirstDateOfPriorRange() {
+      return date('YmdHis', strtotime('- 1 year', strtotime($this->getFirstDateOfCurrentRange())));
+    }
+  
+    public function getLastNYearColumnTitle($year) {
+      if (CRM_Utils_Array::value('yid_op', $this->_params, 'calendar') == 'calendar') {
+        return ts('Total for ') . ($this->_params['yid_value'] - $year);
+      }
+      return ts('Total for Fiscal Year ') . ($this->_params['yid_value'] - $year) . '-' . ($this->_params['yid_value']);
+    }
+
+    public function getLastYearColumnTitle() {
+      if (CRM_Utils_Array::value('yid_op', $this->_params, 'calendar') == 'calendar') {
+        return ts('Total for ') . ($this->_params['yid_value'] - 1);
+      }
+      return ts('Total for Fiscal Year ') . ($this->_params['yid_value'] - 1) . '-' . ($this->_params['yid_value']);
+    }
+
+    static function getReportInstanceDetailsByName( $name ): array {
+        $result = civicrm_api3('ReportInstance', 'get', [
+            'sequential' => 1,
+            'return' => ["id"],
+            'name' => $name,
+            ]);
+    
+        return $result['values'][0];
+
+        // todo: use API4 after upgrade
+        // $reportInstance = \Civi\Api4\ReportInstance::get(TRUE)
+        // ->addSelect('name', 'title')
+        // ->addWhere('id', '=', $reportId)
+        // ->execute()
+        // ->itemAt(1);
     }
 }
 

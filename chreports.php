@@ -147,7 +147,8 @@ function chreports_civicrm_buildForm($formName, &$form) {
       });"
     );
   }
-  if ($formName == 'CRM_Chreports_Form_Report_ExtendSummary' || $formName == 'CRM_Chreports_Form_Report_GLSummaryReport' || $formName == 'CRM_Chreports_Form_Report_ExtendedDetail') {
+  if ($formName == 'CRM_Chreports_Form_Report_ExtendSummary' || $formName == 'CRM_Chreports_Form_Report_GLSummaryReport' || $formName == 'CRM_Chreports_Form_Report_ExtendedDetail' || $formName == "CRM_Chreports_Form_Report_ExtendLYBUNT" || $formName == "CRM_Chreports_Form_Report_ExtendMonthlyYearly") {
+    //die( 'ssss');
     //default pre-select the column and group by
     if (array_key_exists('fields', $form->_elementIndex)) {
       $reportInstance = $form->getReportInstance();
@@ -168,7 +169,8 @@ function chreports_civicrm_buildForm($formName, &$form) {
     }
 
   }
-  if ($formName == 'CRM_Chreports_Form_Report_ExtendSummary' || $formName == 'CRM_Report_Form_Contact_Summary'|| $formName == 'CRM_Chreports_Form_Report_GLSummaryReport') {
+  if ($formName == 'CRM_Chreports_Form_Report_ExtendSummary' || $formName == 'CRM_Report_Form_Contact_Summary'|| $formName == 'CRM_Chreports_Form_Report_GLSummaryReport' || $formName == "CRM_Chreports_Form_Report_ExtendLYBUNT" || $formName == "CRM_Chreports_Form_Report_ExtendMonthlyYearly") {
+    //die( 'eeeeee');
     CRM_Core_Resources::singleton()->addScript(
       "CRM.$(function($) {
         $('#fields_total_amount').parent().hide();
@@ -199,8 +201,10 @@ function chreports_civicrm_buildForm($formName, &$form) {
 
 function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
 
-  if ($object instanceof CRM_Chreports_Form_Report_ExtendSummary || $object instanceof CRM_Chreports_Form_Report_ExtendedDetail) {
-      
+  if ($object instanceof CRM_Chreports_Form_Report_ExtendSummary || $object instanceof CRM_Chreports_Form_Report_ExtendedDetail || $object instanceof CRM_Chreports_Form_Report_ExtendMonthlyYearly) {
+   
+    //echo '<pre>';print_r($object);echo '</pre>';
+    //die( 'hunnnn');
       $reportInstance = $object->getReportInstance();
 
       if ($varType == 'columns') {
@@ -216,6 +220,7 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
       }
 
       if ($varType == 'rows') {
+        //echo '<pre>';print_r($var);echo '</pre>';
          // remove unwanted columns from display
          $reportInstance->alterColumnHeadersForDisplay($var,$object->_columnHeaders);
         //manage display of result
@@ -585,7 +590,8 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
       }
     }
   }
-  if ($object instanceof CRM_Report_Form_Contribute_Summary || $object instanceof CRM_Chreports_Form_Report_ExtendSummary) {
+  if ($object instanceof CRM_Report_Form_Contribute_Summary || $object instanceof CRM_Chreports_Form_Report_ExtendSummary || $object instanceof CRM_Chreports_Form_Report_ExtendMonthlyYearly) {
+    //die( 'tttttt');
     $tablename = E::getTableNameByName('Campaign_Information');
     if ($varType == 'columns') {
       if ($object instanceof CRM_Chreports_Form_Report_ExtendSummary) {
@@ -700,8 +706,9 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
  * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_preProcess
  */
 function chreports_civicrm_preProcess($formName, &$form) {
-  if($formName == "CRM_Chreports_Form_Report_ExtendSummary" || $formName == "CRM_Chreports_Form_Report_GLSummaryReport" || $formName == "CRM_Chreports_Form_Report_ExtendedDetail")
+  if($formName == "CRM_Chreports_Form_Report_ExtendSummary" || $formName == "CRM_Chreports_Form_Report_GLSummaryReport" || $formName == "CRM_Chreports_Form_Report_ExtendedDetail" || $formName == "CRM_Chreports_Form_Report_ExtendLYBUNT")
   {
+    //die('vvvvvvv');
     //hide empty custom fields based filter sections on filter tab
     $reportInstance = $form->getReportInstance();
     $filters = $form->getVar('_filters');

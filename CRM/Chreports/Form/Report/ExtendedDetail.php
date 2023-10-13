@@ -18,6 +18,11 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
   }
 
   public function statistics(&$rows) {
+    if($this->_reportInstance->isLYBNTSYBNTReport())
+    {
+      $statistics = [];
+    return $statistics;
+    }
     $showDetailedStat = $this->_reportInstance->isOpportunityReport() ? false:true;
     $statistics = $this->_reportInstance->alterStatistics($rows,$showDetailedStat);
     if ($statistics) {
@@ -57,6 +62,11 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
     // merge opportunity fields from array defined in BaseReport class
     if($this->_reportInstance->isOpportunityReport())
     $this->_reportInstance->setOpportunityFields($var->getVar('_columns'));
+
+    if($this->_reportInstance->getEntity() == 'contact')
+        {
+          $this->_reportInstance->setAddressField($var->getVar('_columns'));
+        }
     // setting out columns, filters, params,mapping from report object
     $this->_reportInstance->setFieldsMapping($var->getVar('_columns'));
     $params = $var->getVar('_params');
@@ -64,7 +74,10 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
     $this->_reportInstance->setColumns($params['fields']);
     $this->_reportInstance->setFilters();
     $this->_reportInstance->setPagination($this->addPaging);
-   
+
+    $this->_reportInstance->setLimit($var->getVar('_limit'));
+    //attache entity name to fields for mapping purpose
+    $this->_reportInstance->setEntityTableForFields();
     // Report Instance
     // _entity => Contribution, Contact, etc
     // _columns => array of columns with info for each field
@@ -102,7 +115,9 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
       $var->setVar('_where', "WHERE " . implode(' AND ', $clauses));
     }
     $this->_reportInstance->setWhere($var->getVar('_where'));
-    
+    //print_r($var->getVar('_limit'));
+    //print_r($var->getVar('_groupLimit'));
+    $var->setVar('_limit', $this->_reportInstance->getLimit());
   }
   private function buildWhereClause(): array {
     $clauses = [];
@@ -118,6 +133,9 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
     if(!empty($this->_reportInstance->getFilters())){
       foreach ($this->_reportInstance->getFilters() as $fieldName => $fieldInfo) {
         switch ($fieldName) {
+          case 'total_range':
+          case 'yid': // fund_13
+            break;
           case 'ch_fund': // fund_13
             $clauses[] = $this->generateFilterClause($fieldInfo, $fieldInfo['name']);
             break;
@@ -403,6 +421,23 @@ WHERE  civicrm_contribution_contribution_id={$row['civicrm_contribution_contribu
       }
       $lastKey = $rowNum;
     }
+  }
+
+  /**
+   * Override "This Year" $op options
+   * @param string $type
+   * @param null $fieldName
+   *
+   * @return array
+   */
+  public function getOperationPair($type = "string", $fieldName = NULL) {
+    if ($fieldName == 'yid') {
+      return [
+        'calendar' => ts('Is Calendar Year'),
+        'fiscal' => ts('Fiscal Year Starting'),
+      ];
+    }
+    return parent::getOperationPair($type, $fieldName);
   }
 
 }

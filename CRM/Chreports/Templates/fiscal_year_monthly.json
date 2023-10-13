@@ -1,0 +1,13 @@
+{ 
+    "name": "fiscal_year_monthly",
+    "title": "Fiscal Year to Date",
+    "type": "fiscal",
+    "entity": "contribution",
+    "fields":{
+        "receive_date_start": {"default" : true},
+        "total_amount": {},
+        "no_of_contributions": {}
+    },
+    "use_default_filters" : true,
+    "groupByDisplay" : false
+}
