@@ -11,7 +11,6 @@ class CRM_Chreports_Reports_ReportConfiguration {
     protected $_action = "view";
 
     public function __construct(int $id) {
-        watchdog('Report', 'Initiated COnfiguration File');
         $this->_id = $id;
         $this->_action = $action;    
         $this->loadSettings();
