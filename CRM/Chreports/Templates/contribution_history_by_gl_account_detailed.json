@@ -9,7 +9,13 @@
         },
         "source": {},
         "financial_type_id":{},
-        "payment_instrument_id":{}
+        "payment_instrument_id":{},
+        "gl_code": {"preSelected" : true},
+        "account_type": {"preSelected" : true},
+        "sort_name": {"preSelected" : true},
+        "exposed_id": {"preSelected" : true},
+        "receive_date": {"preSelected" : true},
+        "total_amount": {"default" : true}
         
     },
     "use_default_filters" : true,

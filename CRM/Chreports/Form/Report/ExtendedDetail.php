@@ -18,8 +18,14 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
   }
 
   public function statistics(&$rows) {
+    if($this->_reportInstance->isGLAccountandPaymentMethodReconciliationReport())
+    return;
     $showDetailedStat = $this->_reportInstance->isOpportunityReport() ? false:true;
+    if(!$this->_reportInstance->isRecurringContributionReport())
     $statistics = $this->_reportInstance->alterStatistics($rows,$showDetailedStat);
+
+    if($this->_reportInstance->isRecurringContributionReport())
+    $statistics = $this->_reportInstance->alterRecurringStatistics($rows,$showDetailedStat);
     if ($statistics) {
       $count = count($rows);
       // requires access to form
@@ -107,6 +113,13 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
   private function buildWhereClause(): array {
     $clauses = [];
       
+    if($this->_reportInstance->isRecurringContributionReport())
+    {
+      $clauses[] = 'IF('.$this->_reportInstance->getEntityTable('contribution').'.contribution_recur_id IS NOT NULL, 1, IF(sg_flag_38 IS NOT NULL, 1, 0)) = 1';
+      $clauses[] = $this->_reportInstance->getEntityTable('contribution').'.contribution_status_id = 1';
+    }
+
+
     //-- DEFAULT: NOT a test contribution
     if(!$this->_reportInstance->isOpportunityReport())
     $clauses[] = $this->_reportInstance->getEntityTable('contribution').'.is_test = 0';
