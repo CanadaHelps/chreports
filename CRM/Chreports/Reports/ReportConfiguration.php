@@ -89,17 +89,9 @@ class CRM_Chreports_Reports_ReportConfiguration {
      * @return void
      */
     private function _fetchConfigSettings($reportInstanceDetails) {
-        $fileName = self::escapeFileName($reportInstanceDetails['name']);
-        $sourcePath = dirname(__DIR__, 1)  . "/Templates/" . $fileName.'.json';
-
-        //For the Custom Saved reports, fetch it from Files folder instead
-        if($reportInstanceDetails['created_id']) {
-            $basePath = CRM_Core_Config::singleton()->uploadDir;
-            $report_id = self::escapeFileName($reportInstanceDetails['report_id']);
-            $sourcePath = $basePath. 'reports/saved/'. $reportInstanceDetails['created_id']. '_' . $report_id . '_' . $reportInstanceDetails['id']. '.json';
-        }
-        if (is_file($sourcePath)) {
-            return json_decode(file_get_contents($sourcePath),true);
+        $filePath = $this->getFilePath($reportInstanceDetails);
+        if (is_file($filePath['source'])) {
+            return json_decode(file_get_contents($filePath['source']),true);
         }
     }
 
@@ -182,15 +174,11 @@ class CRM_Chreports_Reports_ReportConfiguration {
         // Create the report
         $instance = CRM_Report_BAO_ReportInstance::create($params);
 
-        $report_id = self::escapeFileName($instance->report_id);
-        $basePath = dirname(__DIR__, 1)  . "/Templates/";
-        $filePath = $basePath. $report_id.'.json';
-        if($this->_action == 'copy') {
-            $basePath = CRM_Core_Config::singleton()->uploadDir;
-            $filePath = $basePath. 'reports/saved/'. $instance->created_id. '_' . $report_id . '_' . $instance->id. '.json';
-        }
+        // Get the base and source file name
+        $filePath = self::getFilePath((array) $instance, $this->_action);
+
         // Ensure the directory exists, create it if necessary
-        if (!is_dir($basePath)) {
+        if (!is_dir($filePath['base'])) {
             return;
         }
 
@@ -199,7 +187,7 @@ class CRM_Chreports_Reports_ReportConfiguration {
         $jsonConfig = json_encode($config, JSON_PRETTY_PRINT);
 
         // Write the JSON data to the file
-        if (file_put_contents($filePath, $jsonConfig) !== false) {
+        if (file_put_contents($filePath['source'], $jsonConfig) !== false) {
             // Set status, check for _createNew param to identify new report
             $statusMsg = ts('Your report has been successfully copied as "%1". You are currently viewing the new copy.', [1 => $instance->title]);
             CRM_Core_Session::setStatus($statusMsg, '', 'success');
@@ -227,6 +215,30 @@ class CRM_Chreports_Reports_ReportConfiguration {
         $jsonFileName = str_replace(")","", $jsonFileName);
         $jsonFileName = strtolower(preg_replace('/[^a-zA-Z0-9]+/', '_', trim($jsonFileName)));
         return $jsonFileName;
+    }
+
+    /**
+     *
+     * Return Filepath and basepath depending on the report Instance details and action
+     *
+     * @return array
+     */
+    public static function getFilePath(array $reportDetails, $action = 'save'): array {
+        $report_id = self::escapeFileName($reportDetails['report_id']);
+        if($action == 'copy' || $reportDetails['created_id']) {
+            $filePath['base'] = CRM_Core_Config::singleton()->uploadDir;
+            $filePath['source'] = $filePath['base']. 'reports/saved/'. $reportDetails['created_id']. '_' . $report_id . '_' . $reportDetails['id']. '.json';
+        } else {
+            $filePath['base'] = dirname(__DIR__, 1)  . "/Templates/";
+            $filePath['source'] = $filePath['base']. $report_id.'.json';
+
+            // hack for now
+            // Else remove it from here after completion of CRM-2111
+            if (!is_file($filePath['source'])) {
+                $filePath['source'] = $filePath['base']. self::escapeFileName($reportDetails['name']).'.json';
+            }
+        }
+        return $filePath;
     }
 }
 ?>
