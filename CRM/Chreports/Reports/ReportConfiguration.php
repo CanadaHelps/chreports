@@ -107,9 +107,9 @@ class CRM_Chreports_Reports_ReportConfiguration {
      *
      * Build Json File from all report params and values
      * @param string $action The task action coming from the form
-     * @return array
+     * @return void
      */
-    public function buildJsonConfigSettings(): array {
+    public function buildJsonConfigSettings(): void {
         $config = [];
 
         //Set Default Params
@@ -143,7 +143,7 @@ class CRM_Chreports_Reports_ReportConfiguration {
         if($this->_action == 'copy') {
             $config['is_copy'] = (int) 1;
         }
-        return $config;
+        $this->_settings = $config;
     }
 
     /**
@@ -154,7 +154,13 @@ class CRM_Chreports_Reports_ReportConfiguration {
      * @param string $redirect Default set to true, redirect to the newly created report
      * @return void
      */
-    public function writeJsonConfigFile(array $config, $redirect = 'true'): void {
+    public function writeJsonConfigFile($redirect = 'true'): void {
+
+        $config = $this->_settings;
+        if(empty($config)) {
+            CRM_Core_Session::setStatus(ts("Cannot Create Report. No Settings Found."), ts('Report Save Error'), 'error');
+            return;
+        }
         $params = $this->getFormParams();
 
         // Do Not update the name if already present
