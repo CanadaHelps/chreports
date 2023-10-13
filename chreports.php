@@ -742,6 +742,20 @@ function chreports_civicrm_preProcess($formName, &$form) {
   }
 } // */
 
+/**
+ * Implements hook_civicrm_post().
+ *
+ * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_preProcess
+ */
+function chreports_civicrm_post($op, $objectName, $objectId, &$objectRef) {
+  if ($objectName == "ReportInstance" && $op == "delete") {
+    $filePath = CRM_Chreports_Reports_ReportConfiguration::getFilePath((array) $objectRef);
+    if (is_file($filePath['source'])) {
+      unlink($filePath['source']);
+    }
+  }
+}
+
 
 /**
  * Implements hook_civicrm_navigationMenu().
