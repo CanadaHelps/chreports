@@ -94,6 +94,25 @@ class CRM_Chreports_Reports_ReportConfiguration {
         }
     }
 
+
+    /**
+     * Set the preset filter from Config Files to Params
+     *
+     * @return void
+     */
+    public function setDefaultFilterValues(): void {
+        $params = $this->getFormParams();
+        if(isset($this->_settings['preset_filter_values'])) {
+            $defaultFilterParams = $this->createCustomFilterParams();
+            foreach($defaultFilterParams as $k => $v) {
+                if(!$params[$k] && $v) {
+                    $params[$k] = $v;
+                }
+            }
+            $this->_params = $params;
+        }
+    }
+
     /**
      *
      * Build Json File from all report params and values

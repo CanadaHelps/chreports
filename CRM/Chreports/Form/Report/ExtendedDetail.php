@@ -128,6 +128,15 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
     $clauses[] = $this->_reportInstance->getEntityTable('contact').'.is_deleted = 0';
     
     // Filters
+    // Create params from the default JSON config file
+    $this->_reportInstance->setDefaultFilterValues();
+
+    // // Set the new filters (if applicable)
+    $this->_reportInstance->setFilters();
+
+    // // This is done for the generateFilterClause() method to work
+    $this->_params = $this->_reportInstance->_params;
+
     if(!empty($this->_reportInstance->getFilters())){
       foreach ($this->_reportInstance->getFilters() as $fieldName => $fieldInfo) {
         switch ($fieldName) {
