@@ -10,8 +10,6 @@ class CRM_Chreports_Form_Report_ExtendSummary extends CRM_Report_Form_Contribute
   }
 
   public function getReportInstance(): CRM_Chreports_Reports_SummaryReport {
-    
-    
     // Instantiate Report Instance if doesn't exists yet
     if ($this->_reportInstance == NULL) {
       $reportPath = $this->_attributes['action'];
@@ -27,7 +25,7 @@ class CRM_Chreports_Form_Report_ExtendSummary extends CRM_Report_Form_Contribute
   public function buildSQLQuery(&$var) {
 
     $params = $var->getVar('_params');
-        
+
     // setting out columns, filters, params,mapping from report object
     $this->_reportInstance->setFieldsMapping($var->getVar('_columns'));
     $this->_reportInstance->setFormParams($params);
@@ -101,6 +99,15 @@ class CRM_Chreports_Form_Report_ExtendSummary extends CRM_Report_Form_Contribute
     $clauses[] = $this->_reportInstance->getEntityTable('contact').'.is_deleted = 0';
     
     // Filters
+    // Create params from the default JSON config file
+    $this->_reportInstance->setDefaultFilterValues();
+
+    // Set the new filters (if applicable)
+    $this->_reportInstance->setFilters();
+
+    // This is done for the generateFilterClause() method to work
+    $this->_params = $this->_reportInstance->_params;
+
     if(!empty($this->_reportInstance->getFilters())){
       foreach ($this->_reportInstance->getFilters() as $fieldName => $fieldInfo) {
         switch ($fieldName) {
