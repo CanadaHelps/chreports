@@ -6,14 +6,15 @@ class CRM_Chreports_Reports_ReportConfiguration {
     private $_id;
 
     protected $_settings = [];
+    protected $_mappings = [];
 
     // Default Action is to View Report
     protected $_action = "view";
 
     public function __construct(int $id) {
-        watchdog('Report', 'Initiated COnfiguration File');
         $this->_id = $id;
         $this->_action = $action;    
+        $this->loadMappings();
         $this->loadSettings();
     }
 
@@ -41,6 +42,24 @@ class CRM_Chreports_Reports_ReportConfiguration {
     public function setAction(string $action) {
         $this->_action = $action;
     }
+
+
+    /**
+     * 
+     * TBD
+     * 
+     * @return void
+     */
+    private function loadMappings(): void {
+        $filePath = dirname(__DIR__, 1)  . "/Templates/mapping.json";
+        //echo "<pre>file:  $filePath</pre>";
+        if (is_file($filePath)) {
+            $this->_mappings = json_decode(file_get_contents($filePath),true);
+            return;
+        } 
+        //echo "<pre>file not found</pre>";
+    }
+
 
 
     /**
@@ -82,6 +101,123 @@ class CRM_Chreports_Reports_ReportConfiguration {
         // ->itemAt(1);
     }
 
+    public function getAllColumns( ): array {
+        return $this->_settings['fields'];
+    }
+
+    /**
+     * 
+     * TBD
+     *
+     * @param TBD
+     * @return array
+     */
+    public function getFieldInfo( $fieldName ): array {
+       // echo '<pre>';print_r();echo '</pre>';
+        if ($this->_mappings[$fieldName])
+            return $this->_mappings[$fieldName];
+        return ["error" => "not found"];
+    }
+
+    public function getFilterType($fieldName) : array {
+        $fieldInfo = $this->getFieldInfo($fieldName);
+        $type = ucwords( ($fieldInfo["field_type"]) ?? "string" );
+        $fieldType = [
+            "dataType" => $type
+        ];
+
+        switch ($type) {
+            case "String":
+                $fieldType["type"] = CRM_Utils_Type::T_STRING;
+                $fieldType["htmlType"] = "Text";
+                break;
+            case "Int":
+                $fieldType["type"] = CRM_Utils_Type::T_INT;
+                $fieldType["htmlType"] = "Text";
+                break;
+            case "Boolean":
+                $fieldType["type"] = CRM_Utils_Type::T_BOOLEAN;
+                $fieldType["htmlType"] = "Radio";
+                break;
+            case "Money":
+                $fieldType["type"] = CRM_Utils_Type::T_MONEY;
+                $fieldType["htmlType"] = "Text";
+                break;
+        }
+        return $fieldType;
+    }
+
+    public function getFilterOptions($fieldName) : array {
+        $options = [];
+        $fieldInfo = $this->getFieldInfo($fieldName);
+
+        $fieldNameVal = (isset($fieldInfo['field_name']))? $fieldInfo['field_name']: $fieldName;
+        $fieldTable = isset($fieldInfo['dependent_table_entity'])? $this->getEntityTable($fieldInfo['dependent_table_entity']): $this->getEntityTable($fieldInfo['entity']);
+       
+        // custom built (contribution source)
+        if(isset($fieldInfo['custom']) && $fieldInfo['custom'] === true ){
+            
+            $columnName = E::getColumnNameByName($fieldInfo['custom_fieldName']);
+            $optionGroupName = E::getOptionGroupNameByColumnName($columnName);
+            $customTablename = EU::getTableNameByName($fieldInfo['group_name']);
+            $options =   $this->getOptionValueDropdownList($fieldName,$customTablename,$optionGroupName);
+            
+        }else if(isset($fieldInfo['use_option_value']) && $fieldInfo['use_option_value'] === true){ // option values
+            
+            $groupName = $fieldInfo['group_name'];
+            $options =   $this->getOptionValueDropdownList($fieldNameVal,$fieldTable,$groupName);
+        }else if(isset($fieldInfo['fileter_field_type']) && $fieldInfo['fileter_field_type'] === boolean){ 
+            $options =   array(''=> 'Any',1=> 'Yes',0=> 'No');
+        }else{  // entity table 
+            
+            $fieldNameVal = $fieldInfo['select_option'];
+         $options =   $this->getOptionDropdownList($fieldNameVal,$fieldTable);
+        }
+        
+        
+        return $options;
+    }
+
+    public static function getOptionDropdownList($fieldName,$fieldTable) {
+        $optionValue = [];
+        $selectClause =  implode(', ', $fieldName);
+    
+        $optionsListings = CRM_Core_DAO::executeQuery('SELECT DISTINCT '.$selectClause.' FROM '.$fieldTable)->fetchAll();
+        foreach($optionsListings as $optionsListing) {
+          if($optionsListing) {
+            if(count($fieldName) > 1){
+                $optionValue[$optionsListing[$fieldName[0]]] = $optionsListing[$fieldName[1]];
+            }else{
+                $optionValue[$optionsListing[$fieldName[0]]] = $optionsListing[$fieldName[0]];
+            }
+          }
+        }
+        //$optionValue = array('' => '- select -') + $optionValue;
+        return $optionValue;
+      }
+
+      public static function getOptionValueDropdownList($fieldName,$fieldTable,$groupName) {
+        $optionValue = [];
+    
+        $tableName_group = $fieldTable.'_group';
+        $tableName_value = $fieldTable.'_value';
+
+        $subselectClause = " 
+        LEFT JOIN civicrm_option_group as ".$tableName_group." ON ".$tableName_group.".name = '".$groupName."' 
+        LEFT JOIN civicrm_option_value as ".$tableName_value." ON ".$tableName_value.".option_group_id = ".$tableName_group.".id ";
+        
+        $optionsListings = CRM_Core_DAO::executeQuery('SELECT DISTINCT '.$tableName_value.'.value,'.$tableName_value.'.label FROM '.$fieldTable.' '.$subselectClause)->fetchAll();
+      
+        foreach($optionsListings as $optionsListing) {
+          if($optionsListing) {
+            
+                $optionValue[$optionsListing['value']] = $optionsListing['label'];
+            }
+          }
+        
+        return $optionValue;
+      }
+
     /**
      * Fetch the JSON Config from different paths depending on the Report Instance & Report ID type
      *
@@ -89,17 +225,9 @@ class CRM_Chreports_Reports_ReportConfiguration {
      * @return void
      */
     private function _fetchConfigSettings($reportInstanceDetails) {
-        $fileName = self::escapeFileName($reportInstanceDetails['name']);
-        $sourcePath = dirname(__DIR__, 1)  . "/Templates/" . $fileName.'.json';
-
-        //For the Custom Saved reports, fetch it from Files folder instead
-        if($reportInstanceDetails['created_id']) {
-            $basePath = CRM_Core_Config::singleton()->uploadDir;
-            $report_id = self::escapeFileName($reportInstanceDetails['report_id']);
-            $sourcePath = $basePath. 'reports/saved/'. $reportInstanceDetails['created_id']. '_' . $report_id . '_' . $reportInstanceDetails['id']. '.json';
-        }
-        if (is_file($sourcePath)) {
-            return json_decode(file_get_contents($sourcePath),true);
+        $filePath = $this->getFilePath($reportInstanceDetails);
+        if (is_file($filePath['source'])) {
+            return json_decode(file_get_contents($filePath['source']),true);
         }
     }
 
@@ -107,9 +235,9 @@ class CRM_Chreports_Reports_ReportConfiguration {
      *
      * Build Json File from all report params and values
      * @param string $action The task action coming from the form
-     * @return array
+     * @return void
      */
-    public function buildJsonConfigSettings(): array {
+    public function buildJsonConfigSettings(): void {
         $config = [];
 
         //Set Default Params
@@ -143,7 +271,7 @@ class CRM_Chreports_Reports_ReportConfiguration {
         if($this->_action == 'copy') {
             $config['is_copy'] = (int) 1;
         }
-        return $config;
+        $this->_settings = $config;
     }
 
     /**
@@ -154,7 +282,13 @@ class CRM_Chreports_Reports_ReportConfiguration {
      * @param string $redirect Default set to true, redirect to the newly created report
      * @return void
      */
-    public function writeJsonConfigFile(array $config, $redirect = 'true'): void {
+    public function writeJsonConfigFile($redirect = 'true'): void {
+
+        $config = $this->_settings;
+        if(empty($config)) {
+            CRM_Core_Session::setStatus(ts("Cannot Create Report. No Settings Found."), ts('Report Save Error'), 'error');
+            return;
+        }
         $params = $this->getFormParams();
 
         // Do Not update the name if already present
@@ -176,15 +310,11 @@ class CRM_Chreports_Reports_ReportConfiguration {
         // Create the report
         $instance = CRM_Report_BAO_ReportInstance::create($params);
 
-        $report_id = self::escapeFileName($instance->report_id);
-        $basePath = dirname(__DIR__, 1)  . "/Templates/";
-        $filePath = $basePath. $report_id.'.json';
-        if($this->_action == 'copy') {
-            $basePath = CRM_Core_Config::singleton()->uploadDir;
-            $filePath = $basePath. 'reports/saved/'. $instance->created_id. '_' . $report_id . '_' . $instance->id. '.json';
-        }
+        // Get the base and source file name
+        $filePath = self::getFilePath((array) $instance, $this->_action);
+
         // Ensure the directory exists, create it if necessary
-        if (!is_dir($basePath)) {
+        if (!is_dir($filePath['base'])) {
             return;
         }
 
@@ -193,7 +323,7 @@ class CRM_Chreports_Reports_ReportConfiguration {
         $jsonConfig = json_encode($config, JSON_PRETTY_PRINT);
 
         // Write the JSON data to the file
-        if (file_put_contents($filePath, $jsonConfig) !== false) {
+        if (file_put_contents($filePath['source'], $jsonConfig) !== false) {
             // Set status, check for _createNew param to identify new report
             $statusMsg = ts('Your report has been successfully copied as "%1". You are currently viewing the new copy.', [1 => $instance->title]);
             CRM_Core_Session::setStatus($statusMsg, '', 'success');
@@ -221,6 +351,30 @@ class CRM_Chreports_Reports_ReportConfiguration {
         $jsonFileName = str_replace(")","", $jsonFileName);
         $jsonFileName = strtolower(preg_replace('/[^a-zA-Z0-9]+/', '_', trim($jsonFileName)));
         return $jsonFileName;
+    }
+
+    /**
+     *
+     * Return Filepath and basepath depending on the report Instance details and action
+     *
+     * @return array
+     */
+    public static function getFilePath(array $reportDetails, $action = 'save'): array {
+        $report_id = self::escapeFileName($reportDetails['report_id']);
+        if($action == 'copy' || $reportDetails['created_id']) {
+            $filePath['base'] = CRM_Core_Config::singleton()->uploadDir;
+            $filePath['source'] = $filePath['base']. 'reports/saved/'. $reportDetails['created_id']. '_' . $report_id . '_' . $reportDetails['id']. '.json';
+        } else {
+            $filePath['base'] = dirname(__DIR__, 1)  . "/Templates/";
+            $filePath['source'] = $filePath['base']. $report_id.'.json';
+
+            // hack for now
+            // Else remove it from here after completion of CRM-2111
+            if (!is_file($filePath['source'])) {
+                $filePath['source'] = $filePath['base']. self::escapeFileName($reportDetails['name']).'.json';
+            }
+        }
+        return $filePath;
     }
 }
 ?>

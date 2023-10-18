@@ -36,27 +36,26 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     [
         "receive_date",
         "receipt_date",
-        "contribution_status_id",
-        "contribution_page_id",
-        "financial_type_id",
-        "contribution_recur_id",
+        "contribution_status_id", //op
+        "contribution_page_id", //op //campaign
+        "financial_type_id", //fund  //op
+        "contribution_recur_id", //op
         "total_amount",
         "non_deductible_amount",
         "total_sum",
-        "total_count",
-        "campaign_id",
-        "card_type_id",
-        "batch_id",
+        "campaign_id", //campaign group //op
+        "card_type_id", //op
+        "batch_id", //op
         "amount",
-        "tagid",
-        "gid",
+        "tagid", //op
+        "gid", //op
         "total_sum",
         "total_count",
         "total_avg",
-        "contribution_source",
-        "payment_instrument_id",
-        "campaign_type",
-        "ch_fund"
+        "contribution_source", //op
+        "payment_instrument_id", //op //payment method
+        "campaign_type", //op
+        "ch_fund" //op //custom
     ];
 
     public function __construct( string $entity, int $id, string $name ) {
@@ -109,9 +108,9 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     // TODO: why do we have both getReportingFilters and getFilters
     private function getReportingFilters(): array {
         $filterValues = [];
-       
+
         if ($this->_settings['use_default_filters'] == TRUE) {
-            $filterValues = $this->_defaultFilters;
+            $filterValues = array_fill_keys($this->_defaultFilters, []);
         }
         if (count($this->_settings['filters']) > 0) {
             $filterValues = array_merge($filterValues, $this->_settings['filters']);
@@ -220,9 +219,10 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
      public function setLimit(string $limit) {
         $this->_limit = $limit;
     }
-    
-    //Opportunity array defined for fields, orderby, filters
-    public function setOpportunityFields(&$var) {
+
+     //Opportunity array defined for fields, orderby, filters
+     public function setOpportunityFields(&$var) {
+        return;
         $specificCols = [
           'civicrm_grant' => [
             'dao' => 'CRM_Grant_DAO_Grant',
@@ -360,10 +360,10 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
           ],
         ];
         $var = array_merge($var, $specificCols);
-      }
+    }
 
-    public function setAddressField(&$var)
-    {
+    public function setAddressField(&$var) {
+        return;
         $addressCols = [
             'civicrm_address' => [
                 'dao' => 'CRM_Core_DAO_Address',
@@ -429,6 +429,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         ];
         $var = array_merge($var, $addressCols);
     }
+    
     //get type of the report from settings
     public function getReportType(): string {
         return $this->_settings['type'];
@@ -616,25 +617,14 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     
     //get field details from array
     public function getFieldMapping(string $fieldEntity, string $fieldName): array {
-        //$entityTable = $this->getEntityTable($fieldEntity);
-        $entityTable = ($this->_entityTableMapping[$fieldName] == NULL) ? $this->getEntityTable() : $this->_entityTableMapping[$fieldName];
+        $entityTable = $this->getEntityTable($fieldEntity);
+       
+        //$entityTable = ($this->_entityTableMapping[$fieldName] == NULL) ? $this->getEntityTable() : $this->_entityTableMapping[$fieldName];
         if ( !array_key_exists($entityTable, $this->_mapping) 
             || !array_key_exists($fieldName, $this->_mapping[$entityTable]['fields']) ) {
                 return ['name' => $fieldName, 'title' => $fieldName, 'table_name' => $entityTable];
             }
         return $this->_mapping[$entityTable]['fields'][$fieldName];
-    }
-
-    public function setEntityTableForFields(): void {
-    $fieldTable = [];
-        foreach ($this->_mapping as $entityName =>  $entityDetails)
-        {
-            foreach ( $entityDetails['fields'] as $fieldName => $fieldValue)
-            {
-                $fieldTable[$fieldName] = $entityName;
-            }
-        }
-        $this->_entityTableMapping = $fieldTable;
     }
 
     public function buildSelectQuery() {
@@ -649,6 +639,261 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     public function buildOrderByQuery() {
     }
 
+    /**
+     * 
+     * Retrieve GL Accountand Payment Method Reconciliation Report
+     *
+     * @return bool
+     */
+    public function isGLAccountandPaymentMethodReconciliationReport()
+    {
+        if($this->_settings['type'] == 'detailed' && $this->_settings['entity'] == 'contribution' 
+        && $this->_settings['name'] == 'gl_account_payment_method_reconciliation_report_full')
+        {
+            //$this->setEntity($this->_settings['entity']);
+            return true; 
+        }
+        return false;
+    }
+    /**
+     * 
+     * Retrieve Repeat Contributions Report
+     *
+     * @return bool
+     */
+    public function isRepeatContributionsReport()
+    {
+        if($this->_settings['type'] == 'detailed' && $this->_settings['entity'] == 'contact' 
+        && $this->_settings['name'] == 'repeat_contributions_detailed')
+        {
+            $this->setEntity($this->_settings['entity']);
+            return true; 
+        }
+        return false;
+    }
+    /**
+     * 
+     * Retrieve Recurring Contribution Report
+     *
+     * @return bool
+     */
+
+    public function isRecurringContributionReport()
+    {
+        if($this->_settings['type'] == 'detailed' && $this->_settings['entity'] == 'contact' 
+        && $this->_settings['name'] == 'recurring_contributions_summary')
+        {
+            $this->setEntity($this->_settings['entity']);
+            return true; 
+        }
+        return false;
+    }
+/**
+     * 
+     * Set GL Accountand Payment Method Reconciliation Report additional &var params
+     *
+     * @return array
+     */
+
+     public function setGLAccountandPaymentMethodReconciliationReport(&$var) {
+        return;
+        $specificColsforReport = [
+            'civicrm_membership' => [
+              'dao' => 'CRM_Member_DAO_Membership',
+              'fields' => [
+                'id' => [
+                  'title' => ts('Membership #'),
+                  'name'=>'id',
+                  'no_display' => TRUE,
+                  'required' => TRUE,
+                ],
+              ],
+            ],
+            'civicrm_financial_account' => [
+              'dao' => 'CRM_Financial_DAO_FinancialAccount',
+              'filters' => [
+                'debit_accounting_code' => [
+                  'title' => ts('Financial Account Code - Debit'),
+                  'operatorType' => CRM_Report_Form::OP_MULTISELECT,
+                  'options' => CRM_Contribute_PseudoConstant::financialAccount(NULL, NULL, 'accounting_code', 'accounting_code'),
+                  'name' => 'accounting_code',
+                  'alias' => 'financial_account_civireport_debit',
+                ],
+                'debit_contact_id' => [
+                  'title' => ts('Financial Account Owner - Debit'),
+                  'operatorType' => CRM_Report_Form::OP_SELECT,
+                  'type' => CRM_Utils_Type::T_INT,
+                  'options' => ['' => '- Select Organization -'] + CRM_Financial_BAO_FinancialAccount::getOrganizationNames(FALSE),
+                  'name' => 'contact_id',
+                  'alias' => 'financial_account_civireport_debit',
+                ],
+                'credit_accounting_code' => [
+                  'title' => ts('Financial Account Code - Credit'),
+                  'type' => CRM_Utils_Type::T_INT,
+                  'operatorType' => CRM_Report_Form::OP_MULTISELECT,
+                  'options' => CRM_Contribute_PseudoConstant::financialAccount(NULL, NULL, 'accounting_code', 'accounting_code'),
+                  'name' => 'accounting_code',
+                  'alias' => 'financial_account_civireport_credit',
+                ],
+                'credit_contact_id' => [
+                  'title' => ts('Financial Account Owner - Credit'),
+                  'operatorType' => CRM_Report_Form::OP_SELECT,
+                  'type' => CRM_Utils_Type::T_INT,
+                  'options' => ['' => '- Select Organization -'] + CRM_Financial_BAO_FinancialAccount::getOrganizationNames(FALSE),
+                  'name' => 'contact_id',
+                  'alias' => 'financial_account_civireport_credit',
+                ],
+                'debit_name' => [
+                  'title' => ts('Financial Account Name - Debit'),
+                  'type' => CRM_Utils_Type::T_STRING,
+                  'operatorType' => CRM_Report_Form::OP_MULTISELECT,
+                  'options' => CRM_Contribute_PseudoConstant::financialAccount(),
+                  'name' => 'id',
+                  'alias' => 'financial_account_civireport_debit',
+                ],
+                'credit_name' => [
+                  'title' => ts('Financial Account Name - Credit'),
+                  'type' => CRM_Utils_Type::T_STRING,
+                  'operatorType' => CRM_Report_Form::OP_MULTISELECT,
+                  'options' => CRM_Contribute_PseudoConstant::financialAccount(),
+                  'name' => 'id',
+                  'alias' => 'financial_account_civireport_credit',
+                ],
+              ],
+            ],
+            'civicrm_line_item' => [
+              'dao' => 'CRM_Price_DAO_LineItem',
+              'fields' => [
+                'financial_type_id' => [
+                  'title' => ts('Financial Type'),
+                  'default' => TRUE,
+                ],
+              ],
+              'filters' => [
+                'financial_type_id' => [
+                  'title' => ts('Financial Type'),
+                  'type' => CRM_Utils_Type::T_INT,
+                  'operatorType' => CRM_Report_Form::OP_MULTISELECT,
+                  'options' => CRM_Contribute_BAO_Contribution::buildOptions('financial_type_id', 'search'),
+                ],
+              ],
+              'order_bys' => [
+                'financial_type_id' => ['title' => ts('Financial Type')],
+              ],
+            ],
+            'civicrm_batch' => [
+              'dao' => 'CRM_Batch_DAO_Batch',
+              'fields' => [
+                'title' => [
+                  'title' => ts('Batch Title'),
+                  'alias' => 'batch',
+                  'default' => FALSE,
+                  'name'=> 'title',
+                ],
+                'name' => [
+                  'title' => ts('Batch Name'),
+                  'alias' => 'batch',
+                  'default' => TRUE,
+                  'name'=> 'name'
+                ],
+              ],
+            ],
+            'civicrm_financial_trxn' => [
+              'dao' => 'CRM_Financial_DAO_FinancialTrxn',
+              'fields' => [
+                'check_number' => [
+                  'title' => ts('Cheque #'),
+                  'default' => TRUE,
+                ],
+                'currency' => [
+                  'required' => TRUE,
+                  'no_display' => TRUE,
+                ],
+                'trxn_date' => [
+                  'title' => ts('Transaction Date'),
+                  'default' => TRUE,
+                  'type' => CRM_Utils_Type::T_DATE + CRM_Utils_Type::T_TIME,
+                  'table_name' => 'trxn',
+                  'dbAlias' => 'trxn.trxn_date',
+                ],
+                'trxn_id' => [
+                  'title' => ts('Trans #'),
+                  'default' => TRUE,
+                ],
+                'card_type_id' => [
+                  'title' => ts('Credit Card Type'),
+                ],
+              ],
+              'filters' => [
+                'payment_instrument_id' => [
+                  'title' => ts('Payment Method'),
+                  'type' => CRM_Utils_Type::T_INT,
+                  'operatorType' => CRM_Report_Form::OP_MULTISELECT,
+                  'options' => CRM_Contribute_PseudoConstant::paymentInstrument(),
+                ],
+                'currency' => [
+                  'title' => ts('Currency'),
+                  'operatorType' => CRM_Report_Form::OP_MULTISELECT,
+                  'options' => CRM_Core_OptionGroup::values('currencies_enabled'),
+                  'default' => NULL,
+                  'type' => CRM_Utils_Type::T_STRING,
+                ],
+                'trxn_date' => [
+                  'title' => ts('Transaction Date'),
+                  'operatorType' => CRM_Report_Form::OP_DATETIME,
+                  'type' => CRM_Utils_Type::T_DATE + CRM_Utils_Type::T_TIME,
+                ],
+                'status_id' => [
+                  'title' => ts('Financial Transaction Status'),
+                  'operatorType' => CRM_Report_Form::OP_MULTISELECT,
+                  'options' => CRM_Contribute_BAO_Contribution::buildOptions('contribution_status_id', 'search'),
+                  'default' => [1],
+                  'table_name' => 'civicrm_financial_trxn_report',
+                  'dbAlias' => 'civicrm_financial_trxn_report.status_id',
+                ],
+                'card_type_id' => [
+                  'title' => ts('Credit Card Type'),
+                  'operatorType' => CRM_Report_Form::OP_MULTISELECT,
+                  'options' => CRM_Financial_DAO_FinancialTrxn::buildOptions('card_type_id'),
+                  'default' => NULL,
+                  'type' => CRM_Utils_Type::T_STRING,
+                ],
+              ],
+              'order_bys' => [
+                'payment_instrument_id' => ['title' => ts('Payment Method')],
+                'trxn_date' => ['title' => ts('Transaction Date')],
+              ],
+            ],
+            'civicrm_entity_financial_trxn' => [
+              'dao' => 'CRM_Financial_DAO_EntityFinancialTrxn',
+              'fields' => [
+                'amount' => [
+                  'title' => ts('Amount'),
+                  'default' => TRUE,
+                  'type' => CRM_Utils_Type::T_STRING,
+                ],
+              ],
+              'filters' => [
+                'amount' => ['title' => ts('Amount')],
+              ],
+            ],
+        ];
+
+        //Add contribution fields
+        $var['civicrm_contribution']['fields']['invoice_id'] = [
+                  'title' => ts('Invoice Reference'),
+                  'default' => TRUE,
+        ];
+        $var['civicrm_contribution']['fields']['invoice_number'] = [
+            'title' => ts('Invoice Number'),
+            'default' => TRUE,
+        ];
+        $var['civicrm_contribution']['fields']['id'] = [
+            'title' => ts('Contribution ID'),
+            'default' => TRUE,
+        ];
+        $var = array_merge($var, $specificColsforReport);
+    }
 
     /**
      * Updates the search form of the report based on configuration
@@ -657,21 +902,32 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
      * @return void
      */
     public function filteringReportOptions(&$var) {
+       
         // merge opportunity array defined in BaseReport class with the existing
-        if($this->isOpportunityReport())
-        $this->setOpportunityFields($var);
+        //if($this->isOpportunityReport())
+        //$this->setOpportunityFields($var);
 
-        if($this->getEntity() == 'contact')
-        {
-            $this->setAddressField($var);
-        }
-        // stores field configuration so we can use it later on
-        $this->setFieldsMapping($var);
-        
+        //if($this->getEntity() == 'contact') {
+        //    $this->setAddressField($var);
+        //}
         // Columns
+        //CRM-2082 recurring contribution details
+        // merge recurring contribution array defined in BaseReport class with the existing
+        //if($this->isRecurringContributionReport())
+        //$this->setRecurringContributionsFields($var);
+
+        // merge GLAccountandPaymentMethodReconciliation contribution array defined in BaseReport class with the existing
+        //if($this->isGLAccountandPaymentMethodReconciliationReport())
+        //$this->setGLAccountandPaymentMethodReconciliationReport($var);
+        //echo '<pre>';print_r($var);echo '</pre>';
+        // stores field configuration so we can use it later on
+        // $this->setFieldsMapping($var);
+        
+        // Fields
         $this->filteringReportFields($var);
+        //echo '<pre>';print_r($var);echo '</pre>';
         // Columns: Custom fields
-        $this->filteringReportAddCustomField('ch_fund',$var); //CH Fund 
+        //$this->filteringReportAddCustomField('ch_fund',$var); //CH Fund 
         
         // Grouping
         $this->filteringReportGroupOptions($var);
@@ -679,22 +935,144 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         // Filters
         $this->filteringReportFilterOptions($var);
         // Filters: Custom Fields
-        $this->filteringReportAddCustomFilter('contribution_source',$var); //Contribution Source
-        $this->filteringReportAddCustomFilter('payment_instrument_id',$var); //Payment Method
-        $this->filteringReportAddCustomFilter('campaign_type',$var); //Campaign Type
-        $this->filteringReportAddCustomFilter('ch_fund',$var); //CH Fund
-        $this->filteringReportAddCustomFilter('application_submitted',$var); //Application Submitted
-        $this->filteringReportAddCustomFilter('probability',$var); //Probability
-        $this->filteringReportAddCustomFilter('Opportunity_Name',$var); //Opportunity Name
-        $this->filteringReportAddCustomFilter('Opportunity_Owner',$var); //Opportunity Owner
-        //SYBNT fields
-        $this->filteringReportAddCustomFilter('on_hold',$var); //Opportunity Owner
-        $this->filteringReportAddCustomFilter('yid',$var); //Opportunity Owner
-        //top contributors
-        $this->filteringReportAddCustomFilter('total_range',$var); //Opportunity Owner
+        // $this->filteringReportAddCustomFilter('contribution_source',$var); //Contribution Source
+        // $this->filteringReportAddCustomFilter('payment_instrument_id',$var); //Payment Method
+        // $this->filteringReportAddCustomFilter('campaign_type',$var); //Campaign Type
+        // $this->filteringReportAddCustomFilter('ch_fund',$var); //CH Fund
+        // $this->filteringReportAddCustomFilter('application_submitted',$var); //Application Submitted
+        // $this->filteringReportAddCustomFilter('probability',$var); //Probability
+        // $this->filteringReportAddCustomFilter('Opportunity_Name',$var); //Opportunity Name
+        // $this->filteringReportAddCustomFilter('Opportunity_Owner',$var); //Opportunity Owner
+        // //SYBNT fields
+        // $this->filteringReportAddCustomFilter('on_hold',$var); //Opportunity Owner
+        // $this->filteringReportAddCustomFilter('yid',$var); //Opportunity Owner
+        // //top contributors
+        // $this->filteringReportAddCustomFilter('total_range',$var); //Opportunity Owner
+        // if($this->isRepeatContributionsReport())
+        // {
+        //     $this->filteringReportAddCustomFilter('total_lifetime_contributions',$var); //Total Lifetime Contributions
+        //     $this->filteringReportAddCustomFilter('amount_of_last_contribution',$var); //Amount of last contribution
+        //     $this->filteringReportAddCustomFilter('date_of_last_contribution',$var); //Date of Last Contribution
+        //     $this->filteringReportAddCustomFilter('date_of_first_contribution',$var); //Date of First Contribution
+        //     $this->filteringReportAddCustomFilter('largest_contribution',$var); //Largest Contribution
+        //     $this->filteringReportAddCustomFilter('count_of_contributions',$var); //Count of Contributions
+        // }
     }
 
+    public function setRecurringContributionsFields(&$var) {
+
+        $var['civicrm_phone']['fields']['phone']['title'] = E::ts('Phone');
+        $var['civicrm_email']['fields']['email']['title'] = E::ts('Email');
+
+        $specificCols2 = [
+            'civicrm_address' => [
+                'dao' => 'CRM_Core_DAO_Address',
+                'fields' => [ 
+                  'street_address' => ['title' => E::ts('Address - Primary')],
+                  'city' => ['title' => E::ts('City')],
+                  'postal_code' => ['title' => E::ts('Postal Code')],
+                  'state_province_id' => ['title' => E::ts('State/Province')],
+                  'country_id' => ['title' => E::ts('Country')],
+                ],
+                'grouping' => 'contact-fields',
+              ],
+              'civicrm_contribution' => [
+                'dao' => 'CRM_Contribute_BAO_Contribution',
+                'fields' => [
+                  'total_amount' => [
+                    'title' => E::ts('This Month Amount'),
+                    'required' => TRUE,
+                    'dbAlias' => "temp.this_month_amount",
+                  ],
+                  'source' => [
+                    'title' => E::ts('Contribution Source'),
+                  ],
+                  'completed_contributions' => [
+                    'title' => E::ts('Completed Contributions'),
+                    'dbAlias' => 'temp.completed_contributions',
+                  ],
+                  'start_date' => [
+                    'title' => E::ts('Start Date/First Contribution'),
+                    'type' => CRM_Utils_Type::T_DATE + CRM_Utils_Type::T_TIME,
+                    'dbAlias' => 'temp.start_date',
+                  ],
+                  'last_month_amount' => [
+                    'title' => E::ts('Last Month Amount'),
+                    'type' => CRM_Utils_TYPE::T_MONEY,
+                    'required' => TRUE,
+                    'dbAlias' => "temp.last_month_amount",
+                  ],
+                ],
+                'filters' => [
+                  'receive_date' => [
+                    'title' => E::ts('Receive Date'),
+                    'default' => 'this.month',
+                    'operatorType' => CRM_Report_form::OP_DATETIME,
+                    'type' => CRM_Utils_TYPE::T_DATE + CRM_Utils_Type::T_TIME,
+                  ],
+                  'campaign_id' => $var['civicrm_contribution']['filters']['campaign_id']
+                ],
+                'grouping' => 'contribute-fields',
+              ],
+        ];
+        $var = array_merge($var, $specificCols2);
+
+      }
+
     private function filteringReportFields(&$var) {
+        
+        /*
+        var
+            => civicrm_contribution
+                => fields
+                    => amount [...]
+
+        template.json
+            => fields
+                => amount [...]
+        */
+
+        // clear var
+        $var = [];
+
+        foreach ($this->getAllColumns() as $fieldName => $fieldInfo) {
+            $fieldInfo = array_merge( $fieldInfo, $this->getFieldInfo($fieldName) );
+            
+            // field not found
+            if ( isset($fieldInfo['error']) ) {
+                //echo "<pre>$fieldName => not found</pre>";
+                continue;
+            }
+            if(isset($fieldInfo['custom'])){
+                $entityName = EU::getTableNameByName($fieldInfo['group_name']);
+                //echo $entityName = $this->getEntityTable();
+                //echo 'hell yeah';
+              }else{
+                $entityName = $this->getEntityTable($fieldInfo['entity']);
+              }
+            
+              $actualFieldName = ($fieldInfo['field_name']) ?? $fieldName;
+            $filterType = $this->getFilterType($fieldName);
+            //$entityName = $fieldInfo['entity'];
+            $var[$entityName]['fields'][$fieldName] = [
+                "title" => $fieldInfo["title"],
+                "default" => ( $fieldInfo["default"] === true || $fieldInfo["selected"] === true ),
+                "type" => $filterType['type'],
+            ];
+            //set order by fields //sort by
+            $var[$entityName]['order_bys'][$fieldName] = [
+                'title' => $fieldInfo["title"]
+            ];
+            //set group by
+            $var[$entityName]['group_bys'][$fieldName] = [
+                'title' => $fieldInfo["title"]
+            ];
+
+        }
+
+        return;
+        
+        
         foreach ($var as $entityName => $entityData) {
             if($this->isOpportunityReport())
             unset($var[$entityName]['order_bys']);
@@ -703,7 +1081,8 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                 // We do not want to show this field
                 if (!in_array($fieldName, $this->getColumnsFromConfig())) {
                     unset($var[$entityName]['fields'][$fieldName]);
-                    if($this->_settings['type'] == 'detailed' && $this->_settings['entity'] == 'contribution')
+                    //For add Detailed report fields order by parameters should be same as display column fields
+                    if($this->_settings['type'] == 'detailed' && ($this->_settings['entity'] == 'contribution' || $this->_settings['entity'] == 'contact'))
                     unset($var[$entityName]['order_bys'][$fieldName]);
             
                 // We want this
@@ -724,7 +1103,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                     {
                         unset($var[$entityName]['order_bys'][$fieldName]);
                     }else{
-                        if($this->_settings['type'] == 'detailed' && $this->_settings['entity'] == 'contribution'){
+                        if($this->_settings['type'] == 'detailed' && ($this->_settings['entity'] == 'contribution' || $this->_settings['entity'] == 'contact')){
                             array_shift($orderByFieldList);
                         }
                         if(!in_array($fieldName,$orderByFieldList)){
@@ -901,6 +1280,136 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                     ];
                     $this->customFieldCreation($fieldName,$var,$fieldDetails);
                     break; 
+                //Repeat contributions report custom fields and extra fields
+                case 'total_lifetime_contributions':
+                    $fieldDetails = [];
+                    $customTablename = EU::getTableNameByName('Summary_Fields');
+                    $trial = EU::getCustomFieldID('Total_Lifetime_Contributions');
+                    $fieldDetails = $this->_mapping[$customTablename]['fields'][$trial];
+                    $fieldDetails ['table_name'] = $customTablename;
+                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
+                    break;
+                case 'amount_of_last_contribution':
+                    $fieldDetails = [];
+                    $customTablename = EU::getTableNameByName('Summary_Fields');
+                    $trial = EU::getCustomFieldID('Amount_of_last_contribution');
+                    $fieldDetails = $this->_mapping[$customTablename]['fields'][$trial];
+                    $fieldDetails ['table_name'] = $customTablename;
+                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
+                    break;
+                case 'date_of_last_contribution':
+                    $fieldDetails = [];
+                    $customTablename = EU::getTableNameByName('Summary_Fields');
+                    $trial = EU::getCustomFieldID('Date_of_Last_Contribution');
+                    $fieldDetails = $this->_mapping[$customTablename]['fields'][$trial];
+                    $fieldDetails ['table_name'] = $customTablename;
+                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
+                    break;
+                case 'date_of_first_contribution':
+                    $fieldDetails = [];
+                    $customTablename = EU::getTableNameByName('Summary_Fields');
+                    $trial = EU::getCustomFieldID('Date_of_First_Contribution');
+                    $fieldDetails = $this->_mapping[$customTablename]['fields'][$trial];
+                    $fieldDetails ['table_name'] = $customTablename;
+                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
+                    break;
+                case 'largest_contribution':
+                    $fieldDetails = [];
+                    $customTablename = EU::getTableNameByName('Summary_Fields');
+                    $trial = EU::getCustomFieldID('Largest_Contribution');
+                    $fieldDetails = $this->_mapping[$customTablename]['fields'][$trial];
+                    $fieldDetails ['table_name'] = $customTablename;
+                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
+                    break;
+                case 'count_of_contributions':
+                    $fieldDetails = [];
+                    $customTablename = EU::getTableNameByName('Summary_Fields');
+                    $trial = EU::getCustomFieldID('Count_of_Contributions');
+                    $fieldDetails = $this->_mapping[$customTablename]['fields'][$trial];
+                    $fieldDetails ['table_name'] = $customTablename;
+                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
+                    break;
+                case 'range_one_stat':
+                    $fieldDetails = [
+                        'title' => E::ts('Range One Stat'),
+                        'name' => 'range_one_stat',
+                    ];
+                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
+                    break;
+                case 'range_two_stat':
+                    $fieldDetails = [
+                        'title' => E::ts('Range Two Stat'),
+                        'name' => 'range_two_stat'
+                    ];
+                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
+                    break;
+                
+                    //gl account and payment method reconciliation
+
+                case 'debit_name':
+                case 'debit_accounting_code':
+                //case 'debit_contact_id':
+
+                    if ($fieldName == "debit_name") {
+                        $actualFieldNeme = 'name';  
+                        $fieldTitle = 'GL Account Name - Debit'   ;  
+                    }    
+                    else if ($fieldName == "debit_accounting_code") {
+                        $actualFieldNeme = 'accounting_code'; 
+                        $fieldTitle = 'GL Account Code - Debit'   ;
+                    } 
+                    $fieldDetails = [
+                                    'title' => E::ts($fieldTitle),
+                                    'name' => $actualFieldNeme,
+                                    'select_clause_alias' => $this->getEntityTable('financial_account').'_debit.' . $actualFieldNeme,
+                                    'table_name' => $this->getEntityTable('financial_account'),
+                                    //'dbAlias' => $this->getEntityTable('financial_account').'.' . $actualFieldNeme,
+                                    'dbAlias' => $this->getEntityTable('financial_account').'_debit.' . $actualFieldNeme,
+                                ];
+                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
+                    break;
+
+                case 'credit_name':
+                case 'credit_accounting_code':
+            
+                    if ($fieldName == "credit_name") {
+                        $actualFieldNeme = 'name';  
+                        $fieldTitle = 'Financial Account Name - Credit'   ;  
+                    }    
+                    else if ($fieldName == "credit_accounting_code") {
+                        $actualFieldNeme = 'accounting_code'; 
+                        $fieldTitle = 'GL Account Code - Credit'   ;
+                    } 
+                    $fieldDetails = [
+                        'title' => E::ts($fieldTitle),
+                        'name' => $actualFieldNeme,
+                        'select_clause_alias' => $this->getEntityTable('financial_account').'_credit.' . $actualFieldNeme,
+                        'table_name' => $this->getEntityTable('financial_account'),
+                        //'dbAlias' => $this->getEntityTable('financial_account').'.' . $actualFieldNeme,
+                        'dbAlias' => $this->getEntityTable('financial_account').'_credit.' . $actualFieldNeme,
+                    ];
+                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
+                    break;
+                case 'debit_contact_id':
+                case 'credit_contact_id':
+                    if ($fieldName == "debit_contact_id") {
+                        $fieldTitle = 'GL Account Owner - Debit'   ;  
+                        $fieldType = 'debit';
+                    }    
+                    else if ($fieldName == "credit_contact_id") {
+                        $fieldTitle = 'GL Account Owner - Credit'   ;
+                        $fieldType = 'credit';
+                    } 
+                    $fieldDetails = [
+                        'title' => E::ts($fieldTitle),
+                        'name' => 'organization_name',
+                        'select_clause_alias' => $this->getEntityTable('contact').'_'.$fieldType.'.organization_name',
+                        'table_name' => $this->getEntityTable('contact'),
+                        //'dbAlias' => $this->getEntityTable('contact').'.organization_name',
+                        'dbAlias' => $this->getEntityTable('contact').'_'.$fieldType.'.organization_name',    
+                    ];
+                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
+                    break;
             }
         }
     }
@@ -942,6 +1451,13 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                 case 'status_id': //Opportunity status
                     $var['fields'][$fieldName]['select_clause_alias'] = $this->getEntityTable().'_'.$fieldName.'_value.label';
                     $var['fields'][$fieldName]['custom_alias'] = $this->getEntityTable().'_'.$fieldName;
+                    
+                case 'street_address':
+                case 'city':
+                case 'postal_code':
+                case 'state_province_id':
+                case 'country_id':
+                    $var['fields'][$fieldName]['select_clause_alias'] = $this->getEntityTable('address').'.'.$fieldName;
                     break;
             }
     }
@@ -962,39 +1478,62 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     }
 
     private function filteringReportFilterOptions(&$var) {
+        //echo "<pre> FILTERS => ".print_r($this->getReportingFilters(), true)."</pre>";
+        foreach ($this->getReportingFilters() as $fieldName => $fieldInfo) {
+            $fieldInfo = array_merge( $fieldInfo, $this->getFieldInfo($fieldName) );
+            
+            // field not found
+            if ( isset($fieldInfo['error']) ) {
+                //echo "<pre>$fieldName => not found</pre>";
+                continue;
+            }
+            if(isset($fieldInfo['custom'])){
+                $entityName = EU::getTableNameByName($fieldInfo['group_name']);
+                //$entityName = $this->getEntityTable();
+              }else{
+                $entityName = $this->getEntityTable($fieldInfo['entity']);
+              }
+            //$entityName = $fieldInfo['entity'];
+            $actualFieldName = ($fieldInfo['field_name']) ?? $fieldName;
+            $filterType = $this->getFilterType($fieldName);
+            $var[$entityName]['filters'][$fieldName] = [
+                "name" => $actualFieldName,
+                "title" => $fieldInfo["title"],
+                "default" => $fieldInfo["default_value"] ?? '',
+                "dataType" => $filterType["dataType"],
+                "htmlType" => $filterType["htmlType"],
+                "type" => $filterType["type"]
+            ];
+
+
+            if ( isset($fieldInfo['options']) && $fieldInfo['options'] === true ) {
+                $var[$entityName]['filters'][$fieldName]["operatorType"] = CRM_Report_Form::OP_MULTISELECT;
+               //print_r($this->getFilterOptions($fieldName));
+                $var[$entityName]['filters'][$fieldName]["options"] = $this->getFilterOptions($fieldName);
+                // TODO: options
+            }
+
+            // TODO: date / datetime
+
+        }
+
+        //echo "<pre> AFTER FILTERS => ".print_r($var, true)."</pre>";
+
+        return;
         foreach ($var as $entityName => $entityData) {
             foreach ($entityData['filters'] as $fieldName => $fieldData) {
-                switch ($fieldName) {
-                    //update title from 'non deductible amount' to 'Advantage amount'
-                    case 'non_deductible_amount':
-                       $var[$entityName]['filters'][$fieldName]['title'] = 'Advantage amount';
-                       break;
-                    case 'receive_date':
-                        if($this->isFiscalQuarterReport())
-                        {
-                            $defaultVal =($this->getReportType() == 'fiscal')? 'this.fiscal_year' : 'ending.year';
-                            $var[$entityName]['filters'][$fieldName]['default'] = $defaultVal;
-                        }
-                        if($this->getReportName() == 'top_donors')
-                        {
-                            $defaultVal = 'ending.year';
-                            $var[$entityName]['filters'][$fieldName]['default'] = $defaultVal;
-                        }
-                        break;
-                    }
+                
                 // We do not want to show this filters
-                if (!in_array($fieldName, $this->getReportingFilters())) {
-                    unset($var[$entityName]['filters'][$fieldName]);
-                } else{
+                
                     //modify filter option values if required
                     $this->fixFilterOption($fieldName, $var[$entityName]['filters'][$fieldName]);
-                    
-                }
+
             }
         }
     }
 
     private function filteringReportAddCustomFilter($fieldName,&$var) {
+        return;
         if(in_array($fieldName,$this->getReportingFilters())){
             switch ($fieldName) {
                 case 'contribution_source':
@@ -1131,6 +1670,82 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                             'default_op' => 'eq',
                     ];
                     break; 
+                    //repeat contributions report
+                case 'total_lifetime_contributions';
+                    if ($columnName = E::getColumnNameByName('Total_Lifetime_Contributions')) {
+                        $customTablename = EU::getTableNameByName('Summary_Fields');
+                        $var[$this->getEntityTable()]['filters'][$fieldName] = [
+                        'title' => ts('Total Lifetime Contributions'),
+                        'column_name' => $columnName,
+                        'table_name' => $customTablename,
+                        'type' => CRM_Utils_Type::T_MONEY,
+                        'dbAlias' => $customTablename.".".$columnName,
+                        ];
+                    }
+                    break;
+                case 'amount_of_last_contribution';
+                    if ($columnName = E::getColumnNameByName('Amount_of_last_contribution')) {
+                        $customTablename = EU::getTableNameByName('Summary_Fields');
+                        $var[$this->getEntityTable()]['filters'][$fieldName] = [
+                        'title' => ts('Amount of last contribution'),
+                        'column_name' => $columnName,
+                        'table_name' => $customTablename,
+                        'type' => CRM_Utils_Type::T_MONEY,
+                        'dbAlias' => $customTablename.".".$columnName,
+                        ];
+                    }
+                    break;
+                case 'date_of_last_contribution';
+                    if ($columnName = E::getColumnNameByName('Date_of_Last_Contribution')) {
+                        $customTablename = EU::getTableNameByName('Summary_Fields');
+                        $var[$this->getEntityTable()]['filters'][$fieldName] = [
+                        'title' => ts('Date of Last Contributions'),
+                        'column_name' => $columnName,
+                        'table_name' => $customTablename,
+                        'operatorType' => CRM_Report_Form::OP_DATETIME,
+                        'type' => CRM_Utils_Type::T_DATE + CRM_Utils_Type::T_TIME,
+                        'dbAlias' => $customTablename.".".$columnName,
+                        ];
+                    }
+                    break;
+                case 'date_of_first_contribution';
+                    if ($columnName = E::getColumnNameByName('Date_of_First_Contribution')) {
+                        $customTablename = EU::getTableNameByName('Summary_Fields');
+                        $var[$this->getEntityTable()]['filters'][$fieldName] = [
+                        'title' => ts('Date of First Contributions'),
+                        'column_name' => $columnName,
+                        'table_name' => $customTablename,
+                        'operatorType' => CRM_Report_Form::OP_DATETIME,
+                        'type' => CRM_Utils_Type::T_DATE + CRM_Utils_Type::T_TIME,
+                        'dbAlias' => $customTablename.".".$columnName,
+                        ];
+                    }
+                    break;
+                case 'largest_contribution';
+                    if ($columnName = E::getColumnNameByName('Largest_Contribution')) {
+                        $customTablename = EU::getTableNameByName('Summary_Fields');
+                        $var[$this->getEntityTable()]['filters'][$fieldName] = [
+                        'title' => ts('Largest Contribution'),
+                        'column_name' => $columnName,
+                        'table_name' => $customTablename,
+                        'type' => CRM_Utils_Type::T_MONEY,
+                        'dbAlias' => $customTablename.".".$columnName,
+                        ];
+                    }
+                    break;
+                case 'count_of_contributions';
+                    if ($columnName = E::getColumnNameByName('Count_of_Contributions')) {
+                        $customTablename = EU::getTableNameByName('Summary_Fields');
+                        $var[$this->getEntityTable()]['filters'][$fieldName] = [
+                        'title' => ts('Count of Contributions'),
+                        'column_name' => $columnName,
+                        'table_name' => $customTablename,
+                        'operatorType' => CRM_Report_Form::OP_INT,
+                        'type' => CRM_Utils_Type::T_INT,
+                        'dbAlias' => $customTablename.".".$columnName,
+                        ];
+                    }
+                    break;
             }
         }
     }
@@ -1210,18 +1825,49 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         foreach ($this->_orderByFields as $fieldName => $value) {
             if ($fieldName == 'financial_type') {
                 $entityName = 'financial_type';
-            } else{
+            }
+            else if($fieldName == 'sort_name' || $fieldName == 'first_name' || $fieldName == 'last_name' || $fieldName == 'organization_name'|| $fieldName == 'exposed_id')
+            {
+               $entityName = 'contact';
+            }
+            else if($fieldName == 'phone' || $fieldName == 'email')
+            {
+               $entityName = $fieldName;
+            }
+            else if($fieldName == 'street_address' || $fieldName == 'city' || $fieldName == 'postal_code' || $fieldName == 'state_province_id' || $fieldName == 'country_id')
+            {
+               $entityName = 'address';
+            }
+            else if($fieldName == 'source')
+            {
+               $entityName = 'contribution';
+            } 
+            else{
                 $entityName = $this->getEntity();
             }
             $columnInfo = $this->getFieldMapping( $entityName, $fieldName);
+            if(($this->isRecurringContributionReport()) && ($fieldName == 'total_amount' || $fieldName == 'last_month_amount' || $fieldName == 'completed_contributions' || $fieldName == 'start_date'))
+           {
+            $sortByAlias = ($columnInfo['custom_alias']) ? $columnInfo['custom_alias'] : $fieldName;
+           }else{
             $sortByAlias = ($columnInfo['custom_alias']) ? $columnInfo['custom_alias'] : $columnInfo['table_name'].'_'.$fieldName;
+           }
             // adding sort field to column headers
             $columnHeader[$sortByAlias] = [
                 'title' => $columnInfo['title']
             ];
-            // adding sort field to select clauses
+            if(($this->isRecurringContributionReport()) && ($fieldName == 'total_amount' || $fieldName == 'last_month_amount' || $fieldName == 'completed_contributions' || $fieldName == 'start_date'))
+           {
+            $selectStatement = ($columnInfo['select_clause_alias'] && $columnInfo['custom_alias']) ? $columnInfo['select_clause_alias'] : $columnInfo['name'];
+           }else{
             $selectStatement = ($columnInfo['select_clause_alias'] && $columnInfo['custom_alias']) ? $columnInfo['select_clause_alias'] : $columnInfo['table_name'] ."." . $columnInfo['name'];
+           }
+           if(($this->isRecurringContributionReport()) && ($fieldName == 'total_amount' || $fieldName == 'last_month_amount' || $fieldName == 'completed_contributions' || $fieldName == 'start_date'))
+           {
+           }else{
             $select[] = $selectStatement ." as ". $sortByAlias;
+           }
+           
         }
         $this->_select = array_merge( $this->_select, $select);
         $this->_selectClauses = array_merge( $this->_selectClauses, $select);
@@ -1339,7 +1985,43 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         }
       }
     
+    public function alterRecurringStatistics(array $rows, bool $showDetailed = false): array {
+        $statistics = [];
+        if($this->isRecurringContributionReport())
+        {
+            $contriQuery = "IFNULL((CASE WHEN 
+            YEAR(".$this->getEntityTable('contribution').".receive_date) = YEAR(NOW()) AND MONTH(".$this->getEntityTable('contribution').".receive_date) = MONTH(NOW()) THEN SUM(".$this->getEntityTable('contribution').".total_amount) 
+            END),0) AS total_amount,
+            IFNULL((CASE WHEN 
+            YEAR(".$this->getEntityTable('contribution').".receive_date) = YEAR(MAX(".$this->getEntityTable('contribution').".receive_date)) AND MONTH(".$this->getEntityTable('contribution').".receive_date) = MONTH(MAX(".$this->getEntityTable('contribution').".receive_date)) THEN SUM(".$this->getEntityTable('contribution').".total_amount) 
+            END),0) AS last_month_amount ".$this->_from.' '.$this->_where;
     
+            $contriSQL = "SELECT {$contriQuery} {$this->_groupBy}";
+            $contriDAO = CRM_Core_DAO::executeQuery($contriSQL);
+            $thisMonthAmount=$lastMonthAmount=[];
+            $count=0;
+            while ($contriDAO->fetch()) {
+                if(!empty($contriDAO->total_amount))
+                $thisMonthAmount[] += $contriDAO->total_amount;
+                if(!empty($contriDAO->total_amount))
+                $lastMonthAmount[] += $contriDAO->last_month_amount;
+            
+            }
+            $statistics['counts']['total_amount'] = [
+                'title' => ts('This Month Total Amount'),
+                'value' => array_sum($thisMonthAmount),
+                'type' => CRM_Utils_Type::T_MONEY
+            ];
+
+            // total contribution count
+            $statistics['counts']['last_month_amount'] = [
+                'title' => ts('Last Month Total Amount'),
+                'value' => array_sum($lastMonthAmount),
+                'type' => CRM_Utils_Type::T_MONEY
+            ];
+            return $statistics;
+        }
+    }
 
     /**
      * 
@@ -1765,6 +2447,32 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         // ->addWhere('id', '=', $reportId)
         // ->execute()
         // ->itemAt(1);
+    }
+
+    public function getEntityTableFromField($fieldName,$select = NULL) : string {
+        $fieldInfo = $this->getFieldInfo($fieldName);
+        if(isset($fieldInfo['custom'])){
+            $entityTableName = EU::getTableNameByName($fieldInfo['group_name']);
+          }else{
+            $entityTableName = $this->getEntityTable($fieldInfo['entity']);
+            if($select)
+            {
+                $entityTableName = isset($fieldInfo['dependent_table_entity'])? $this->getEntityTable($fieldInfo['dependent_table_entity']): $this->getEntityTable($fieldInfo['entity']);
+            }
+            
+          }
+        return $entityTableName;
+    }
+
+    public function getEntityClauseFromField($fieldName) : string {
+        $fieldInfo = $this->getFieldInfo($fieldName);
+        $entityTable = $this->getEntityTableFromField($fieldName);
+        if(isset($fieldInfo['custom'])){
+            $entityField = E::getColumnNameByName($fieldInfo['custom_fieldName']);
+          }else{
+            $entityField = (isset($fieldInfo['field_name']))? $fieldInfo['field_name']: $fieldName;
+          }
+        return $entityTable.'.'.$entityField;
     }
 }
 

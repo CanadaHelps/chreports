@@ -1,0 +1,37 @@
+{ 
+    "name": "recurring_contributions_summary",
+    "title": "Recurring Contributions (Summary)",
+    "type": "detailed",
+    "entity": "contact",
+    "fields":{
+        "id": {"default" : true},
+        "exposed_id":{},
+        "sort_name":{"default" : true},
+        "first_name": {},
+        "last_name": {},
+        "phone":{ "preSelected" : true},
+       
+        "email":{},
+        "total_amount":{"default" : true},
+        "source":{ "preSelected" : true},
+        "completed_contributions":{ "preSelected" : true},
+        "start_date":{},
+        "last_month_amount":{"default" : true},
+
+
+        "street_address":{ "preSelected" : true},
+        "city":{ "preSelected" : true},
+        "postal_code":{},
+        "state_province_id":{ "preSelected" : true},
+        "country_id":{ "preSelected" : true}
+    },
+    "use_default_filters" : false,
+    "filters":[
+        "sort_name",
+        "receive_date",
+        "tagid",
+        "gid",
+        "campaign_id"
+    ],
+    "groupByDisplay" : false
+}

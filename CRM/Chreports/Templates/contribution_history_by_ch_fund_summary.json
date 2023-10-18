@@ -9,7 +9,7 @@
         },
         "contribution_source": {},
         "campaign_id": {},
-        "financial_type": {},
+        "financial_type_id": {},
         "contribution_page_id": {}
     },
     "use_default_filters" : true,

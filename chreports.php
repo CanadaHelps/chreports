@@ -740,12 +740,11 @@ function chreports_civicrm_preProcess($formName, &$form) {
         $reportInstance->setColumns($params['fields']);
 
       // Build the Json File Config
-      $config = $reportInstance->buildJsonConfigSettings();
+      $reportInstance->buildJsonConfigSettings();
 
       // Save and create the JSON File
       // Redirect is set to TRUE by default
-      if($config)
-        $reportInstance->writeJsonConfigFile($config);
+      $reportInstance->writeJsonConfigFile();
     }
   }
 } // */

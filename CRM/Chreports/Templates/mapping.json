@@ -1,0 +1,196 @@
+{
+    
+    "financial_type_id":{
+        "title": "Fund",
+        "entity": "contribution",
+        "field_name": "financial_type_id",
+        "options": true,
+        "field_type": "int",
+        "select_option": ["id","name"],
+        "dependent_table_entity":"financial_type"
+    },
+    "contribution_page_id":{
+        "title": "Campaign",
+        "entity": "contribution",
+        "field_name": "contribution_page_id",
+        "options": true,
+        "field_type": "int",
+        "select_option": ["id","title"],
+        "dependent_table_entity":"contribution_page",
+        "select_name": "title"
+    },
+    "receive_date":{
+        "title": "Date Received",
+        "entity": "contribution",
+        "field_name": "receive_date",
+        "field_type": "Datetime",
+        "operatorType": true
+       
+    },
+    "receipt_date":{
+        "title": "Date Received",
+        "entity": "contribution",
+        "field_name": "receive_date",
+        "field_type": "Datetime",
+        "operatorType": true
+         
+    },
+    "contribution_status_id":{
+        "title": "Contribution Status",
+        "entity": "contribution",
+        "field_name": "contribution_status_id",
+        "options": true,
+        "group_name": "contribution_status",
+        "field_type": "int",
+        "use_option_value": true,
+        "select_name": "option_value",
+        "select_option": ["value","label"]
+    },
+    "contribution_recur_id":{
+        "title": "Contribution Recurring",
+        "entity": "contribution",
+        "field_name": "contribution_recur_id",
+        "options": true,
+        "field_type": "int",
+        "fileter_field_type": "boolean"
+    },
+    "total_amount" : {
+        "title": "Contribution Amount",
+        "entity": "contribution",
+        "field_name": "total_amount",
+        "field_type": "money"
+    },
+    "non_deductible_amount":{
+        "title": "Advantage amount",
+        "entity": "contribution",
+        "field_name": "non_deductible_amount",
+        "field_type": "money"
+    },
+
+    "card_type_id": {
+        "title": "Credit Card Type",
+        "entity": "financial_trxn",
+        "field_name": "card_type_id",
+        "options": true,
+        "group_name": "accept_creditcard",
+        "field_type": "int",
+        "use_option_value": true,
+        "select_name": "option_value",
+        "select_option": ["value","label"]
+    },
+
+    "batch_id": {
+        "title": "Batch Name",
+        "entity": "batch",
+        "field_name": "id",
+       
+        "options": true,
+        "field_type": "int",
+        "select_option": ["id","title"]
+    },
+
+    "tagid":{
+        "title": "Tag",
+        "entity": "tag",
+        "field_name": "id",
+        "options": true,
+        "field_type": "int",
+        "select_option": ["id","name"]
+    },
+    
+    "gid":{
+        "title": "Group",
+        "entity": "group",
+        "field_name": "id",
+        "options": true,
+        "field_type": "int",
+        "select_option": ["id","title"]
+    },
+    "contribution_source": {
+        "title": "Source",
+        "entity": "contribution",
+        "field_name": "source",
+        "options": true,
+        
+        "field_type": "string",
+        "select_option": ["source"]
+    },
+    "contact_source": {
+        "title": "Contact Source",
+        "entity": "contact",
+        "field_name": "source"
+    },
+    "gl_account": {
+        "title": "Financial Acccount",
+        "entity": "financial_account",
+        "field_name": "id",
+        "select_name": "name"
+    },
+    "invoice_id": {
+        "title": "Invoice Reference",
+        "entity": "contribution"
+    },
+    "contact_name": {
+        "title": "Contact Name",
+        "entity": "contact",
+        "field_name": "display_name"
+    },
+    "grant_type_id": {
+        "title": "Opportunity Type",
+        "entity": "grant",
+        "options": true,
+        "group_name": "grant_type",
+        "field_type": "int",
+        "use_option_value": true,
+        "select_name": "option_value",
+        "select_option": ["value","label"]
+    },
+    "ch_fund": {
+        "title": "CH Fund",
+        "custom": true,
+        "options": true,
+        "group_name": "Additional_info",
+        "field_type": "string",
+        "select_option": ["value","label"],
+        "custom_fieldName": "Fund"
+    },
+    "campaign_type": {
+        "title": "Campaign Type",
+        "custom": true,
+        "options": true,
+        "group_name": "Campaign_Information",
+        "field_type": "string",
+        "select_option": ["value","label"],
+        "custom_fieldName": "Campaign_Type"
+    },
+    "campaign_id": {
+        "title": "Campaign Group",
+        "entity": "campaign",
+        "options": true,
+        "select_name": "title",
+        "select_option": ["id","title"],
+        "field_name": "id"
+    },
+    "credit_name": {
+        "title": "GL Account Name - Credit",
+        "field_name": "name",
+        "entity": "financial_account",
+        "table_alias": "financial_account_credit",
+        "options": true,
+        "field_type": "string"
+    },
+    "debit_accounting_code": {
+        "title": "GL Account Code - Debit",
+        "field_name": "accounting_code",
+        "entity": "financial_account",
+        "table_alias": "financial_account_debit",
+        "options": true,
+        "field_type": "int"
+    },
+    "amount": {
+        "title": "Amount",
+        "entity": "contribution",
+        "field_name": "total_amount",
+        "field_type": "money"
+    }
+}

@@ -27,7 +27,7 @@ class CRM_Chreports_Form_Report_ExtendSummary extends CRM_Report_Form_Contribute
   public function buildSQLQuery(&$var) {
 
     $params = $var->getVar('_params');
-        
+    //echo '<pre>';print_r($var->getVar('_columns'));echo '</pre>';
     // setting out columns, filters, params,mapping from report object
     $this->_reportInstance->setFieldsMapping($var->getVar('_columns'));
     $this->_reportInstance->setFormParams($params);
@@ -52,7 +52,7 @@ class CRM_Chreports_Form_Report_ExtendSummary extends CRM_Report_Form_Contribute
     $this->_reportInstance->setLimit($var->getVar('_limit'));
 
     //attache entity name to fields for mapping purpose
-    $this->_reportInstance->setEntityTableForFields();
+    //$this->_reportInstance->setEntityTableForFields();
 
     // Report Instance
     // _entity => Contribution, Contact, etc
