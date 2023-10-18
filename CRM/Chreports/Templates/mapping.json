@@ -47,7 +47,8 @@
         "entity": "contribution",
         "field_name": "contribution_recur_id",
         "options": true,
-        "field_type": "int"
+        "field_type": "int",
+        "fileter_field_type": "boolean"
     },
     "total_amount" : {
         "title": "Contribution Amount",
