@@ -1,5 +1,4 @@
 {
-    
     "financial_type_id":{
         "title": "Fund",
         "entity": "contribution",
@@ -16,8 +15,7 @@
         "options": true,
         "field_type": "int",
         "select_option": ["id","title"],
-        "dependent_table_entity":"contribution_page",
-        "select_name": "title"
+        "dependent_table_entity":"contribution_page"
     },
     "receive_date":{
         "title": "Date Received",
@@ -25,15 +23,13 @@
         "field_name": "receive_date",
         "field_type": "Datetime",
         "operatorType": true
-       
     },
     "receipt_date":{
-        "title": "Date Received",
+        "title": "Receipt Date",
         "entity": "contribution",
-        "field_name": "receive_date",
+        "field_name": "receipt_date",
         "field_type": "Datetime",
         "operatorType": true
-         
     },
     "contribution_status_id":{
         "title": "Contribution Status",
@@ -51,8 +47,7 @@
         "entity": "contribution",
         "field_name": "contribution_recur_id",
         "options": true,
-        "field_type": "int",
-        "fileter_field_type": "boolean"
+        "field_type": "int"
     },
     "total_amount" : {
         "title": "Contribution Amount",
@@ -66,29 +61,24 @@
         "field_name": "non_deductible_amount",
         "field_type": "money"
     },
-
-    "card_type_id": {
-        "title": "Credit Card Type",
-        "entity": "financial_trxn",
-        "field_name": "card_type_id",
-        "options": true,
-        "group_name": "accept_creditcard",
-        "field_type": "int",
-        "use_option_value": true,
-        "select_name": "option_value",
-        "select_option": ["value","label"]
-    },
-
     "batch_id": {
         "title": "Batch Name",
         "entity": "batch",
         "field_name": "id",
-       
         "options": true,
         "field_type": "int",
         "select_option": ["id","title"]
     },
-
+    "batch_title": {
+        "title": "Batch Title",
+        "entity": "batch",
+        "field_name": "title"
+    },
+    "batch_name": {
+        "title": "Batch Name",
+        "entity": "batch",
+        "field_name": "name"
+    },
     "tagid":{
         "title": "Tag",
         "entity": "tag",
@@ -97,7 +87,6 @@
         "field_type": "int",
         "select_option": ["id","name"]
     },
-    
     "gid":{
         "title": "Group",
         "entity": "group",
@@ -106,19 +95,653 @@
         "field_type": "int",
         "select_option": ["id","title"]
     },
+    "payment_instrument_id":{
+        "title": "Payment Method",
+        "entity": "financial_trxn",
+        "field_name": "payment_instrument_id",
+        "options": true,
+        "group_name": "payment_instrument",
+        "field_type": "int",
+        "use_option_value": true,
+        "select_name": "option_value",
+        "select_option": ["value","label"]
+    },
+    "trxn_date":{
+        "title": "Transaction Date",
+        "entity": "financial_trxn",
+        "field_name": "trxn_date",
+        "field_type": "Datetime",
+        "table_alias": "financial_trxn_report"
+    },
+     "card_type_id": {
+        "title": "Credit Card Type",
+        "entity": "financial_trxn",
+        "field_name": "card_type_id",
+        "table_alias": "financial_trxn_report",
+        "options": true,
+        "group_name": "accept_creditcard",
+        "field_type": "int",
+        "use_option_value": true,
+        "select_name": "option_value",
+        "select_option": ["value","label"]
+    },
+    "trxn_id":{
+        "title": "Trans #",
+        "entity": "financial_trxn",
+        "field_name": "trxn_id",
+        "table_alias": "financial_trxn_report"
+    },
+    "check_number":{
+        "title": "Cheque #",
+        "entity": "financial_trxn",
+        "field_name": "check_number",
+        "table_alias": "financial_trxn_report"
+    },
+    "financial_trxn_currency":{
+        "title": "Currency",
+        "entity": "financial_trxn",
+        "field_name": "currency",
+        "table_alias": "financial_trxn_report",
+        "options": true,
+        "group_name": "currencies_enabled",
+        "field_type": "string",
+        "use_option_value": true,
+        "select_name": "option_value",
+        "select_option": ["value","label"]
+    },
+    "financial_trxn_status_id":{
+        "title": "Financial Transaction Status",
+        "entity": "financial_trxn",
+        "field_name": "status_id",
+        "table_alias": "financial_trxn_report",
+        "options": true,
+        "group_name": "contribution_status",
+        "field_type": "int",
+        "use_option_value": true,
+        "select_name": "option_value",
+        "select_option": ["value","label"]
+    },
+    "entity_financial_trxn_amount":{
+        "title": "Amount",
+        "entity": "entity_financial_trxn",
+        "field_name": "amount",
+        "table_alias": "entity_financial_trxn_report",
+        "field_type": "money"
+    },
+    "sort_name": {
+        "title": "Donor Name",
+        "entity": "contact",
+        "field_name": "sort_name",
+        "field_type": "string"
+    },
+    "first_name": {
+        "title": "First Name",
+        "entity": "contact",
+        "field_name": "first_name",
+        "field_type": "string"
+    },
+    "middle_name": {
+        "title": "Middle Name",
+        "entity": "contact",
+        "field_name": "middle_name",
+        "field_type": "string"
+    },
+    "last_name": {
+        "title": "Last Name",
+        "entity": "contact",
+        "field_name": "last_name",
+        "field_type": "string"
+    },
+    "organization_name" : {
+        "title": "Organization Name",
+        "entity": "contact",
+        "field_name": "organization_name" ,
+        "field_type": "string"
+    },
+    "exposed_id":{
+        "title": "Contact ID",
+        "field_name": "id",
+        "entity": "contact"
+    },
+    "prefix_id":{
+        "title": "Contact Prefix",
+        "field_name": "prefix_id",
+        "entity": "contact",
+        "options": true,
+        "group_name": "individual_prefix",
+        "field_type": "int",
+        "use_option_value": true,
+        "select_name": "option_value",
+        "select_option": ["value","label"]
+    },
+    "suffix_id":{
+        "title": "Contact Suffix",
+        "field_name": "suffix_id",
+        "entity": "contact",
+        "options": true,
+        "group_name": "individual_suffix",
+        "field_type": "int",
+        "use_option_value": true,
+        "select_name": "option_value",
+        "select_option": ["value","label"]
+    },
+    "nick_name": {
+        "title": "Nick Name",
+        "field_name": "nick_name",
+        "entity": "contact"
+    },
+    "postal_greeting_display": {
+        "title": "Postal Greeting",
+        "field_name": "postal_greeting_display",
+        "entity": "contact"
+    },
+    "email_greeting_display": {
+        "title": "Email Greeting",
+        "field_name": "email_greeting_display",
+        "entity": "contact"
+    },
+    "addressee_display": {
+        "title": "Addressee",
+        "field_name": "addressee_display",
+        "entity": "contact"
+    },
+    "contact_type": {
+        "title": "Contact Type",
+        "field_name": "contact_type",
+        "entity": "contact",
+        "options": true,
+        "field_type": "int",
+        "select_option": ["contact_type"]
+    },
+    "contact_sub_type": {
+        "title": "Contact Sub Type",
+        "field_name": "contact_sub_type",
+        "entity": "contact",
+        "options": true,
+        "field_type": "int",
+        "select_option": ["contact_sub_type"]
+    },
+    "gender_id": {
+        "title": "Gender",
+        "field_name": "gender_id",
+        "entity": "contact",
+        "options": true,
+        "group_name": "gender",
+        "field_type": "int",
+        "use_option_value": true,
+        "select_name": "option_value",
+        "select_option": ["value","label"]
+    },
+    "birth_date": {
+        "title": "Birth Date",
+        "field_name": "birth_date",
+        "entity": "contact",
+        "field_type": "Datetime",
+        "operatorType": true
+    },
+    "age": {
+        "title": "Age",
+        "field_name": "age",
+        "entity": "contact",
+        "dbAlias": "TIMESTAMPDIFF(YEAR, civicrm_contact.birth_date, CURDATE())",
+        "operatorType": true
+    },
+    "job_title": {
+        "title": "Contact Job Title",
+        "field_name": "job_title",
+        "entity": "contact"
+    },
+    "external_identifier": {
+        "title": "Contact identifier from external system",
+        "field_name": "external_identifier",
+        "entity": "contact" 
+    },
+    "do_not_email": {
+        "title": "Do not email",
+        "field_name": "do_not_email",
+        "entity": "contact" ,
+        "options": true,
+        "field_type": "boolean"
+    },
+    "do_not_phone": {
+        "title": "Do not phone",
+        "field_name": "do_not_phone",
+        "entity": "contact" ,
+        "options": true,
+        "field_type": "boolean"
+    },
+    "do_not_mail": {
+        "title": "Do not mail",
+        "field_name": "do_not_mail",
+        "entity": "contact",
+        "options": true,
+        "field_type": "boolean" 
+    },
+    "do_not_sms": {
+        "title": "Do not SMS",
+        "field_name": "do_not_sms",
+        "entity": "contact" ,
+        "options": true,
+        "field_type": "boolean"
+    },
+    "do_not_trade": {
+        "title": "Do not Trade",
+        "field_name": "do_not_trade",
+        "entity": "contact" ,
+        "options": true,
+        "field_type": "boolean"
+    },
+    "is_opt_out": {
+        "title": "Do not bulk email",
+        "field_name": "is_opt_out",
+        "entity": "contact" ,
+        "options": true,
+        "field_type": "boolean"
+    },
+    "is_deceased": {
+        "title": "Deceased",
+        "field_name": "is_deceased",
+        "entity": "contact" ,
+        "options": true,
+        "field_type": "boolean"
+    },
+    "preferred_language": {
+        "title": "Preferred Language",
+        "field_name": "preferred_language",
+        "entity": "contact" ,
+        "options": true,
+        "group_name": "languages",
+        "field_type": "int",
+        "use_option_value": true,
+        "select_option": ["name","label"]
+    },
+    "employer_id": {
+        "title": "Current Employer",
+        "field_name": "employer_id",
+        "entity": "contact" 
+    },
+    "email":{
+        "title": "Email",
+        "field_name": "email",
+        "entity": "email"
+    },
+    "street_address":{
+        "title": "Street Address",
+        "field_name": "street_address",
+        "entity": "address",
+        "field_type": "string"
+    },
+    "street_number":{
+        "title": "Street Number",
+        "field_name": "street_number",
+        "entity": "address",
+        "field_type": "string"
+    },
+    "street_name":{
+        "title": "Street Name",
+        "field_name": "street_name",
+        "entity": "address",
+        "field_type": "string"
+    },
+    "street_unit":{
+        "title": "Street Unit",
+        "field_name": "street_unit",
+        "entity": "address",
+        "field_type": "string"
+    },
+    "supplemental_address_1":{
+        "title": "Supplementary Address Field 1",
+        "field_name": "supplemental_address_1",
+        "entity": "address",
+        "field_type": "string"
+    },
+    "supplemental_address_2":{
+        "title": "Supplementary Address Field 2",
+        "field_name": "supplemental_address_2",
+        "entity": "address",
+        "field_type": "string"
+    },
+    "supplemental_address_3":{
+        "title": "Supplementary Address Field 3",
+        "field_name": "supplemental_address_3",
+        "entity": "address",
+        "field_type": "string"
+    },
+    "city": {
+        "title": "City",
+        "field_name": "city",
+        "entity": "address",
+        "field_type": "string"
+    },
+    "postal_code": {
+        "title": "Postal Code",
+        "field_name": "postal_code",
+        "entity": "address",
+        "field_type": "string"
+    },
+    "country": {
+        "title": "Country",
+        "field_name": "country_id",
+        "entity": "address",
+        "field_type": "int",
+        "options": true,
+        "select_option": ["id","name"],
+        "dependent_table_entity":"country"
+    },
+    "province": {
+        "title": "Province",
+        "field_name": "state_province_id",
+        "entity": "address",
+        "field_type": "int",
+        "options": true,
+        "select_option": ["id","name"],
+        "dependent_table_entity":"state_province"
+    },
+    "county": {
+        "title": "County",
+        "field_name": "county_id",
+        "entity": "address",
+        "field_type": "int",
+        "options": true,
+        "select_option": ["id","name"],
+        "dependent_table_entity":"county"
+    },
+    "grant_type_id": {
+        "title": "Opportunity Type",
+        "field_name": "grant_type_id",
+        "entity": "grant",
+        "options": true,
+        "group_name": "grant_type",
+        "field_type": "int",
+        "use_option_value": true,
+        "select_name": "option_value",
+        "select_option": ["value","label"]
+    },
+    "grant_status_id": {
+        "title": "Opportunity Status",
+        "field_name": "status_id",
+        "entity": "grant",
+        "options": true,
+        "group_name": "grant_status",
+        "field_type": "int",
+        "use_option_value": true,
+        "select_name": "option_value",
+        "select_option": ["value","label"]
+    },
+    "grant_amount_total":{
+        "title": "Opportunity Amount",
+        "field_name": "amount_total",
+        "entity": "grant",
+        "field_type": "money",
+        "operatorType" : "CRM_Report_Form::OP_INT"
+    },
+    "amount_granted":{
+        "title": "Amount Received",
+        "field_name": "amount_granted",
+        "entity": "grant",
+        "field_type": "money",
+        "operatorType" : "CRM_Report_Form::OP_INT"
+    },
+    "application_received_date":{
+        "title": "Application Deadline",
+        "field_name": "application_received_date",
+        "entity": "grant",
+        "field_type": "Datetime",
+        "operatorType" : "CRM_Report_Form::OP_DATE"
+    },
+    "money_transfer_date":{
+        "title": "Application Deadline",
+        "field_name": "money_transfer_date",
+        "entity": "grant",
+        "field_type": "Datetime",
+        "operatorType" : "CRM_Report_Form::OP_DATE"
+    },
+    "grant_due_date":{
+        "title": "Report Due",
+        "field_name": "grant_due_date",
+        "entity": "grant",
+        "field_type": "Datetime",
+        "operatorType" : "CRM_Report_Form::OP_DATE"
+    },
+    "decision_date":{
+        "title": "Decision Date",
+        "field_name": "decision_date",
+        "entity": "grant",
+        "field_type": "Datetime",
+        "operatorType" : "CRM_Report_Form::OP_DATE"
+    },
+    "rationale":{
+        "title": "Rationale",
+        "field_name": "rationale",
+        "entity": "grant"
+    },
+    "application_submitted": {
+        "title": "Application Submitted",
+        "custom": true,
+        "options": true,
+        "group_name": "Grant",
+        "field_type": "boolean",
+        "custom_fieldName": "application_submitted"
+    },
+    "probability": {
+        "title": "Probability",
+        "custom": true,
+        "options": true,
+        "group_name": "Grant",
+        "field_type": "int",
+        "select_option": ["value","label"],
+        "custom_fieldName": "application_submitted"
+    },
+    "Opportunity_Name": {
+        "title": "Opportunity Name",
+        "custom": true,
+        "group_name": "Grant",
+        "field_type": "string",
+        "custom_fieldName": "Opportunity_Name"
+    },
+    "total_lifetime_contributions": {
+        "title": "Total Lifetime Contributions",
+        "custom": true,
+        "group_name": "Summary_Fields",
+        "field_type": "money",
+        "custom_fieldName": "Total_Lifetime_Contributions"
+    },
+    "Opportunity_Owner": {
+        "title": "Opportunity Owner",
+        "custom": true,
+        "group_name": "Grant",
+        "field_type": "string",
+        "custom_fieldName": "Opportunity_Owner"
+    },
+    "amount_of_last_contribution": {
+        "title": "Amount of last contribution",
+        "custom": true,
+        "group_name": "Summary_Fields",
+        "field_type": "money",
+        "custom_fieldName": "Amount_of_last_contribution"
+    },
+    "date_of_last_contribution": {
+        "title": "Date of Last Contributions",
+        "custom": true,
+        "group_name": "Summary_Fields",
+        "field_type": "Datetime",
+        "custom_fieldName": "Date_of_Last_Contribution"
+    },
+    "date_of_first_contribution": {
+        "title": "Date of First Contributions",
+        "custom": true,
+        "group_name": "Summary_Fields",
+        "field_type": "Datetime",
+        "custom_fieldName": "Date_of_First_Contribution"
+    },
+    "largest_contribution": {
+        "title": "Largest Contribution",
+        "custom": true,
+        "group_name": "Summary_Fields",
+        "field_type": "money",
+        "custom_fieldName": "Largest_Contribution"
+    },
+    "count_of_contributions": {
+        "title": "Count of Contributions",
+        "custom": true,
+        "group_name": "Summary_Fields",
+        "field_type": "int",
+        "custom_fieldName": "Count_of_Contributions"
+    },
+    "range_one_stat": {
+        "title": "Range One Stat",
+        "field_name": "total_amount",
+        "entity": "contribution"
+    },
+    "range_two_stat": {
+        "title": "Range Two Stat",
+        "field_name": "total_amount",
+        "entity": "contribution"
+    },
+    "repeat_contri_initial_date_range": {
+        "title": "Initial Date Range",
+        "field_name": "receive_date",
+        "entity": "contribution",
+        "field_type": "Datetime",
+        "default" : "previous.year",
+        "table_alias": "contribution_primaryset"
+    },
+    "repeat_contri_second_date_range": {
+        "title": "Second Date Range",
+        "field_name": "receive_date",
+        "entity": "contribution",
+        "field_type": "Datetime",
+        "default" : "this.year",
+        "table_alias": "contribution_secondset"
+    },
+    "range_amount_one": {
+        "title": "Range One Amount",
+        "field_name": "total_amount",
+        "entity": "contribution",
+        "field_type": "int"
+    },
+    "range_amount_two": {
+        "title": "Range One Amount",
+        "field_name": "total_amount",
+        "entity": "contribution",
+        "field_type": "int"
+    },
+    "receive_date_start": {
+        "title": "Application Deadline",
+        "field_name": "receive_date",
+        "entity": "contribution",
+        "field_type": "string"
+    },
+    "last_four_year_total_amount": {
+        "title": "Last 4rth Year Total",
+        "field_name": "last_four_year_total_amount",
+        "field_type": "money"
+    },
+    "last_three_year_total_amount": {
+        "title": "Last 3 Years total",
+        "field_name": "last_three_year_total_amount",
+        "field_type": "money"
+    },
+    "last_two_year_total_amount": {
+        "title": "Last 2 Years total",
+        "field_name": "last_two_year_total_amount",
+        "field_type": "money"
+    },
+    "on_hold": {
+        "title": "Email on hold",
+        "field_name": "on_hold",
+        "field_type": "int",
+        "options": true,
+        "_comment": "static dropdown options ['' => ts('Any')] + CRM_Core_PseudoConstant::emailOnHoldOptions()"
+    },
+    "yid": {
+        "title": "This Year",
+        "field_name": "yid",
+        "field_type": "int",
+        "options": true,
+        "_comment": "This is calculated options field dropdown",
+        "default": "date('Y')"
+    },
+    "total_range": {
+        "title": "Show no. of Top Donors",
+        "field_name": "yid",
+        "field_type": "int",
+        "options": true,
+        "_comment": "Top donors report , reporting fields",
+        "default_op": "eq"
+    },
+    "membership_id": {
+        "title": "GL Account Name - Credit",
+        "field_name": "name",
+        "entity": "financial_account"
+    },
+    "credit_name": {
+        "title": "GL Account Name - Credit",
+        "field_name": "name",
+        "entity": "financial_account",
+        "table_alias": "financial_account_credit",
+        "options": true,
+        "field_type": "string",
+        "select_option": ["id","name"]
+    },
+    "bebit_name": {
+        "title": "GL Account Name - Debit",
+        "field_name": "name",
+        "entity": "financial_account",
+        "table_alias": "financial_account_debit",
+        "options": true,
+        "field_type": "string",
+        "select_option": ["id","name"]
+    },
+    "debit_accounting_code": {
+        "title": "GL Account Code - Debit",
+        "field_name": "accounting_code",
+        "entity": "financial_account",
+        "table_alias": "financial_account_debit",
+        "options": true,
+        "field_type": "int"    ,
+        "select_option": ["accounting_code","accounting_code"]
+    }, 
+    "credit_accounting_code": {
+        "title": "GL Account Code - Credit",
+        "field_name": "accounting_code",
+        "entity": "financial_account",
+        "table_alias": "financial_account_credit",
+        "options": true,
+        "field_type": "int"    ,
+        "select_option": ["accounting_code","accounting_code"]
+    }, 
+    "debit_contact_id": {
+        "title": "GL Account Owner - Debit",
+        "field_name": "organization_name",
+        "entity": "contact",
+        "table_alias": "contact_debit",
+        "options": true,
+        "field_type": "int"    ,
+        "select_option": ["id","organization_name"]
+    }, 
+    "credit_contact_id": {
+        "title": "GL Account Code - Credit",
+        "field_name": "organization_name",
+        "entity": "contact",
+        "table_alias": "contact_credit",
+        "options": true,
+        "field_type": "int"    ,
+        "select_option": ["id","organization_name"]
+    }, 
     "contribution_source": {
         "title": "Source",
         "entity": "contribution",
         "field_name": "source",
         "options": true,
-        
         "field_type": "string",
         "select_option": ["source"]
     },
     "contact_source": {
         "title": "Contact Source",
         "entity": "contact",
-        "field_name": "source"
+        "field_name": "source",
+        "field_type": "string"
     },
     "gl_account": {
         "title": "Financial Acccount",
@@ -130,20 +753,14 @@
         "title": "Invoice Reference",
         "entity": "contribution"
     },
+    "invoice_number": {
+        "title": "Invoice Number",
+        "entity": "contribution"
+    },
     "contact_name": {
         "title": "Contact Name",
         "entity": "contact",
         "field_name": "display_name"
-    },
-    "grant_type_id": {
-        "title": "Opportunity Type",
-        "entity": "grant",
-        "options": true,
-        "group_name": "grant_type",
-        "field_type": "int",
-        "use_option_value": true,
-        "select_name": "option_value",
-        "select_option": ["value","label"]
     },
     "ch_fund": {
         "title": "CH Fund",
@@ -170,22 +787,6 @@
         "select_name": "title",
         "select_option": ["id","title"],
         "field_name": "id"
-    },
-    "credit_name": {
-        "title": "GL Account Name - Credit",
-        "field_name": "name",
-        "entity": "financial_account",
-        "table_alias": "financial_account_credit",
-        "options": true,
-        "field_type": "string"
-    },
-    "debit_accounting_code": {
-        "title": "GL Account Code - Debit",
-        "field_name": "accounting_code",
-        "entity": "financial_account",
-        "table_alias": "financial_account_debit",
-        "options": true,
-        "field_type": "int"
     },
     "amount": {
         "title": "Amount",

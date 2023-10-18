@@ -919,13 +919,13 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         // merge GLAccountandPaymentMethodReconciliation contribution array defined in BaseReport class with the existing
         //if($this->isGLAccountandPaymentMethodReconciliationReport())
         //$this->setGLAccountandPaymentMethodReconciliationReport($var);
-        //echo '<pre>';print_r($var);echo '</pre>';
+       
         // stores field configuration so we can use it later on
         // $this->setFieldsMapping($var);
         
         // Fields
         $this->filteringReportFields($var);
-        //echo '<pre>';print_r($var);echo '</pre>';
+        
         // Columns: Custom fields
         //$this->filteringReportAddCustomField('ch_fund',$var); //CH Fund 
         
@@ -1040,13 +1040,10 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
             
             // field not found
             if ( isset($fieldInfo['error']) ) {
-                //echo "<pre>$fieldName => not found</pre>";
                 continue;
             }
             if(isset($fieldInfo['custom'])){
                 $entityName = EU::getTableNameByName($fieldInfo['group_name']);
-                //echo $entityName = $this->getEntityTable();
-                //echo 'hell yeah';
               }else{
                 $entityName = $this->getEntityTable($fieldInfo['entity']);
               }
@@ -1478,13 +1475,11 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     }
 
     private function filteringReportFilterOptions(&$var) {
-        //echo "<pre> FILTERS => ".print_r($this->getReportingFilters(), true)."</pre>";
         foreach ($this->getReportingFilters() as $fieldName => $fieldInfo) {
             $fieldInfo = array_merge( $fieldInfo, $this->getFieldInfo($fieldName) );
             
             // field not found
             if ( isset($fieldInfo['error']) ) {
-                //echo "<pre>$fieldName => not found</pre>";
                 continue;
             }
             if(isset($fieldInfo['custom'])){
@@ -1517,7 +1512,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
 
         }
 
-        //echo "<pre> AFTER FILTERS => ".print_r($var, true)."</pre>";
+       
 
         return;
         foreach ($var as $entityName => $entityData) {

@@ -52,12 +52,10 @@ class CRM_Chreports_Reports_ReportConfiguration {
      */
     private function loadMappings(): void {
         $filePath = dirname(__DIR__, 1)  . "/Templates/mapping.json";
-        //echo "<pre>file:  $filePath</pre>";
         if (is_file($filePath)) {
             $this->_mappings = json_decode(file_get_contents($filePath),true);
             return;
         } 
-        //echo "<pre>file not found</pre>";
     }
 
 
@@ -113,7 +111,6 @@ class CRM_Chreports_Reports_ReportConfiguration {
      * @return array
      */
     public function getFieldInfo( $fieldName ): array {
-       // echo '<pre>';print_r();echo '</pre>';
         if ($this->_mappings[$fieldName])
             return $this->_mappings[$fieldName];
         return ["error" => "not found"];
@@ -228,6 +225,25 @@ class CRM_Chreports_Reports_ReportConfiguration {
         $filePath = $this->getFilePath($reportInstanceDetails);
         if (is_file($filePath['source'])) {
             return json_decode(file_get_contents($filePath['source']),true);
+        }
+    }
+
+
+    /**
+     * Set the preset filter from Config Files to Params
+     *
+     * @return void
+     */
+    public function setDefaultFilterValues(): void {
+        $params = $this->getFormParams();
+        if(isset($this->_settings['preset_filter_values'])) {
+            $defaultFilterParams = $this->createCustomFilterParams();
+            foreach($defaultFilterParams as $k => $v) {
+                if(!$params[$k] && $v) {
+                    $params[$k] = $v;
+                }
+            }
+            $this->_params = $params;
         }
     }
 

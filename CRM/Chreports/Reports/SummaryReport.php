@@ -51,7 +51,6 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
           $selectStatement =  $this->getEntityClauseFromField($fieldName);
         }
         
-echo $selectStatement;
         
        // $selectStatement = ($columnInfo['select_clause_alias']) ? $columnInfo['select_clause_alias'] : $columnInfo['table_name']. "." . $columnInfo['name'];
         //$columnTableInfo = ($columnInfo['op_group_alias']) ? $columnInfo['table_name'].'_value' : $columnInfo['table_name'];
