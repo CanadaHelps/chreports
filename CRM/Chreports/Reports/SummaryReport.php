@@ -16,6 +16,9 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
       foreach($this->_columns as $fieldName => $nodata) {
 
         if($fieldName){
+
+          $fieldInfo = $this->getFieldInfo($fieldName);
+
         if ($fieldName == 'total_amount')
             continue;
          else if($fieldName == 'financial_type')
@@ -24,8 +27,32 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
          }else{
             $entityName = $this->getEntity();
          }
-        $columnInfo = $this->getFieldMapping( $entityName, $fieldName);
-        $selectStatement = ($columnInfo['select_clause_alias']) ? $columnInfo['select_clause_alias'] : $columnInfo['table_name']. "." . $columnInfo['name'];
+        
+
+        $columnInfo = $this->getFieldMapping($this->getEntityTableFromField($fieldName), $fieldName);
+        // select clause from option value
+        if(isset($fieldInfo['select_name']) && $fieldInfo['select_name'] === 'option_value' )
+        {
+          
+          if(isset($fieldInfo['custom'])){
+            $customTablename = EU::getTableNameByName($fieldInfo['group_name']);
+            $selectOption = $customTablename.'_'.$fieldName.'_value';
+          }else{
+            $selectOption = $this->getEntityTable($fieldInfo['entity']).'_'.$fieldName.'_value';
+          }
+          $selectStatement = $selectOption;
+        }else if(isset($fieldInfo['select_name'])) //select clause from table
+        {
+         
+          $selectStatement = $this->getEntityTableFromField($fieldName,true). "." . $fieldInfo['select_name'];
+        }else{ //normal clause
+        
+          //$fieldValue = (isset($fieldInfo['field_name']))? $fieldInfo['field_name']: $fieldName;
+          $selectStatement =  $this->getEntityClauseFromField($fieldName);
+        }
+        
+        
+       // $selectStatement = ($columnInfo['select_clause_alias']) ? $columnInfo['select_clause_alias'] : $columnInfo['table_name']. "." . $columnInfo['name'];
         //$columnTableInfo = ($columnInfo['op_group_alias']) ? $columnInfo['table_name'].'_value' : $columnInfo['table_name'];
         $select[] = $selectStatement . " AS $fieldName";
         //Adding columns to _columnHeaders for display purpose
@@ -33,6 +60,21 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
         $this->_columnHeaders[$fieldName]['type'] = $columnInfo['type'];
         }
       }  
+
+       //fiscle year report
+       if($this->isFiscalQuarterReport()){
+        if($this->getReportType() == 'fiscal')
+        {
+          $select[] = "MONTH(".$this->getEntityTable().".`receive_date`) AS monthIndex";
+          $this->_columnHeaders['monthIndex']['title'] = '';
+
+          $select[] = "MONTHNAME(".$this->getEntityTable().".`receive_date`) AS monthname";
+          $this->_columnHeaders['monthname']['title'] = '';
+        }else{
+          $select[] = "QUARTER(".$this->getEntityTable().".`receive_date`) AS quartername";
+          $this->_columnHeaders['quartername']['title'] = '';
+        }
+      }
 
       // Add default fields such as total, sum and currency
       $select[] = "COUNT(".$this->getEntityTable().".id) AS count";
@@ -86,11 +128,26 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
 
       if ($fieldName == 'total_amount')
         continue;
-      
-      $columnInfo = $this->getFieldMapping($this->getEntity(), $fieldName);
-      $groupBy[] = $columnInfo['table_name'] . "." .  $columnInfo['name'];
+      //new code
+      //$fieldInfo = $this->getFieldInfo($fieldName);
+      //$this->getEntityClauseFromField($fieldName)
+      $groupBy[] =  $this->getEntityClauseFromField($fieldName);
+      // end new code
+
+      //$columnInfo = $this->getFieldMapping($this->getEntity(), $fieldName);
+      //$groupBy[] = $columnInfo['table_name'] . "." .  $columnInfo['name'];
       }
     } 
+
+    if($this->isFiscalQuarterReport()){
+      unset($groupBy);
+      if($this->getReportType() == 'fiscal')
+      {
+      $groupBy[] = "EXTRACT(YEAR_MONTH FROM ".$this->getEntityTable().".`receive_date`)";
+      }else{
+        $groupBy[] = "QUARTER(".$this->getEntityTable().".`receive_date`)";
+      }
+    }
 
     if (!empty($groupBy)) {
       $this->_groupBy = ' GROUP BY ' . implode(', ', $groupBy);
@@ -110,11 +167,16 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
           if($orderBy['column'] != '-')
           {
             $fieldName = ($orderBy['column'] == 'financial_type') ? $orderBy['column'] . '_id' : $orderBy['column'];
-            $columnInfo = $this->getFieldMapping($this->getEntity(), $fieldName);
-            $orderBys[] = $columnInfo['table_name'] . "." .  $columnInfo['name']." ".$orderBy['order'];
+            //new code
+            $fieldInfo = $this->getFieldInfo($fieldName);
+            $fieldValue = (isset($fieldInfo['field_name']))? $fieldInfo['field_name']: $fieldName;
+            //$groupBy[] =  $this->getEntityTable($this->getEntityTableFromField($fieldName)). "." . $fieldValue;
+            //end new code 
+            //$columnInfo = $this->getFieldMapping($this->getEntity(), $fieldName);
+            $orderBys[] = $this->getEntityClauseFromField($fieldName);
             // assign order by fields which has section display checked
             if($orderBy['section'])
-            $this->_orderByFields[$orderBy['column']] = $columnInfo['table_name'] . "." .  $columnInfo['name'];
+            $this->_orderByFields[$orderBy['column']] = $this->getEntityClauseFromField($fieldName);
           }
         }
       }

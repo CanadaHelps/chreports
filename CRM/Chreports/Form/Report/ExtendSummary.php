@@ -25,7 +25,6 @@ class CRM_Chreports_Form_Report_ExtendSummary extends CRM_Report_Form_Contribute
   public function buildSQLQuery(&$var) {
 
     $params = $var->getVar('_params');
-
     // setting out columns, filters, params,mapping from report object
     $this->_reportInstance->setFieldsMapping($var->getVar('_columns'));
     $this->_reportInstance->setFormParams($params);
@@ -40,12 +39,17 @@ class CRM_Chreports_Form_Report_ExtendSummary extends CRM_Report_Form_Contribute
     $this->_reportInstance->setColumns($params['fields']);
     $this->_reportInstance->setFilters();
     //Remove limit, pagination parameter from query for monthly/yearly reports
-    if($this->_reportInstance->isMonthlyYearlyReport()){
-      $var->setVar('_limit','');
+    if($this->_reportInstance->isMonthlyYearlyReport() || ($this->_reportInstance->getReportName() == 'Top contributors')){
+      //$var->setVar('_limit','');
       $this->_reportInstance->setPagination(FALSE);
     }else{
       $this->_reportInstance->setPagination($this->addPaging);
     }
+    //manage limit of query params
+    $this->_reportInstance->setLimit($var->getVar('_limit'));
+
+    //attache entity name to fields for mapping purpose
+    //$this->_reportInstance->setEntityTableForFields();
 
     // Report Instance
     // _entity => Contribution, Contact, etc
@@ -87,7 +91,7 @@ class CRM_Chreports_Form_Report_ExtendSummary extends CRM_Report_Form_Contribute
     }
 
     $this->_reportInstance->setWhere($var->getVar('_where'));
-    
+    $var->setVar('_limit', $this->_reportInstance->getLimit());
   }
   private function buildWhereClause(): array {
     $clauses = [];

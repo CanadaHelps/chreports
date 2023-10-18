@@ -12,9 +12,15 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
 
       $select = [];
       $this->_columnHeaders = [];
-
+      if($this->getReportName() == 'sybunt' || $this->getReportName() == 'lybunt')
+      {
+        $select[] = "MAX(".$this->getEntityTable('contribution').".receive_date) as lastContributionTime";
+      }
+      //echo '<pre>';print_r($this->_columns);echo '</pre>';
       // Add selected columns to SELECT clause
       foreach($this->_columns as $fieldName => $nodata) {
+        if ($fieldName == 'total_amount')
+            continue;
 
         if((parent::isGLAccountandPaymentMethodReconciliationReport()))
            {
@@ -131,15 +137,43 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
       $columnInfo['title'] = 'Organization Name';
 
 
-        $selectStatement = ($columnInfo['select_clause_alias']) ? $columnInfo['select_clause_alias'] : $columnInfo['table_name'] . "." .  $columnInfo['name'];
-        $select[] = $selectStatement . " AS $fieldName";
+        // $selectStatement = ($columnInfo['select_clause_alias']) ? $columnInfo['select_clause_alias'] : $columnInfo['table_name'] . "." .  $columnInfo['name'];
+        // $select[] = $selectStatement . " AS $fieldName";
         //for boolean data value display directly 'Yes' or 'No' rather than 1 or 0
         if($fieldName == 'application_submitted')
         {
           $select[] = "case when ".$columnInfo['table_name'] . "." .  $columnInfo['name']." then 'Yes' else 'No' end AS $fieldName";
+        }else if($fieldName == 'civicrm_life_time_total')
+        {
+          $select[] = "SUM(".$this->getEntityTable('contribution').".total_amount) AS $fieldName";
+          $this->_columnHeaders[$fieldName]['title'] = $columnInfo['title'];
+        }
+        else if($fieldName == 'last_four_year_total_amount')
+        {
+          $select[] = "SUM(IF(" . $this->whereClauseLastNYears('civicrm_contribution.receive_date',4) . ", civicrm_contribution.total_amount, 0)) as $fieldName";
+          $this->_columnHeaders[$fieldName]['title'] = $this->getLastNYearColumnTitle(4);;
+        }
+        else if($fieldName == 'last_three_year_total_amount')
+        {
+          $select[] = "SUM(IF(" . $this->whereClauseLastNYears('civicrm_contribution.receive_date',3) . ", civicrm_contribution.total_amount, 0)) as $fieldName";
+          $this->_columnHeaders[$fieldName]['title'] =$this->getLastNYearColumnTitle(3);;
+        }
+        else if($fieldName == 'last_two_year_total_amount')
+        {
+          $select[] = "SUM(IF(" . $this->whereClauseLastNYears('civicrm_contribution.receive_date',2) . ", civicrm_contribution.total_amount, 0)) as $fieldName";
+          $this->_columnHeaders[$fieldName]['title'] = $this->getLastNYearColumnTitle(2);;
+        }
+        else if($fieldName == 'last_year_total_amount')
+        {
+          $select[] = "SUM(IF(" . $this->whereClauseLastYear('civicrm_contribution.receive_date') . ", civicrm_contribution.total_amount, 0)) as $fieldName";
+          $this->_columnHeaders[$fieldName]['title'] = $this->getLastYearColumnTitle();;
+        }else{
+          $selectStatement = ($columnInfo['select_clause_alias']) ? $columnInfo['select_clause_alias'] : $columnInfo['table_name'] . "." .  $columnInfo['name'];
+          $select[] = $selectStatement . " AS $fieldName";
+          $this->_columnHeaders[$fieldName]['title'] = $columnInfo['title'];
         }
         //Adding columns to _columnHeaders for display purpose
-        $this->_columnHeaders[$fieldName]['title'] = $columnInfo['title'];
+       
         $this->_columnHeaders[$fieldName]['type'] = $columnInfo['type'];
 
       }
@@ -166,6 +200,37 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
       $this->_columnHeaders['civicrm_contact_id']['title'] = 'contact_id';
       $this->_columnHeaders['civicrm_contact_id']['type'] = CRM_Utils_Type::T_INT;
 
+      if($this->getReportName() == 'top_donors')
+      {
+      $select[] = "COUNT(".$this->getEntityTable('contribution').".id) AS count";
+      $this->_columnHeaders['count']['title'] = 'Donations';
+      $this->_columnHeaders['count']['type'] = CRM_Utils_Type::T_INT;
+
+      $select[] = "SUM(".$this->getEntityTable('contribution').".`total_amount`) AS total_amount";
+      $this->_columnHeaders['total_amount']['title'] = 'Aggregate Amount';
+      $this->_columnHeaders['total_amount']['type'] = CRM_Utils_Type::T_MONEY;
+
+      $select[] = "ROUND(AVG(".$this->getEntityTable('contribution').".`total_amount`),2) AS avg_amount";
+      $this->_columnHeaders['avg_amount']['title'] = 'Average';
+      $this->_columnHeaders['avg_amount']['type'] = CRM_Utils_Type::T_MONEY;
+
+      $customTablename = EU::getTableNameByName('Summary_Fields');
+      $columnName = E::getColumnNameByName('Total_Lifetime_Contributions');
+      $select[] = $customTablename.".".$columnName." AS total_lifetime_contributions";
+      $this->_columnHeaders['total_lifetime_contributions']['title'] = 'Total Lifetime Contributions';
+      $this->_columnHeaders['total_lifetime_contributions']['type'] = CRM_Utils_Type::T_MONEY;
+
+      $columnName = E::getColumnNameByName('Amount_of_last_contribution');
+      $select[] = $customTablename.".".$columnName." AS Amount_of_last_contribution";
+      $this->_columnHeaders['Amount_of_last_contribution']['title'] = 'Amount of last contribution';
+      $this->_columnHeaders['Amount_of_last_contribution']['type'] = CRM_Utils_Type::T_MONEY;
+
+      $select[] = "GROUP_CONCAT(DISTINCT ".$this->getEntityTable('contribution').".currency) AS currency";
+      $this->_columnHeaders['currency']['title'] = 'Currency';
+      $this->_columnHeaders['currency']['type'] = CRM_Utils_Type::T_STRING;
+
+      }
+
       // Combine everything
       $this->_selectClauses = $select;
       $this->_select = $select;
@@ -178,9 +243,26 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
     $fieldName = 'id';
     $columnInfo = $this->getFieldMapping($entityName, $fieldName);
     $groupBy[] = $columnInfo['table_name'] . "." .  $columnInfo['name'];
-   
+    $having = [];
+      foreach($this->_filters as $fieldName => $fieldInfo) {
+        switch ($fieldName) {
+        case 'yid': // fund_13
+         
+      if($this->getReportName() == 'sybunt')
+      {
+          $having[] = $this->whereClauseLast4Year("lastContributionTime");
+      }else if($this->getReportName() == 'lybunt'){
+          $having[] = $this->whereClauseLastYear("lastContributionTime");
+      }
+          break;
+        }
+      }
     if (!empty($groupBy)) {
       $this->_groupBy = ' GROUP BY ' . implode(', ', $groupBy);
+    }
+
+    if (!empty($having)) {
+      $this->_groupBy .= " HAVING " . implode(', ', $having);
     }
 
     } 
@@ -190,6 +272,10 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
       $orderBys = [];
       if (!empty($this->_params['order_bys']) && is_array($this->_params['order_bys'])) 
       {
+      if($this->getReportName() == 'sybunt' || $this->getReportName() == 'lybunt')
+      {
+        $orderBys[] = "ISNULL(exposed_id)";
+      }
         foreach ($this->_params['order_bys'] as $orderBy) {
           //if order by option is selected on the report
           if($orderBy['column'] != '-')
@@ -245,6 +331,9 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
            || $fieldName == 'debit_name'|| $fieldName == 'credit_name'))
            {
             $orderBys[] = $columnInfo['dbAlias']." ".$orderBy['order'];
+           }else if($fieldName == 'civicrm_life_time_total' || $fieldName == 'last_year_total_amount')
+           {
+             $orderBys[] = $fieldName." ".$orderBy['order'];
            }else{
             $orderBys[] = $columnInfo['table_name'] . "." .  $columnInfo['name']." ".$orderBy['order'];
            }
@@ -253,6 +342,11 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
             $this->_orderByFields[$orderBy['column']] = $columnInfo['table_name'] . "." .  $columnInfo['name'];
           }
         }
+        if($this->getReportName() == 'top_donors')
+      {
+        unset($orderBys);
+        $orderBys[] = "total_amount DESC";
+      }
       }
 
       if (!empty($orderBys)) {
@@ -266,16 +360,24 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
       
       // Add defaults for entity
       $from[] = $this->getEntityTable();
-      if($this->getEntityTable() !== 'civicrm_contact')
-      {
-        $from[] = "INNER JOIN " . $this->getEntityTable('contact') . " ON " . $this->getEntityTable('contact') . ".id = " . $this->getEntityTable() . ".contact_id";
+      if ($this->getEntity() != 'contact') {
+        $from[] = $this->getSQLJoinForField('contact_id', $this->getEntityTable('contact'), $this->getEntityTable(), 'id', "INNER");
+      }else{
+        $from[] = $this->getSQLJoinForField('id', $this->getEntityTable('contribution'), $this->getEntityTable(), 'contact_id', "INNER");
       }
+      //$from[] = "INNER JOIN " . $this->getEntityTable('contact') . " ON " . $this->getEntityTable('contact') . ".id = " . $this->getEntityTable() . ".contact_id";
+      
       if(parent::isRecurringContributionReport()){
         $from[] = "INNER JOIN " . $this->getEntityTable('contribution') . " ON " . $this->getEntityTable() . ".id = " . $this->getEntityTable('contribution') . ".contact_id";
       }
       $fieldsForFromClauses = array_merge($this->_columns,$this->_orderByFields);
+      if($this->getReportName() == 'top_donors')
+        {
+          $customTablename = EU::getTableNameByName('Summary_Fields');
+          $from[] = $this->getSQLJoinForField('id', $customTablename, $this->getEntityTable('contact'),'entity_id');
+        }
 
-      if($this->isOpportunityReport())
+        if($this->isOpportunityReport())
         {
           $customTablename = EU::getTableNameByName('Grant');
             $from[] = " LEFT JOIN ".$customTablename."
@@ -299,20 +401,11 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
       foreach($fieldsForFromClauses as $fieldName => $nodata) {
         switch ($fieldName) {
          
-          //campaign
-          case 'contribution_page_id':
-            $from[] = " LEFT JOIN ".$this->getEntityTable('contribution_page')."
-            ON ".$this->getEntityTable().".contribution_page_id = ".$this->getEntityTable('contribution_page').".id";
-            break;
-            //campaign group
-          case 'campaign_id':
-            $from[] = " LEFT JOIN ".$this->getEntityTable('campaign')."
-            ON ".$this->getEntityTable().".campaign_id = ".$this->getEntityTable('campaign').".id";
-            break;
-            //Fund
-          case 'financial_type_id':
-            $from[] = " LEFT JOIN ".$this->getEntityTable('financial_type')."
-            ON ".$this->getEntityTable().".financial_type_id = ".$this->getEntityTable('financial_type').".id";
+          case 'contribution_page_id': //campaign
+          case 'campaign_id': //campaign group
+          case 'financial_type_id': //Fund
+            $fieldEntity = str_replace("_id", "", $fieldName);
+            $from[] = $this->getSQLJoinForField($fieldName, $this->getEntityTable($fieldEntity), $this->getEntityTable('contribution'));
             break;
           case 'gl_account': // fund_13
             $from[] = " LEFT JOIN ".$this->getEntityTable('line_item')." 
@@ -388,6 +481,11 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
         case 'ch_fund': // fund_13
           $from[] = " LEFT JOIN ".$fieldInfo['table_name']."
           ON ".$fieldInfo['table_name'].".entity_id = ".$this->getEntityTable().".id";
+          break;
+        case 'total_range': // fund_13
+         $limitRange =   $this->_params["total_range_value"];
+          $this->_limit = ' LIMIT 0, '.$limitRange;
+          $this->setPagination(FALSE);
           break;
         }
       }

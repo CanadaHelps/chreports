@@ -6,6 +6,7 @@ class CRM_Chreports_Reports_ReportConfiguration {
     private $_id;
 
     protected $_settings = [];
+    protected $_mappings = [];
 
     // Default Action is to View Report
     protected $_action = "view";
@@ -13,6 +14,7 @@ class CRM_Chreports_Reports_ReportConfiguration {
     public function __construct(int $id) {
         $this->_id = $id;
         $this->_action = $action;    
+        $this->loadMappings();
         $this->loadSettings();
     }
 
@@ -40,6 +42,22 @@ class CRM_Chreports_Reports_ReportConfiguration {
     public function setAction(string $action) {
         $this->_action = $action;
     }
+
+
+    /**
+     * 
+     * TBD
+     * 
+     * @return void
+     */
+    private function loadMappings(): void {
+        $filePath = dirname(__DIR__, 1)  . "/Templates/mapping.json";
+        if (is_file($filePath)) {
+            $this->_mappings = json_decode(file_get_contents($filePath),true);
+            return;
+        } 
+    }
+
 
 
     /**
@@ -80,6 +98,122 @@ class CRM_Chreports_Reports_ReportConfiguration {
         // ->execute()
         // ->itemAt(1);
     }
+
+    public function getAllColumns( ): array {
+        return $this->_settings['fields'];
+    }
+
+    /**
+     * 
+     * TBD
+     *
+     * @param TBD
+     * @return array
+     */
+    public function getFieldInfo( $fieldName ): array {
+        if ($this->_mappings[$fieldName])
+            return $this->_mappings[$fieldName];
+        return ["error" => "not found"];
+    }
+
+    public function getFilterType($fieldName) : array {
+        $fieldInfo = $this->getFieldInfo($fieldName);
+        $type = ucwords( ($fieldInfo["field_type"]) ?? "string" );
+        $fieldType = [
+            "dataType" => $type
+        ];
+
+        switch ($type) {
+            case "String":
+                $fieldType["type"] = CRM_Utils_Type::T_STRING;
+                $fieldType["htmlType"] = "Text";
+                break;
+            case "Int":
+                $fieldType["type"] = CRM_Utils_Type::T_INT;
+                $fieldType["htmlType"] = "Text";
+                break;
+            case "Boolean":
+                $fieldType["type"] = CRM_Utils_Type::T_BOOLEAN;
+                $fieldType["htmlType"] = "Radio";
+                break;
+            case "Money":
+                $fieldType["type"] = CRM_Utils_Type::T_MONEY;
+                $fieldType["htmlType"] = "Text";
+                break;
+        }
+        return $fieldType;
+    }
+
+    public function getFilterOptions($fieldName) : array {
+        $options = [];
+        $fieldInfo = $this->getFieldInfo($fieldName);
+
+        $fieldNameVal = (isset($fieldInfo['field_name']))? $fieldInfo['field_name']: $fieldName;
+        $fieldTable = isset($fieldInfo['dependent_table_entity'])? $this->getEntityTable($fieldInfo['dependent_table_entity']): $this->getEntityTable($fieldInfo['entity']);
+       
+        // custom built (contribution source)
+        if(isset($fieldInfo['custom']) && $fieldInfo['custom'] === true ){
+            
+            $columnName = E::getColumnNameByName($fieldInfo['custom_fieldName']);
+            $optionGroupName = E::getOptionGroupNameByColumnName($columnName);
+            $customTablename = EU::getTableNameByName($fieldInfo['group_name']);
+            $options =   $this->getOptionValueDropdownList($fieldName,$customTablename,$optionGroupName);
+            
+        }else if(isset($fieldInfo['use_option_value']) && $fieldInfo['use_option_value'] === true){ // option values
+            
+            $groupName = $fieldInfo['group_name'];
+            $options =   $this->getOptionValueDropdownList($fieldNameVal,$fieldTable,$groupName);
+        }else if(isset($fieldInfo['fileter_field_type']) && $fieldInfo['fileter_field_type'] === boolean){ 
+            $options =   array(''=> 'Any',1=> 'Yes',0=> 'No');
+        }else{  // entity table 
+            
+            $fieldNameVal = $fieldInfo['select_option'];
+         $options =   $this->getOptionDropdownList($fieldNameVal,$fieldTable);
+        }
+        
+        
+        return $options;
+    }
+
+    public static function getOptionDropdownList($fieldName,$fieldTable) {
+        $optionValue = [];
+        $selectClause =  implode(', ', $fieldName);
+    
+        $optionsListings = CRM_Core_DAO::executeQuery('SELECT DISTINCT '.$selectClause.' FROM '.$fieldTable)->fetchAll();
+        foreach($optionsListings as $optionsListing) {
+          if($optionsListing) {
+            if(count($fieldName) > 1){
+                $optionValue[$optionsListing[$fieldName[0]]] = $optionsListing[$fieldName[1]];
+            }else{
+                $optionValue[$optionsListing[$fieldName[0]]] = $optionsListing[$fieldName[0]];
+            }
+          }
+        }
+        //$optionValue = array('' => '- select -') + $optionValue;
+        return $optionValue;
+      }
+
+      public static function getOptionValueDropdownList($fieldName,$fieldTable,$groupName) {
+        $optionValue = [];
+    
+        $tableName_group = $fieldTable.'_group';
+        $tableName_value = $fieldTable.'_value';
+
+        $subselectClause = " 
+        LEFT JOIN civicrm_option_group as ".$tableName_group." ON ".$tableName_group.".name = '".$groupName."' 
+        LEFT JOIN civicrm_option_value as ".$tableName_value." ON ".$tableName_value.".option_group_id = ".$tableName_group.".id ";
+        
+        $optionsListings = CRM_Core_DAO::executeQuery('SELECT DISTINCT '.$tableName_value.'.value,'.$tableName_value.'.label FROM '.$fieldTable.' '.$subselectClause)->fetchAll();
+      
+        foreach($optionsListings as $optionsListing) {
+          if($optionsListing) {
+            
+                $optionValue[$optionsListing['value']] = $optionsListing['label'];
+            }
+          }
+        
+        return $optionValue;
+      }
 
     /**
      * Fetch the JSON Config from different paths depending on the Report Instance & Report ID type

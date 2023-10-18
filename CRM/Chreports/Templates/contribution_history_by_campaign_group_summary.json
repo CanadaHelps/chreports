@@ -11,5 +11,10 @@
         "financial_type": {},
         "contribution_page_id": {}
     },
-    "use_default_filters" : true
+    "use_default_filters" : true,
+    "filters": {
+        "receive_date" : {
+            "default_value": "this.fiscal_year"
+        }
+    }
 }
