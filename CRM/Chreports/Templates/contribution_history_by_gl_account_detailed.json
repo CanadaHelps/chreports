@@ -7,14 +7,14 @@
         "gl_account": {
             "default" : true
         },
-        "source": {},
+        "contribution_source": {},
         "financial_type_id":{},
         "payment_instrument_id":{},
-        "gl_code": {"preSelected" : true},
-        "account_type": {"preSelected" : true},
-        "sort_name": {"preSelected" : true},
-        "exposed_id": {"preSelected" : true},
-        "receive_date": {"preSelected" : true},
+        "gl_code": {"selected" : true},
+        "account_type": {"selected" : true},
+        "sort_name": {"selected" : true},
+        "exposed_id": {"selected" : true},
+        "receive_date": {"selected" : true},
         "total_amount": {"default" : true}
         
     },

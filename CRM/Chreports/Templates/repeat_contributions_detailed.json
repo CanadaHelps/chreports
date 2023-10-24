@@ -9,7 +9,7 @@
         "sort_name":{"default" : true},
         "first_name": {},
         "last_name": {},
-        "phone":{ "preSelected" : true},
+        "phone":{ "selected" : true},
         "organization_name":{},
        
         "email":{},
@@ -19,11 +19,11 @@
       
 
 
-        "address_street_address":{ "preSelected" : true},
-        "address_city":{ "preSelected" : true},
+        "address_street_address":{ "selected" : true},
+        "address_city":{ "selected" : true},
         "address_state_province_id":{},
-        "address_postal_code":{ "preSelected" : true},
-        "address_country_id":{ "preSelected" : true},
+        "address_postal_code":{ "selected" : true},
+        "address_country_id":{ "selected" : true},
 
         "total_lifetime_contributions":{},
         "amount_of_last_contribution":{},

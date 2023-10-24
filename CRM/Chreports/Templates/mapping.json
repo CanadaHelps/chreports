@@ -1,21 +1,25 @@
 {
     "financial_type_id":{
         "title": "Fund",
-        "entity": "contribution",
-        "field_name": "financial_type_id",
+        "entity": "financial_type",
+        "field_name": "id",
         "options": true,
         "field_type": "int",
         "select_option": ["id","name"],
-        "dependent_table_entity":"financial_type"
+        "select_name":"name",
+        "join_field_name":"financial_type_id",
+        "join_entity":"contribution"
     },
     "contribution_page_id":{
         "title": "Campaign",
-        "entity": "contribution",
-        "field_name": "contribution_page_id",
+        "entity": "contribution_page",
+        "field_name": "id",
         "options": true,
         "field_type": "int",
         "select_option": ["id","title"],
-        "dependent_table_entity":"contribution_page"
+        "select_name":"title",
+        "join_field_name":"contribution_page_id",
+        "join_entity":"contribution"
     },
     "receive_date":{
         "title": "Date Received",
@@ -47,8 +51,7 @@
         "entity": "contribution",
         "field_name": "contribution_recur_id",
         "options": true,
-        "field_type": "int",
-        "fileter_field_type": "boolean"
+        "field_type": "boolean"
     },
     "total_amount" : {
         "title": "Contribution Amount",
@@ -99,13 +102,15 @@
     "payment_instrument_id":{
         "title": "Payment Method",
         "entity": "financial_trxn",
-        "field_name": "payment_instrument_id",
+        "field_name": "id",
         "options": true,
         "group_name": "payment_instrument",
         "field_type": "int",
         "use_option_value": true,
         "select_name": "option_value",
-        "select_option": ["value","label"]
+        "select_option": ["value","label"],
+        "join_entity" : "contribution",
+        "join_field_name" : "payment_instrument_id"
     },
     "trxn_date":{
         "title": "Transaction Date",
@@ -364,7 +369,9 @@
     "email":{
         "title": "Email",
         "field_name": "email",
-        "entity": "email"
+        "entity": "email",
+        "join_field_name":"id",
+        "join_entity":"contact"
     },
     "street_address":{
         "title": "Street Address",
@@ -449,7 +456,7 @@
     },
     "grant_type_id": {
         "title": "Opportunity Type",
-        "field_name": "grant_type_id",
+        "field_name": "id",
         "entity": "grant",
         "options": true,
         "group_name": "grant_type",
@@ -522,7 +529,9 @@
         "options": true,
         "group_name": "Grant",
         "field_type": "boolean",
-        "custom_fieldName": "application_submitted"
+        "custom_fieldName": "application_submitted",
+        "join_field_name":"id",
+        "join_entity":"grant"
     },
     "probability": {
         "title": "Probability",
@@ -531,14 +540,17 @@
         "group_name": "Grant",
         "field_type": "int",
         "select_option": ["value","label"],
-        "custom_fieldName": "application_submitted"
+        "custom_fieldName": "probability",
+        "select_name": "option_value"
     },
     "Opportunity_Name": {
         "title": "Opportunity Name",
         "custom": true,
         "group_name": "Grant",
         "field_type": "string",
-        "custom_fieldName": "Opportunity_Name"
+        "custom_fieldName": "Opportunity_Name",
+        "join_field_name":"id",
+        "join_entity":"grant"
     },
     "total_lifetime_contributions": {
         "title": "Total Lifetime Contributions",
@@ -552,7 +564,11 @@
         "custom": true,
         "group_name": "Grant",
         "field_type": "string",
-        "custom_fieldName": "Opportunity_Owner"
+        "custom_fieldName": "Opportunity_Owner",
+        "join_field_name":"id",
+        "join_entity":"grant",
+        "select_name":"display_name",
+        "dependent_table_entity":"contact"
     },
     "amount_of_last_contribution": {
         "title": "Amount of last contribution",
@@ -628,7 +644,7 @@
         "field_type": "int"
     },
     "receive_date_start": {
-        "title": "Application Deadline",
+        "title": "Month",
         "field_name": "receive_date",
         "entity": "contribution",
         "field_type": "string"
@@ -770,7 +786,9 @@
         "group_name": "Additional_info",
         "field_type": "string",
         "select_option": ["value","label"],
-        "custom_fieldName": "Fund"
+        "custom_fieldName": "Fund",
+        "join_field_name":"id",
+        "join_entity":"contribution"
     },
     "campaign_type": {
         "title": "Campaign Type",
@@ -779,7 +797,9 @@
         "group_name": "Campaign_Information",
         "field_type": "string",
         "select_option": ["value","label"],
-        "custom_fieldName": "Campaign_Type"
+        "custom_fieldName": "Campaign_Type",
+        "join_field_name":"contribution_page_id",
+        "join_entity":"contribution"
     },
     "campaign_id": {
         "title": "Campaign Group",
@@ -787,12 +807,79 @@
         "options": true,
         "select_name": "title",
         "select_option": ["id","title"],
-        "field_name": "id"
+        "field_name": "id",
+        "join_field_name":"id",
+        "join_entity":"contribution"
     },
     "amount": {
         "title": "Amount",
         "entity": "contribution",
         "field_name": "total_amount",
         "field_type": "money"
+    },
+    "last_year_total_amount": {
+        "title": "Last Year Total",
+        "field_name": "last_year_total_amount",
+        "field_type": "money"
+    },
+     "life_time_total": {
+        "title": "Lifetime Total",
+        "field_name": "life_time_total",
+        "field_type": "money"
+    },
+    "total_sum": {
+        "title": "Contribution Aggregate",
+        "entity": "contribution",
+        "field_name": "total_sum",
+        "field_type": "money"
+    },
+    "total_count": {
+        "title": "Contribution Count",
+        "entity": "contribution",
+        "field_name": "total_count",
+        "field_type": "int"
+    },
+    "account_type":{
+        "title": "Account Type",
+        "entity": "financial_account",
+        "field_name": "financial_account_type_id",
+        "group_name": "financial_account_type",
+        "field_type": "int",
+        "select_name": "option_value"
+    },
+    "gl_code":{
+        "title": "GL Code",
+        "entity": "financial_account",
+        "field_name": "accounting_code",
+        "select_name": "accounting_code"
+    },
+    "postal_code_suffix": {
+        "title": "Post Code Suffix",
+        "field_name": "postal_code_suffix",
+        "entity": "address",
+        "field_type": "string"
+    },
+    "phone":{
+        "title": "Phone",
+        "field_name": "phone",
+        "entity": "phone",
+        "join_field_name":"id",
+        "join_entity":"contact"
+    },
+    "address_name":{
+        "title": "Address Name",
+        "field_name": "name",
+        "entity": "address",
+        "field_type": "string"
+    },
+    "contribution_id":{
+        "title": "Contribution ID",
+        "field_name": "id",
+        "entity": "contribution"
+    },
+    "grant_id":{
+        "title": "Opportunity ID",
+        "field_name": "id",
+        "entity": "grant"
     }
 }

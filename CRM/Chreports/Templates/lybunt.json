@@ -4,7 +4,7 @@
     "type": "detailed",
     "entity": "contact",
     "fields":{
-        "exposed_id": {"preSelected" : true},
+        "exposed_id": {"selected" : true},
         "sort_name": {"default" : true},
         "prefix_id": {},
         "first_name": {},
@@ -12,7 +12,7 @@
         "middle_name": {},
         "last_name": {},
         "suffix_id": {},
-        "source": {},
+        "contact_source": {},
         "postal_greeting_display": {},
         "email_greeting_display": {},
         "addressee_display": {},
@@ -50,10 +50,10 @@
         "country_id": {},
         "state_province_id": {},
         "county_id": {},
-        "civicrm_life_time_total": {"default" : true},
+        "life_time_total": {"default" : true},
         "last_year_total_amount": {"default" : true},
         "card_type_id": {},
-        "campaign_id":{"preSelected" : true}
+        "campaign_id":{"selected" : true}
     },
     "use_default_filters" : false,
     "filters":[

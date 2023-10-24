@@ -18,6 +18,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     protected $_columnHeaders = [];
 
     protected $_from;
+    protected $_fromEntity = [];
 
     protected $_groupBy = '';
 
@@ -113,7 +114,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
             $filterValues = array_fill_keys($this->_defaultFilters, []);
         }
         if (count($this->_settings['filters']) > 0) {
-            $filterValues = array_merge($filterValues, $this->_settings['filters']);
+            $filterValues = array_merge($filterValues, array_fill_keys($this->_settings['filters'], []));
         }
         return $filterValues;
     }
@@ -483,7 +484,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
 
         // Get actual fields used for filters
         $filterNames = $this->getFieldNamesForFilters();
-        
+
         // Get fields info
         foreach ($this->getAllFieldsMapping() as $entityTable => $entityData) {
             if (array_key_exists('filters', $entityData)) {
@@ -617,7 +618,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     
     //get field details from array
     public function getFieldMapping(string $fieldEntity, string $fieldName): array {
-        $entityTable = $this->getEntityTable($fieldEntity);
+        $entityTable = ($fieldEntity != NULL) ? $fieldEntity : $this->getEntity();
        
         //$entityTable = ($this->_entityTableMapping[$fieldName] == NULL) ? $this->getEntityTable() : $this->_entityTableMapping[$fieldName];
         if ( !array_key_exists($entityTable, $this->_mapping) 
@@ -902,7 +903,8 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
      * @return void
      */
     public function filteringReportOptions(&$var) {
-       
+        //set entity
+        $this->setEntity($this->_settings['entity']);
         // merge opportunity array defined in BaseReport class with the existing
         //if($this->isOpportunityReport())
         //$this->setOpportunityFields($var);
@@ -922,7 +924,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
        
         // stores field configuration so we can use it later on
         // $this->setFieldsMapping($var);
-        
+         //echo '<pre>';print_r($var);echo '</pre>';
         // Fields
         $this->filteringReportFields($var);
         
@@ -930,7 +932,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         //$this->filteringReportAddCustomField('ch_fund',$var); //CH Fund 
         
         // Grouping
-        $this->filteringReportGroupOptions($var);
+        //$this->filteringReportGroupOptions($var);
 
         // Filters
         $this->filteringReportFilterOptions($var);
@@ -1045,7 +1047,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
             if(isset($fieldInfo['custom'])){
                 $entityName = EU::getTableNameByName($fieldInfo['group_name']);
               }else{
-                $entityName = $this->getEntityTable($fieldInfo['entity']);
+                $entityName = isset($fieldInfo['entity'])? $this->getEntityTable($fieldInfo['entity']): $this->getEntityTable();
               }
             
               $actualFieldName = ($fieldInfo['field_name']) ?? $fieldName;
@@ -1062,7 +1064,8 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
             ];
             //set group by
             $var[$entityName]['group_bys'][$fieldName] = [
-                'title' => $fieldInfo["title"]
+                'title' => $fieldInfo["title"],
+                "default" => ( $fieldInfo["default"] === true || $fieldInfo["selected"] === true ),
             ];
 
         }
@@ -1477,18 +1480,18 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     private function filteringReportFilterOptions(&$var) {
         foreach ($this->getReportingFilters() as $fieldName => $fieldInfo) {
             $fieldInfo = array_merge( $fieldInfo, $this->getFieldInfo($fieldName) );
-            
+
             // field not found
             if ( isset($fieldInfo['error']) ) {
                 continue;
             }
+
             if(isset($fieldInfo['custom'])){
                 $entityName = EU::getTableNameByName($fieldInfo['group_name']);
-                //$entityName = $this->getEntityTable();
-              }else{
-                $entityName = $this->getEntityTable($fieldInfo['entity']);
-              }
-            //$entityName = $fieldInfo['entity'];
+            }else{
+                $entityName = isset($fieldInfo['entity'])? $this->getEntityTable($fieldInfo['entity']): $this->getEntityTable();
+            }
+
             $actualFieldName = ($fieldInfo['field_name']) ?? $fieldName;
             $filterType = $this->getFilterType($fieldName);
             $var[$entityName]['filters'][$fieldName] = [
@@ -1497,13 +1500,13 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                 "default" => $fieldInfo["default_value"] ?? '',
                 "dataType" => $filterType["dataType"],
                 "htmlType" => $filterType["htmlType"],
-                "type" => $filterType["type"]
+                "type" => $filterType["type"],
+                "column_name" => $this->getEntityField($fieldName)
             ];
 
-
+            //set operator type
+            $var[$entityName]['filters'][$fieldName]["operatorType"] = $this->getOperatorType($fieldName);
             if ( isset($fieldInfo['options']) && $fieldInfo['options'] === true ) {
-                $var[$entityName]['filters'][$fieldName]["operatorType"] = CRM_Report_Form::OP_MULTISELECT;
-               //print_r($this->getFilterOptions($fieldName));
                 $var[$entityName]['filters'][$fieldName]["options"] = $this->getFilterOptions($fieldName);
                 // TODO: options
             }
@@ -1512,6 +1515,14 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
 
         }
 
+        //set default values mentioned in json file
+        $filterPresets = $this->getSettings()['preset_filter_values'];
+        foreach ($filterPresets as $fieldName => $data) {
+            $entityName = $this->getEntityTableFromField($fieldName);
+            foreach ($data as $operation => $value) {
+                $var[$entityName]['filters'][$fieldName]['default'] = $value;
+            }
+        }
        
 
         return;
@@ -2443,11 +2454,15 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         // ->execute()
         // ->itemAt(1);
     }
-
+    //get entity table name using fieldName 
     public function getEntityTableFromField($fieldName,$select = NULL) : string {
         $fieldInfo = $this->getFieldInfo($fieldName);
         if(isset($fieldInfo['custom'])){
             $entityTableName = EU::getTableNameByName($fieldInfo['group_name']);
+            if($select)
+            {
+                $entityTableName = isset($fieldInfo['dependent_table_entity'])? $this->getEntityTable($fieldInfo['dependent_table_entity']): $entityTableName;
+            }
           }else{
             $entityTableName = $this->getEntityTable($fieldInfo['entity']);
             if($select)
@@ -2458,17 +2473,139 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
           }
         return $entityTableName;
     }
-
+    //get entity clause field through fieldName 'tablename.columnName'
     public function getEntityClauseFromField($fieldName) : string {
         $fieldInfo = $this->getFieldInfo($fieldName);
         $entityTable = $this->getEntityTableFromField($fieldName);
+        $entityField = $this->getEntityField($fieldName);
+        return $entityTable.'.'.$entityField;
+    }
+    //get entity field name using fieldName 
+    public function getEntityField($fieldName) : string {
+        $fieldInfo = $this->getFieldInfo($fieldName);
         if(isset($fieldInfo['custom'])){
             $entityField = E::getColumnNameByName($fieldInfo['custom_fieldName']);
           }else{
             $entityField = (isset($fieldInfo['field_name']))? $fieldInfo['field_name']: $fieldName;
           }
-        return $entityTable.'.'.$entityField;
+        return $entityField;
     }
+    
+    public function getDefaultFromClause(&$from) {
+        // Add defaults for entity
+        $from[] = $this->getEntityTable();
+        $this->_fromEntity[] = $this->getEntityTable();
+        // Automatically join on Contact for reports that are not Contact reports, such Contribution reports 
+        if ($this->getEntity() != 'contact') {
+            $from[] = $this->getSQLJoinForField('contact_id', $this->getEntityTable('contact'), $this->getEntityTable(), 'id', "INNER");
+            $this->_fromEntity[] = $this->getEntityTable('contact');
+        }else{
+            $from[] = $this->getSQLJoinForField('id', $this->getEntityTable('contribution'), $this->getEntityTable(), 'contact_id', "INNER");
+            $this->_fromEntity[] = $this->getEntityTable('contribution');
+        }
+    }
+    //common from clause for summary and detailed report based upon fields
+    public function getCommonFromClause(&$from) {
+
+        $fieldsForFromClauses = array_merge($this->_columns,$this->_orderByFields,$this->_filters);
+
+         // Add columns joins (if needed)
+        foreach($fieldsForFromClauses as $fieldName => $nodata) {
+            $entityName = $this->getEntityTableFromField($fieldName);
+            $groupName = $this->getFieldInfo($fieldName)['group_name'] ?? NULL;
+            $fieldInfo = $this->getFieldInfo($fieldName);
+        
+            if(!in_array($entityName,$this->_fromEntity) || ($groupName !== NULL && !in_array($groupName,$this->_fromEntity))) {
+            //option value
+            if(isset($fieldInfo['select_name']) && $fieldInfo['select_name'] === 'option_value' ){
+                if(isset($fieldInfo['join_entity']) && isset($fieldInfo['join_field_name'])){
+                $from[] = $this->getSQLJoinForOptionValue($groupName,$fieldInfo['join_field_name'],$fieldInfo['join_entity'],$fieldName);
+                }else{
+                $entityField = $this->getEntityField($fieldName);
+                $from[] = $this->getSQLJoinForOptionValue($groupName,$entityField,$entityName,$fieldName);
+                }
+
+            //custom fields look for custom tag
+            } else if ($fieldInfo['custom'] === true) { 
+                $from[] = $this->getSQLJoinForField($fieldInfo['join_field_name'], $entityName, $this->getEntityTable($fieldInfo['join_entity']),'entity_id');
+            
+            // contact fields
+            } else if($fieldInfo['join_entity'] === 'contact'){ 
+                if($fieldName !== 'credit_contact_id' && $fieldName !== 'debit_contact_id')
+                $from[] = $this->getSQLJoinForField($fieldInfo['join_field_name'], $entityName, $this->getEntityTable($fieldInfo['join_entity']),'contact_id');
+            
+            // contribution fields
+            } else{
+                if($fieldName !== 'gl_account'){
+                $from[] = $this->getSQLJoinForField($fieldInfo['join_field_name'], $entityName, $this->getEntityTable($fieldInfo['join_entity']),$this->getEntityField($fieldName));
+                }
+            }
+            $trialValue = ($groupName !== NULL)? $groupName : $entityName;
+            $this->_fromEntity[] = ($groupName !== NULL)? $groupName : $entityName;
+            
+            }
+
+            switch ($fieldName) {
+                case 'gl_account': // GL Account
+                    $from[] = $this->getSQLJoinForField("id", $this->getEntityTable('line_item'), $this->getEntityTable('contribution'), "contribution_id");
+
+                    $from[] = "LEFT JOIN (
+                        SELECT financial_account_id,entity_id,entity_table 
+                        FROM ".$this->getEntityTable('financial_item')."  
+                        GROUP BY entity_id,financial_account_id HAVING SUM(amount)>0
+                        ) ".$this->getEntityTable('financial_item')." 
+                        ON ( ".$this->getEntityTable('financial_item').".entity_table = 'civicrm_line_item' 
+                        AND ".$this->getEntityTable('financial_item').".entity_id = ".$this->getEntityTable('line_item').".id) ";
+
+                    $from[] = $this->getSQLJoinForField('financial_account_id', $this->getEntityTable('financial_account'), $this->getEntityTable('financial_item'));
+                    break;
+                case 'credit_contact_id':
+                    $from[] = "LEFT JOIN ".$this->getEntityTable('contact')." as civicrm_contact_credit ON civicrm_contact_credit.id = ".$this->getEntityTable('financial_account')."_credit.contact_id";
+                    break;
+                case 'debit_contact_id':
+                    $from[] = "LEFT JOIN ".$this->getEntityTable('contact')." as civicrm_contact_debit ON civicrm_contact_debit.id = ".$this->getEntityTable('financial_account')."_debit.contact_id";
+                    break;
+                case ($entity_name === 'civicrm_batch'):
+                    if(!in_array($entity_name,$this->_fromEntity))
+                    {
+                    $from[] = "LEFT JOIN ".$this->getEntityTable('entity_batch')." AS ".$this->getEntityTable('entity_batch')."_report
+                    ON  ".$this->getEntityTable('financial_trxn')."_report.id = ".$this->getEntityTable('entity_batch')."_report.entity_id AND ".$this->getEntityTable('entity_batch')."_report.entity_table = 'civicrm_financial_trxn'";
+            
+                    $from[] = $this->getSQLJoinForField('id', $this->getEntityTable('entity_batch')."_report", $this->getEntityTable('batch'),'batch_id');
+                    $this->_fromEntity[] = $entity_name;
+                    }
+                    break;
+            }
+        }
+        $from = array_unique($from);
+    }
+
+    //common from clause for summary and detailed report based upon fields
+    public function getCommonSelectClause($fieldName,&$select) {
+
+        $fieldInfo = $this->getFieldInfo($fieldName);
+        // select clause from option value
+        if(isset($fieldInfo['select_name']) && $fieldInfo['select_name'] === 'option_value' )
+        {
+          if(isset($fieldInfo['custom'])){
+            $customTablename = EU::getTableNameByName($fieldInfo['group_name']);
+            $selectOption = $customTablename.'_'.$fieldName.'_value.label';
+          }else{
+            $selectOption = $this->getEntityTable($fieldInfo['entity']).'_'.$fieldName.'_value.label';
+          }
+          $selectStatement = $selectOption;
+        }else if(isset($fieldInfo['select_name'])) //select clause from table
+        {
+          $selectStatement = $this->getEntityTableFromField($fieldName,true). "." . $fieldInfo['select_name'];
+
+        }else{ //normal clause
+          $selectStatement =  $this->getEntityClauseFromField($fieldName);
+
+        }
+        
+        $select[] = $selectStatement . " AS $fieldName";
+    }
+
 }
 
 ?>

@@ -9,21 +9,21 @@
         "sort_name":{"default" : true},
         "first_name": {},
         "last_name": {},
-        "phone":{ "preSelected" : true},
+        "phone":{ "selected" : true},
        
         "email":{},
         "total_amount":{"default" : true},
-        "source":{ "preSelected" : true},
-        "completed_contributions":{ "preSelected" : true},
+        "contribution_source":{ "selected" : true},
+        "completed_contributions":{ "selected" : true},
         "start_date":{},
         "last_month_amount":{"default" : true},
 
 
-        "street_address":{ "preSelected" : true},
-        "city":{ "preSelected" : true},
+        "street_address":{ "selected" : true},
+        "city":{ "selected" : true},
         "postal_code":{},
-        "state_province_id":{ "preSelected" : true},
-        "country_id":{ "preSelected" : true}
+        "state_province_id":{ "selected" : true},
+        "country_id":{ "selected" : true}
     },
     "use_default_filters" : false,
     "filters":[

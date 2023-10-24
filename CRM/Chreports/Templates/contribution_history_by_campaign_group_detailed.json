@@ -13,7 +13,7 @@
         "campaign_id": {"default" : true},
         "financial_type_id": {},
         "contribution_page_id": {},
-        "source": {},
+        "contribution_source": {},
         "receive_date": {},
         "total_amount": {
             "default" : true

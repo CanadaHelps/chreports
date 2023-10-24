@@ -46,8 +46,9 @@ class CRM_Chreports_Reports_ReportConfiguration {
 
     /**
      * 
-     * TBD
-     * 
+     * mapping.json file contains all the fields we are using as columns or filters
+     * mapping.json contains details about entity, title, custom field or not, option values etc
+     * this function loads mapping.json file and save values in _mappings 
      * @return void
      */
     private function loadMappings(): void {
@@ -105,7 +106,7 @@ class CRM_Chreports_Reports_ReportConfiguration {
 
     /**
      * 
-     * TBD
+     * Return field information from mapping.json file
      *
      * @param TBD
      * @return array
@@ -115,7 +116,29 @@ class CRM_Chreports_Reports_ReportConfiguration {
             return $this->_mappings[$fieldName];
         return ["error" => "not found"];
     }
-
+    //get operator type values for filters 
+    public function getOperatorType($fieldName) : string {
+        $fieldInfo = $this->getFieldInfo($fieldName);
+        $type = ucwords($fieldInfo["field_type"]);
+        $operator = $fieldInfo['options'];
+        $operatorType = '';
+        switch (true) {
+            case ($type === "Boolean"):
+                $operatorType = CRM_Report_Form::OP_SELECT;
+                break;
+            case ($type === "Datetime"):
+                $operatorType = CRM_Report_Form::OP_DATE;
+                break;
+            case ($type === "Datetime"):
+                $operatorType = CRM_Report_Form::OP_DATE;
+                break;
+            case ($operator === true):
+                $operatorType = CRM_Report_Form::OP_MULTISELECT;
+                break;
+        }
+        return $operatorType;
+    }
+    //get filter type values for fields and filters 
     public function getFilterType($fieldName) : array {
         $fieldInfo = $this->getFieldInfo($fieldName);
         $type = ucwords( ($fieldInfo["field_type"]) ?? "string" );
@@ -140,42 +163,67 @@ class CRM_Chreports_Reports_ReportConfiguration {
                 $fieldType["type"] = CRM_Utils_Type::T_MONEY;
                 $fieldType["htmlType"] = "Text";
                 break;
+            case "Datetime":
+                $fieldType["type"] = CRM_Utils_TYPE::T_DATE + CRM_Utils_Type::T_TIME;
+                $fieldType["htmlType"] = "Text";
+                break;
         }
         return $fieldType;
     }
-
+    //generate filter options based upon values defined in mapping.json file
     public function getFilterOptions($fieldName) : array {
         $options = [];
         $fieldInfo = $this->getFieldInfo($fieldName);
 
         $fieldNameVal = (isset($fieldInfo['field_name']))? $fieldInfo['field_name']: $fieldName;
-        $fieldTable = isset($fieldInfo['dependent_table_entity'])? $this->getEntityTable($fieldInfo['dependent_table_entity']): $this->getEntityTable($fieldInfo['entity']);
+        $fieldTable = $this->getEntityTableFromField($fieldName,true);
        
-        // custom built (contribution source)
+        // option values being created for custom fields such as ch_fund
         if(isset($fieldInfo['custom']) && $fieldInfo['custom'] === true ){
             
             $columnName = E::getColumnNameByName($fieldInfo['custom_fieldName']);
             $optionGroupName = E::getOptionGroupNameByColumnName($columnName);
             $customTablename = EU::getTableNameByName($fieldInfo['group_name']);
-            $options =   $this->getOptionValueDropdownList($fieldName,$customTablename,$optionGroupName);
+            $options =   $this->getOptionsListForOptionGroup($fieldName,$customTablename,$optionGroupName);
             
-        }else if(isset($fieldInfo['use_option_value']) && $fieldInfo['use_option_value'] === true){ // option values
-            
+        }else if(isset($fieldInfo['use_option_value']) && $fieldInfo['use_option_value'] === true){ 
+           // option values being created from option values using option group 
             $groupName = $fieldInfo['group_name'];
-            $options =   $this->getOptionValueDropdownList($fieldNameVal,$fieldTable,$groupName);
-        }else if(isset($fieldInfo['fileter_field_type']) && $fieldInfo['fileter_field_type'] === boolean){ 
-            $options =   array(''=> 'Any',1=> 'Yes',0=> 'No');
-        }else{  // entity table 
-            
+            $options =   $this->getOptionsListForOptionGroup($fieldNameVal,$fieldTable,$groupName);
+        }else if(isset($fieldInfo['field_type']) && $fieldInfo['field_type'] === boolean){ 
+            // option values for boolean fields
+            $options =   [
+              '' => ts('Any'),
+              TRUE => ts('Yes'),
+              FALSE => ts('No'),
+            ];
+        }else if(isset($fieldInfo['select_option'])){
+            // get option values for entity table 
             $fieldNameVal = $fieldInfo['select_option'];
-         $options =   $this->getOptionDropdownList($fieldNameVal,$fieldTable);
+         $options =   $this->getOptionsListForEntity($fieldNameVal,$fieldTable);
+        }else{
+            //get option values for fields which are not coming from db
+            switch ($fieldName) {
+                case "on_hold":
+                    $options = ['' => ts('Any')] + CRM_Core_PseudoConstant::emailOnHoldOptions();
+                    break;
+                case "yid":
+                    $yearsInPast = 10;
+                    $yearsInFuture = 1;
+                    $date = CRM_Core_SelectValues::date('custom', NULL, $yearsInPast, $yearsInFuture);
+                        $count = $date['maxYear'];
+                        while ($date['minYear'] <= $count) {
+                        $optionYear[$date['minYear']] = $date['minYear'];
+                        $date['minYear']++;
+                        }
+                        $options = $optionYear;
+                    break;
+            }
         }
-        
-        
         return $options;
     }
-
-    public static function getOptionDropdownList($fieldName,$fieldTable) {
+    //get option values from the entity defined for that field
+    public static function getOptionsListForEntity($fieldName,$fieldTable) {
         $optionValue = [];
         $selectClause =  implode(', ', $fieldName);
     
@@ -190,10 +238,10 @@ class CRM_Chreports_Reports_ReportConfiguration {
           }
         }
         //$optionValue = array('' => '- select -') + $optionValue;
-        return $optionValue;
+        return array_filter($optionValue);
       }
-
-      public static function getOptionValueDropdownList($fieldName,$fieldTable,$groupName) {
+      //get option values using civicrm_option_group,civicrm_option_value left join
+      public static function getOptionsListForOptionGroup($fieldName,$fieldTable,$groupName) {
         $optionValue = [];
     
         $tableName_group = $fieldTable.'_group';

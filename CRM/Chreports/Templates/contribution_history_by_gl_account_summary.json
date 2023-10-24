@@ -7,8 +7,8 @@
         "gl_account": {
             "default" : true
         },
-        "gl_code": {},
-        "account_type": {}
+        "account_type": {},
+        "gl_code": {}
     },
     "use_default_filters" : true,
     "filters":[

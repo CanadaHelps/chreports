@@ -7,8 +7,8 @@
     "fields":{
         "contribution_source": {},
         "campaign_id": {},
-        "financial_type": { 
-            "preSelected" : true
+        "financial_type_id": { 
+            "selected" : true
         },
         "contribution_page_id": {}
     },

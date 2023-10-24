@@ -66,25 +66,23 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
   }
   public function buildSQLQuery(&$var) {
     // merge opportunity fields from array defined in BaseReport class
-    if($this->_reportInstance->isOpportunityReport())
-    $this->_reportInstance->setOpportunityFields($var->getVar('_columns'));
+    // if($this->_reportInstance->isOpportunityReport())
+    // $this->_reportInstance->setOpportunityFields($var->getVar('_columns'));
 
-    if($this->_reportInstance->getEntity() == 'contact')
-        {
-          $this->_reportInstance->setAddressField($var->getVar('_columns'));
-        }
+    // if($this->_reportInstance->getEntity() == 'contact'){
+    //   $this->_reportInstance->setAddressField($var->getVar('_columns'));
+    // }
    
     // setting out columns, filters, params,mapping from report object
     //$this->_reportInstance->setFieldsMapping($var->getVar('_columns'));
     $params = $var->getVar('_params');
+    $this->_reportInstance->setFieldsMapping($var->getVar('_columns'));
     $this->_reportInstance->setFormParams($params);
     $this->_reportInstance->setColumns($params['fields']);
     $this->_reportInstance->setFilters();
     $this->_reportInstance->setPagination($this->addPaging);
 
     $this->_reportInstance->setLimit($var->getVar('_limit'));
-    //attache entity name to fields for mapping purpose
-    $this->_reportInstance->setEntityTableForFields();
     // Report Instance
     // _entity => Contribution, Contact, etc
     // _columns => array of columns with info for each field

@@ -15,7 +15,7 @@
         "contribution_page_id": {
             "default" : true
         },
-        "source": {},
+        "contribution_source": {},
         "receive_date": {},
         "total_amount": {
             "default" : true

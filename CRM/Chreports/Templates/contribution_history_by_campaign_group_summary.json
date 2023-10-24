@@ -8,13 +8,8 @@
         "campaign_id": {
             "default" : true
         },
-        "financial_type": {},
+        "financial_type_id": {},
         "contribution_page_id": {}
     },
-    "use_default_filters" : true,
-    "filters": {
-        "receive_date" : {
-            "default_value": "this.fiscal_year"
-        }
-    }
+    "use_default_filters" : true
 }
