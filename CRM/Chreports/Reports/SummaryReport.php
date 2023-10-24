@@ -15,27 +15,23 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
       // Add selected columns to SELECT clause
       foreach($this->_columns as $fieldName => $nodata) {
 
-        if($fieldName){
-
-
-        if ($fieldName == 'total_amount')
+        if ($fieldName) {
+          // skip total amount as part of calculated fields
+          if ($fieldName == 'total_amount')
             continue;
-         else if($fieldName == 'financial_type')
-         {
-            $entityName = 'financial_type';
-         }else{
-            $entityName = $this->getEntity();
-         }
-        
 
-        $columnInfo = $this->getFieldMapping($this->getEntityTableFromField($fieldName), $fieldName);
-         //common select clause
-        $this->getCommonSelectClause($fieldName,$select);
-        //Adding columns to _columnHeaders for display purpose
-        $this->_columnHeaders[$fieldName]['title'] = $columnInfo['title'];
-        $this->_columnHeaders[$fieldName]['type'] = $columnInfo['type'];
+          $columnInfo = $this->getFieldMapping($this->getEntityTableFromField($fieldName), $fieldName);
+          //common select clause
+          $this->getCommonSelectClause($fieldName,$select);
+          //Adding columns to _columnHeaders for display purpose
+          $this->_columnHeaders[$fieldName]['title'] = $columnInfo['title'];
+          $this->_columnHeaders[$fieldName]['type'] = $columnInfo['type'];
         }
       }  
+
+      // Calculated fields
+      // @todo move code below here
+      $this->addCalculatedFieldstoSelect($select);
 
        //fiscle year report
        if($this->isFiscalQuarterReport()){
@@ -57,16 +53,18 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
       $this->_columnHeaders['count']['title'] = 'Number of Contributions';
       $this->_columnHeaders['count']['type'] = CRM_Utils_Type::T_INT;
 
-      
-      $select[] = "SUM(".$this->getEntityTable().".`total_amount`) AS total_amount";
+      // Total Amount
+      $select[] = "SUM(".$this->getEntityTable('contribution').".`total_amount`) AS total_amount";
       $this->_columnHeaders['total_amount']['title'] = 'Total Amount';
       $this->_columnHeaders['total_amount']['type'] = CRM_Utils_Type::T_MONEY;
-      //don't include currenct column for Monthly / Yerly report
-      if(!$this->isMonthlyYearlyReport()){
-      $select[] = "GROUP_CONCAT(DISTINCT ".$this->getEntityTable().".currency) AS currency";
-      $this->_columnHeaders['currency']['title'] = 'Currency';
-      $this->_columnHeaders['currency']['type'] = CRM_Utils_Type::T_STRING;
+      
+      //don't include currency column for Monthly / Yerly report
+      if (!$this->isMonthlyYearlyReport()){
+        $select[] = "GROUP_CONCAT(DISTINCT ".$this->getEntityTable().".currency) AS currency";
+        $this->_columnHeaders['currency']['title'] = 'Currency';
+        $this->_columnHeaders['currency']['type'] = CRM_Utils_Type::T_STRING;
       }
+
       //Monthly / Yerly report select clause
       if($this->isMonthlyYearlyReport()){
         if($this->getReportType() == 'monthly')
@@ -82,6 +80,10 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
       $this->_selectClauses = $select;
       $this->_select = $select;
 
+    }
+
+    public function addCalculatedFieldstoSelect(&$select) {
+    
     }
 
 

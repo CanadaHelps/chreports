@@ -209,7 +209,7 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
 
       if ($varType == 'columns') {
         //manage columns, group bys, sorts, filters based on json config
-        $reportInstance->filteringReportOptions($var);
+        $reportInstance->setFormOptions($var);
         return;
       }
 

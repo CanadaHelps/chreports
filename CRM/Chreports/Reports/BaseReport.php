@@ -902,63 +902,15 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
      * @param array  $var Array used to show columns.
      * @return void
      */
-    public function filteringReportOptions(&$var) {
-        //set entity
+    public function setFormOptions(&$var) {
+        // Set main entity
         $this->setEntity($this->_settings['entity']);
-        // merge opportunity array defined in BaseReport class with the existing
-        //if($this->isOpportunityReport())
-        //$this->setOpportunityFields($var);
 
-        //if($this->getEntity() == 'contact') {
-        //    $this->setAddressField($var);
-        //}
-        // Columns
-        //CRM-2082 recurring contribution details
-        // merge recurring contribution array defined in BaseReport class with the existing
-        //if($this->isRecurringContributionReport())
-        //$this->setRecurringContributionsFields($var);
-
-        // merge GLAccountandPaymentMethodReconciliation contribution array defined in BaseReport class with the existing
-        //if($this->isGLAccountandPaymentMethodReconciliationReport())
-        //$this->setGLAccountandPaymentMethodReconciliationReport($var);
-       
-        // stores field configuration so we can use it later on
-        // $this->setFieldsMapping($var);
-         //echo '<pre>';print_r($var);echo '</pre>';
-        // Fields
-        $this->filteringReportFields($var);
-        
-        // Columns: Custom fields
-        //$this->filteringReportAddCustomField('ch_fund',$var); //CH Fund 
-        
-        // Grouping
-        //$this->filteringReportGroupOptions($var);
+        // Columns + Grouping + Sorting
+        $this->setFormColumnOptions($var);
 
         // Filters
-        $this->filteringReportFilterOptions($var);
-        // Filters: Custom Fields
-        // $this->filteringReportAddCustomFilter('contribution_source',$var); //Contribution Source
-        // $this->filteringReportAddCustomFilter('payment_instrument_id',$var); //Payment Method
-        // $this->filteringReportAddCustomFilter('campaign_type',$var); //Campaign Type
-        // $this->filteringReportAddCustomFilter('ch_fund',$var); //CH Fund
-        // $this->filteringReportAddCustomFilter('application_submitted',$var); //Application Submitted
-        // $this->filteringReportAddCustomFilter('probability',$var); //Probability
-        // $this->filteringReportAddCustomFilter('Opportunity_Name',$var); //Opportunity Name
-        // $this->filteringReportAddCustomFilter('Opportunity_Owner',$var); //Opportunity Owner
-        // //SYBNT fields
-        // $this->filteringReportAddCustomFilter('on_hold',$var); //Opportunity Owner
-        // $this->filteringReportAddCustomFilter('yid',$var); //Opportunity Owner
-        // //top contributors
-        // $this->filteringReportAddCustomFilter('total_range',$var); //Opportunity Owner
-        // if($this->isRepeatContributionsReport())
-        // {
-        //     $this->filteringReportAddCustomFilter('total_lifetime_contributions',$var); //Total Lifetime Contributions
-        //     $this->filteringReportAddCustomFilter('amount_of_last_contribution',$var); //Amount of last contribution
-        //     $this->filteringReportAddCustomFilter('date_of_last_contribution',$var); //Date of Last Contribution
-        //     $this->filteringReportAddCustomFilter('date_of_first_contribution',$var); //Date of First Contribution
-        //     $this->filteringReportAddCustomFilter('largest_contribution',$var); //Largest Contribution
-        //     $this->filteringReportAddCustomFilter('count_of_contributions',$var); //Count of Contributions
-        // }
+        $this->setFormFilterOptions($var);
     }
 
     public function setRecurringContributionsFields(&$var) {
@@ -1021,20 +973,9 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
 
       }
 
-    private function filteringReportFields(&$var) {
-        
-        /*
-        var
-            => civicrm_contribution
-                => fields
-                    => amount [...]
+    private function setFormColumnOptions(&$var) {
 
-        template.json
-            => fields
-                => amount [...]
-        */
-
-        // clear var
+        // clear var completely to get blank slate
         $var = [];
 
         foreach ($this->getAllColumns() as $fieldName => $fieldInfo) {
@@ -1042,15 +983,16 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
             
             // field not found
             if ( isset($fieldInfo['error']) ) {
+                echo "<pre>error => " . print_r($fieldName, true) . "</pre>";
                 continue;
             }
-            if(isset($fieldInfo['custom'])){
+            if (isset($fieldInfo['custom'])) {
                 $entityName = EU::getTableNameByName($fieldInfo['group_name']);
-              }else{
+            } else {
                 $entityName = isset($fieldInfo['entity'])? $this->getEntityTable($fieldInfo['entity']): $this->getEntityTable();
-              }
+            }
             
-              $actualFieldName = ($fieldInfo['field_name']) ?? $fieldName;
+            $actualFieldName = ($fieldInfo['field_name']) ?? $fieldName;
             $filterType = $this->getFilterType($fieldName);
             //$entityName = $fieldInfo['entity'];
             $var[$entityName]['fields'][$fieldName] = [
@@ -1069,415 +1011,9 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
             ];
 
         }
-
-        return;
-        
-        
-        foreach ($var as $entityName => $entityData) {
-            if($this->isOpportunityReport())
-            unset($var[$entityName]['order_bys']);
-            foreach ($entityData['fields'] as $fieldName => $fieldData) {
-                    
-                // We do not want to show this field
-                if (!in_array($fieldName, $this->getColumnsFromConfig())) {
-                    unset($var[$entityName]['fields'][$fieldName]);
-                    //For add Detailed report fields order by parameters should be same as display column fields
-                    if($this->_settings['type'] == 'detailed' && ($this->_settings['entity'] == 'contribution' || $this->_settings['entity'] == 'contact'))
-                    unset($var[$entityName]['order_bys'][$fieldName]);
-            
-                // We want this
-                } else {   
-                    //Modify field by adding 'select_clause_alias' param to retrieve tablename.fieldname value for select,section clause
-                    $this->modifyFieldParams($fieldName, $var[$entityName]);
-                    //set default field
-                    $this->setDefaultColumn($fieldName, $var[$entityName]);
-                    // Fix empty / different titles
-                    $this->fixFieldTitle($fieldName, $var[$entityName]['fields'][$fieldName]['title']);
-                    $this->fixFieldStatistics($fieldName, $var[$entityName]['fields'][$fieldName]);
-
-                    // Assigning order bys options based on fields
-                    // Adding missing title to order by options
-                    $orderByFieldList = ["total_amount","currency","id"];
-                    //Remove Sorting tab from reporting fields base upon orderByDisplay params from json
-                    if(isset($this->_settings['orderByDisplay']) && $this->_settings['orderByDisplay'] === false)
-                    {
-                        unset($var[$entityName]['order_bys'][$fieldName]);
-                    }else{
-                        if($this->_settings['type'] == 'detailed' && ($this->_settings['entity'] == 'contribution' || $this->_settings['entity'] == 'contact')){
-                            array_shift($orderByFieldList);
-                        }
-                        if(!in_array($fieldName,$orderByFieldList)){
-                            $var[$entityName]['order_bys'][$fieldName] = [
-                                'title' => $var[$entityName]['fields'][$fieldName]['title']
-                            ];
-                        }
-                    }
-                }
-            }
-        }
     }
-    //Add Custom fields to fields and group by and order by section
-    private function filteringReportAddCustomField($fieldName,&$var) {
-            foreach($this->getColumnsFromConfig() as $key => $fieldName){
-            switch ($fieldName) {
-                case 'ch_fund':
-                    $fieldDetails = [];
-                    $customTablename = EU::getTableNameByName('Additional_info');
-                    $trial = EU::getCustomFieldID('Fund');
-                    $fieldDetails = $this->_mapping[$customTablename]['fields'][$trial];
-                    $fieldDetails ['table_name'] = $customTablename;
-                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
-                    break;
-                case 'gl_account':
-                     $fieldDetails = [
-                                'title' => E::ts('Financial Account'),
-                                'name' => 'name',
-                                'select_clause_alias' => $this->getEntityTable('financial_account').'.name',
-                                'table_name' => $this->getEntityTable('financial_account'),
-                                'dbAlias' => $this->getEntityTable('financial_account').'.name',
-                            ];
-                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
-                    break;
-                case 'gl_code':
-                    $fieldDetails = [
-                                'title' => E::ts('GL Code'),
-                                'name' => 'accounting_code',
-                                'table_name' => $this->getEntityTable('financial_account'),
-                                'dbAlias' => $this->getEntityTable('financial_account').'.accounting_code',
-                            ];
-                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
-                    break;
-                case 'account_type':
-                    $fieldDetails = [
-                        'title' => E::ts('Account Type'),
-                        'name' => 'financial_account_type_id',
-                        'select_clause_alias' => $this->getEntityTable('financial_account').'_'.$fieldName.'_value.label',
-                        'table_name' => $this->getEntityTable('financial_account'),
-                        'dbAlias' => $this->getEntityTable('financial_account').'.financial_account_type_id',
-                    ];
-                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
-                    break;
-                case 'payment_instrument_id':
-                    $fieldDetails = [
-                        'title' => E::ts('Payment Method'),
-                        'name' => 'payment_instrument_id',
-                        'select_clause_alias' => $this->getEntityTable().'_'.$fieldName.'_value.label',
-                        'table_name' => $this->getEntityTable(),
-                        'dbAlias' => $this->getEntityTable().'.payment_instrument_id',
-                    ];
-                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
-                    break;
-                case 'organization_name':
-                    $fieldDetails = [
-                        'title' => E::ts('Organization Name'),
-                        'name' => 'organization_name',
-                        'select_clause_alias' => $this->getEntityTable('contact').'.organization_name',
-                        // 'op_group_alias' => TRUE,
-                        'table_name' => $this->getEntityTable('contact'),
-                        'dbAlias' => $this->getEntityTable('contact').'.organization_name',
-                    ];
-                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
-                    break;
-                case 'application_submitted':
-                    $customFieldName =  E::getColumnNameByName('application_submitted');
-                    $customTablename = EU::getTableNameByName('Grant');
-                    $fieldDetails = [
-                        'title' => E::ts('Application Submitted'),
-                        'name' => $customFieldName,
-                        'table_name' => $customTablename,
-                        'dbAlias' => $customTablename.$customFieldName,
-                    ];
-                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
-                    break;
-                case 'probability':
-                    $customFieldName =  E::getColumnNameByName('probability');
-                    $customTablename = EU::getTableNameByName('Grant');
-                    $fieldDetails = [
-                        'title' => E::ts('Probability'),
-                        'name' => $customFieldName,
-                        'table_name' => $customTablename,
-                        'select_clause_alias' => $customTablename.'_'.$fieldName.'_value.label',
-                        'dbAlias' => $customTablename.$customFieldName,
-                    ];
-                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
-                    break;
-                case 'Opportunity_Name':
-                    $customFieldName =  E::getColumnNameByName('Opportunity_Name');
-                    $customTablename = EU::getTableNameByName('Grant');
-                    $fieldDetails = [
-                        'title' => E::ts('Opportunity Name'),
-                        'name' => $customFieldName,
-                        'table_name' => $customTablename,
-                        'dbAlias' => $customTablename.$customFieldName,
-                    ];
-                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
-                    break;
-                case 'Opportunity_Owner':
-                    $customFieldName =  E::getColumnNameByName('Opportunity_Owner');
-                    $customTablename = EU::getTableNameByName('Grant');
-                    $fieldDetails = [
-                        'title' => E::ts('Opportunity Owner'),
-                        'name' => $customFieldName,
-                        'table_name' => $customTablename,
-                        'select_clause_alias' => $this->getEntityTable('contact').'.display_name',
-                        'dbAlias' => $customTablename.$customFieldName,
-                    ];
-                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
-                    break;
-                case 'receive_date_start': //for fiscal, quarterly report
-                        if($this->isFiscalQuarterReport())
-                        {
-                            $title =($this->getReportType() == 'fiscal')? E::ts('Month') : E::ts('Quarter');
-                        }
-                    $fieldDetails = [
-                        'title' => $title,
-                        'name' => 'receive_date',
-                        'table_name' => $this->getEntityTable(),
-                        //'select_clause_alias' => $this->getEntityTable('contact').'.display_name',
-                        'dbAlias' => $this->getEntityTable().'receive_date',
-                        'type' => CRM_Utils_Type::T_STRING,
-                    ];
-                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
-                    break;
-                case 'last_four_year_total_amount':
-                    $fieldDetails = [
-                        'title' => E::ts('Last 4rth Year Total'),
-                        'type' => CRM_Utils_Type::T_MONEY,
-                    ];
-                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
-                    break;   
-                case 'last_three_year_total_amount':
-                    $fieldDetails = [
-                        'title' => E::ts('Last 3 Years total'),
-                        'type' => CRM_Utils_Type::T_MONEY,
-                    ];
-                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
-                    break; 
-                case 'last_two_year_total_amount':
-                    $fieldDetails = [
-                        'title' => E::ts('Last 2 Years total'),
-                        'type' => CRM_Utils_Type::T_MONEY,
-                    ];
-                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
-                    break; 
-                case 'on_hold':
-                    $fieldDetails = [
-                        'title' => E::ts('Email on hold'),
-                    ];
-                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
-                    break; 
-                case 'last_year_total_amount':
-                    $fieldDetails = [
-                        'title' => ts('Last Year Total'),
-                        'type' => CRM_Utils_Type::T_MONEY,
-                    ];
-                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
-                    break; 
-                case 'civicrm_life_time_total':
-                    $fieldDetails = [
-                        'title' => ts('Lifetime Total'),
-                        'type' => CRM_Utils_Type::T_MONEY,
-                    ];
-                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
-                    break; 
-                //Repeat contributions report custom fields and extra fields
-                case 'total_lifetime_contributions':
-                    $fieldDetails = [];
-                    $customTablename = EU::getTableNameByName('Summary_Fields');
-                    $trial = EU::getCustomFieldID('Total_Lifetime_Contributions');
-                    $fieldDetails = $this->_mapping[$customTablename]['fields'][$trial];
-                    $fieldDetails ['table_name'] = $customTablename;
-                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
-                    break;
-                case 'amount_of_last_contribution':
-                    $fieldDetails = [];
-                    $customTablename = EU::getTableNameByName('Summary_Fields');
-                    $trial = EU::getCustomFieldID('Amount_of_last_contribution');
-                    $fieldDetails = $this->_mapping[$customTablename]['fields'][$trial];
-                    $fieldDetails ['table_name'] = $customTablename;
-                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
-                    break;
-                case 'date_of_last_contribution':
-                    $fieldDetails = [];
-                    $customTablename = EU::getTableNameByName('Summary_Fields');
-                    $trial = EU::getCustomFieldID('Date_of_Last_Contribution');
-                    $fieldDetails = $this->_mapping[$customTablename]['fields'][$trial];
-                    $fieldDetails ['table_name'] = $customTablename;
-                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
-                    break;
-                case 'date_of_first_contribution':
-                    $fieldDetails = [];
-                    $customTablename = EU::getTableNameByName('Summary_Fields');
-                    $trial = EU::getCustomFieldID('Date_of_First_Contribution');
-                    $fieldDetails = $this->_mapping[$customTablename]['fields'][$trial];
-                    $fieldDetails ['table_name'] = $customTablename;
-                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
-                    break;
-                case 'largest_contribution':
-                    $fieldDetails = [];
-                    $customTablename = EU::getTableNameByName('Summary_Fields');
-                    $trial = EU::getCustomFieldID('Largest_Contribution');
-                    $fieldDetails = $this->_mapping[$customTablename]['fields'][$trial];
-                    $fieldDetails ['table_name'] = $customTablename;
-                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
-                    break;
-                case 'count_of_contributions':
-                    $fieldDetails = [];
-                    $customTablename = EU::getTableNameByName('Summary_Fields');
-                    $trial = EU::getCustomFieldID('Count_of_Contributions');
-                    $fieldDetails = $this->_mapping[$customTablename]['fields'][$trial];
-                    $fieldDetails ['table_name'] = $customTablename;
-                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
-                    break;
-                case 'range_one_stat':
-                    $fieldDetails = [
-                        'title' => E::ts('Range One Stat'),
-                        'name' => 'range_one_stat',
-                    ];
-                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
-                    break;
-                case 'range_two_stat':
-                    $fieldDetails = [
-                        'title' => E::ts('Range Two Stat'),
-                        'name' => 'range_two_stat'
-                    ];
-                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
-                    break;
-                
-                    //gl account and payment method reconciliation
-
-                case 'debit_name':
-                case 'debit_accounting_code':
-                //case 'debit_contact_id':
-
-                    if ($fieldName == "debit_name") {
-                        $actualFieldNeme = 'name';  
-                        $fieldTitle = 'GL Account Name - Debit'   ;  
-                    }    
-                    else if ($fieldName == "debit_accounting_code") {
-                        $actualFieldNeme = 'accounting_code'; 
-                        $fieldTitle = 'GL Account Code - Debit'   ;
-                    } 
-                    $fieldDetails = [
-                                    'title' => E::ts($fieldTitle),
-                                    'name' => $actualFieldNeme,
-                                    'select_clause_alias' => $this->getEntityTable('financial_account').'_debit.' . $actualFieldNeme,
-                                    'table_name' => $this->getEntityTable('financial_account'),
-                                    //'dbAlias' => $this->getEntityTable('financial_account').'.' . $actualFieldNeme,
-                                    'dbAlias' => $this->getEntityTable('financial_account').'_debit.' . $actualFieldNeme,
-                                ];
-                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
-                    break;
-
-                case 'credit_name':
-                case 'credit_accounting_code':
-            
-                    if ($fieldName == "credit_name") {
-                        $actualFieldNeme = 'name';  
-                        $fieldTitle = 'Financial Account Name - Credit'   ;  
-                    }    
-                    else if ($fieldName == "credit_accounting_code") {
-                        $actualFieldNeme = 'accounting_code'; 
-                        $fieldTitle = 'GL Account Code - Credit'   ;
-                    } 
-                    $fieldDetails = [
-                        'title' => E::ts($fieldTitle),
-                        'name' => $actualFieldNeme,
-                        'select_clause_alias' => $this->getEntityTable('financial_account').'_credit.' . $actualFieldNeme,
-                        'table_name' => $this->getEntityTable('financial_account'),
-                        //'dbAlias' => $this->getEntityTable('financial_account').'.' . $actualFieldNeme,
-                        'dbAlias' => $this->getEntityTable('financial_account').'_credit.' . $actualFieldNeme,
-                    ];
-                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
-                    break;
-                case 'debit_contact_id':
-                case 'credit_contact_id':
-                    if ($fieldName == "debit_contact_id") {
-                        $fieldTitle = 'GL Account Owner - Debit'   ;  
-                        $fieldType = 'debit';
-                    }    
-                    else if ($fieldName == "credit_contact_id") {
-                        $fieldTitle = 'GL Account Owner - Credit'   ;
-                        $fieldType = 'credit';
-                    } 
-                    $fieldDetails = [
-                        'title' => E::ts($fieldTitle),
-                        'name' => 'organization_name',
-                        'select_clause_alias' => $this->getEntityTable('contact').'_'.$fieldType.'.organization_name',
-                        'table_name' => $this->getEntityTable('contact'),
-                        //'dbAlias' => $this->getEntityTable('contact').'.organization_name',
-                        'dbAlias' => $this->getEntityTable('contact').'_'.$fieldType.'.organization_name',    
-                    ];
-                    $this->customFieldCreation($fieldName,$var,$fieldDetails);
-                    break;
-            }
-        }
-    }
-
-    private function customFieldCreation($fieldName,&$var,$fieldDetails) {
-        //Adding 'custom_alias' to custom fields so we can easily access alias for sort by section
-        $fieldDetails['custom_alias'] = $this->getEntityTable()."_".$fieldName;
-        foreach( ['fields','group_bys','order_bys'] as $entityName) {
-            switch ($entityName) {
-                case 'fields':
-                case 'group_bys':
-                    $var[$this->getEntityTable()][$entityName][$fieldName] = $fieldDetails;
-                    $this->setDefaultColumn($fieldName, $var[$this->getEntityTable()]);
-                    break;
-                case 'order_bys':
-                    $var[$this->getEntityTable()][$entityName][$fieldName] = [
-                        'title' => $fieldDetails['title']
-                    ];
-                    break;
-            }
-
-        }
-    }
-
-    //Add 'select_clause_alias' params to form fields so get the field alias in select clause rather than replacing value in alterDisplay  
-    private function modifyFieldParams($fieldName,&$var) {
-            switch ($fieldName) {
-                case 'contribution_page_id': //campaign
-                    $var['fields'][$fieldName]['select_clause_alias'] = $this->getEntityTable('contribution_page').'.title';
-                    break;
-                case 'campaign_id': //campaign group
-                    $var['fields'][$fieldName]['select_clause_alias'] = $this->getEntityTable('campaign').'.title';
-                    break;
-                case 'email':
-                case 'phone': 
-                    $var['fields'][$fieldName]['select_clause_alias'] = $this->getEntityTable($fieldName).'.'.$fieldName;
-                    break;
-                case 'grant_type_id': //Opportunity type
-                case 'status_id': //Opportunity status
-                    $var['fields'][$fieldName]['select_clause_alias'] = $this->getEntityTable().'_'.$fieldName.'_value.label';
-                    $var['fields'][$fieldName]['custom_alias'] = $this->getEntityTable().'_'.$fieldName;
-                    
-                case 'street_address':
-                case 'city':
-                case 'postal_code':
-                case 'state_province_id':
-                case 'country_id':
-                    $var['fields'][$fieldName]['select_clause_alias'] = $this->getEntityTable('address').'.'.$fieldName;
-                    break;
-            }
-    }
-    private function filteringReportGroupOptions(&$var) {
-        foreach ($var as $entityName => $entityData) {
-            foreach ($entityData['group_bys'] as $fieldName => $fieldData) {
-                if(isset($this->_settings['groupByDisplay']) && $this->_settings['groupByDisplay'] === false)
-                    {
-                        unset($var[$entityName]['group_bys'][$fieldName]);
-                    }else{
-                    // We do not want to show this group_bys
-                    if (!in_array($fieldName, $this->getColumnsFromConfig())) {
-                        unset($var[$entityName]['group_bys'][$fieldName]);
-                    }
-                }
-            }
-        }
-    }
-
-    private function filteringReportFilterOptions(&$var) {
+    
+    private function setFormFilterOptions(&$var) {
         foreach ($this->getReportingFilters() as $fieldName => $fieldInfo) {
             $fieldInfo = array_merge( $fieldInfo, $this->getFieldInfo($fieldName) );
 
@@ -1486,9 +1022,10 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                 continue;
             }
 
-            if(isset($fieldInfo['custom'])){
+            // custom fields
+            if (isset($fieldInfo['custom'])) {
                 $entityName = EU::getTableNameByName($fieldInfo['group_name']);
-            }else{
+            } else {
                 $entityName = isset($fieldInfo['entity'])? $this->getEntityTable($fieldInfo['entity']): $this->getEntityTable();
             }
 
@@ -1504,14 +1041,12 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                 "column_name" => $this->getEntityField($fieldName)
             ];
 
-            //set operator type
+            // set operator type
             $var[$entityName]['filters'][$fieldName]["operatorType"] = $this->getOperatorType($fieldName);
             if ( isset($fieldInfo['options']) && $fieldInfo['options'] === true ) {
                 $var[$entityName]['filters'][$fieldName]["options"] = $this->getFilterOptions($fieldName);
-                // TODO: options
             }
 
-            // TODO: date / datetime
 
         }
 
@@ -1524,18 +1059,6 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
             }
         }
        
-
-        return;
-        foreach ($var as $entityName => $entityData) {
-            foreach ($entityData['filters'] as $fieldName => $fieldData) {
-                
-                // We do not want to show this filters
-                
-                    //modify filter option values if required
-                    $this->fixFilterOption($fieldName, $var[$entityName]['filters'][$fieldName]);
-
-            }
-        }
     }
 
     private function filteringReportAddCustomFilter($fieldName,&$var) {
@@ -2476,7 +1999,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     //get entity clause field through fieldName 'tablename.columnName'
     public function getEntityClauseFromField($fieldName) : string {
         $fieldInfo = $this->getFieldInfo($fieldName);
-        $entityTable = $this->getEntityTableFromField($fieldName);
+        $entityTable = $fieldInfo['table_alias'] ?? $this->getEntityTableFromField($fieldName);
         $entityField = $this->getEntityField($fieldName);
         return $entityTable.'.'.$entityField;
     }
@@ -2489,6 +2012,17 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
             $entityField = (isset($fieldInfo['field_name']))? $fieldInfo['field_name']: $fieldName;
           }
         return $entityField;
+    }
+
+    //get group name name using fieldName 
+    public function getGroupNameField($fieldName) : string {
+        $fieldInfo = $this->getFieldInfo($fieldName);
+        if(isset($fieldInfo['custom'])){
+            $entityGroup = E::getOptionGroupNameByColumnName(E::getColumnNameByName($fieldInfo['custom_fieldName']));
+          }else{
+            $entityGroup = $fieldInfo['group_name'];
+          }
+        return $entityGroup;
     }
     
     public function getDefaultFromClause(&$from) {
@@ -2511,40 +2045,28 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
 
          // Add columns joins (if needed)
         foreach($fieldsForFromClauses as $fieldName => $nodata) {
-            $entityName = $this->getEntityTableFromField($fieldName);
-            $groupName = $this->getFieldInfo($fieldName)['group_name'] ?? NULL;
-            $fieldInfo = $this->getFieldInfo($fieldName);
-        
-            if(!in_array($entityName,$this->_fromEntity) || ($groupName !== NULL && !in_array($groupName,$this->_fromEntity))) {
-            //option value
-            if(isset($fieldInfo['select_name']) && $fieldInfo['select_name'] === 'option_value' ){
-                if(isset($fieldInfo['join_entity']) && isset($fieldInfo['join_field_name'])){
-                $from[] = $this->getSQLJoinForOptionValue($groupName,$fieldInfo['join_field_name'],$fieldInfo['join_entity'],$fieldName);
-                }else{
-                $entityField = $this->getEntityField($fieldName);
-                $from[] = $this->getSQLJoinForOptionValue($groupName,$entityField,$entityName,$fieldName);
-                }
+            $fieldInfo   = $this->getFieldInfo($fieldName);
+            $entityName  = $this->getEntityTableFromField($fieldName);
+            $actualTable = $fieldInfo['table_alias'] ?? $entityName;
+            $groupName   = $fieldInfo['group_name'] ?? NULL;
+            echo "<pre>$fieldName:";print_r($fieldInfo);echo '</pre>';
+            echo "<pre>$fieldName.entityName:";print_r($entityName);echo '</pre>';
+            echo "<pre>$fieldName.actualTable:";print_r($actualTable);echo '</pre>';
+            // echo "<pre>$fieldName.groupName:";print_r($groupName);echo '</pre>';
 
-            //custom fields look for custom tag
-            } else if ($fieldInfo['custom'] === true) { 
-                $from[] = $this->getSQLJoinForField($fieldInfo['join_field_name'], $entityName, $this->getEntityTable($fieldInfo['join_entity']),'entity_id');
-            
-            // contact fields
-            } else if($fieldInfo['join_entity'] === 'contact'){ 
-                if($fieldName !== 'credit_contact_id' && $fieldName !== 'debit_contact_id')
-                $from[] = $this->getSQLJoinForField($fieldInfo['join_field_name'], $entityName, $this->getEntityTable($fieldInfo['join_entity']),'contact_id');
-            
-            // contribution fields
-            } else{
-                if($fieldName !== 'gl_account'){
-                $from[] = $this->getSQLJoinForField($fieldInfo['join_field_name'], $entityName, $this->getEntityTable($fieldInfo['join_entity']),$this->getEntityField($fieldName));
-                }
-            }
-            $trialValue = ($groupName !== NULL)? $groupName : $entityName;
-            $this->_fromEntity[] = ($groupName !== NULL)? $groupName : $entityName;
-            
+            $alreadyIncluded = false;
+            // option value always need a join
+            if ( isset($fieldInfo['select_name']) && $fieldInfo['select_name'] === 'option_value' ) {
+                $alreadyIncluded = false;
+            // field belong to group already joined
+            } else if ($groupName !== NULL && in_array($groupName,$this->_fromEntity)) {
+                $alreadyIncluded = true;
+            // field belong to entity table already joined
+            } else if ( in_array($entityName,$this->_fromEntity)  ) {
+                $alreadyIncluded = true;
             }
 
+            // specific cases that do not fit in regular process
             switch ($fieldName) {
                 case 'gl_account': // GL Account
                     $from[] = $this->getSQLJoinForField("id", $this->getEntityTable('line_item'), $this->getEntityTable('contribution'), "contribution_id");
@@ -2558,25 +2080,94 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                         AND ".$this->getEntityTable('financial_item').".entity_id = ".$this->getEntityTable('line_item').".id) ";
 
                     $from[] = $this->getSQLJoinForField('financial_account_id', $this->getEntityTable('financial_account'), $this->getEntityTable('financial_item'));
+                    $alreadyIncluded = true;
                     break;
+
                 case 'credit_contact_id':
                     $from[] = "LEFT JOIN ".$this->getEntityTable('contact')." as civicrm_contact_credit ON civicrm_contact_credit.id = ".$this->getEntityTable('financial_account')."_credit.contact_id";
+                    $alreadyIncluded = true;
                     break;
+
                 case 'debit_contact_id':
                     $from[] = "LEFT JOIN ".$this->getEntityTable('contact')." as civicrm_contact_debit ON civicrm_contact_debit.id = ".$this->getEntityTable('financial_account')."_debit.contact_id";
+                    $alreadyIncluded = true;
                     break;
-                case ($entity_name === 'civicrm_batch'):
-                    if(!in_array($entity_name,$this->_fromEntity))
-                    {
-                    $from[] = "LEFT JOIN ".$this->getEntityTable('entity_batch')." AS ".$this->getEntityTable('entity_batch')."_report
-                    ON  ".$this->getEntityTable('financial_trxn')."_report.id = ".$this->getEntityTable('entity_batch')."_report.entity_id AND ".$this->getEntityTable('entity_batch')."_report.entity_table = 'civicrm_financial_trxn'";
-            
-                    $from[] = $this->getSQLJoinForField('id', $this->getEntityTable('entity_batch')."_report", $this->getEntityTable('batch'),'batch_id');
-                    $this->_fromEntity[] = $entity_name;
+
+                case ($entityName === 'civicrm_batch'):
+                    if (!$alreadyIncluded) {
+                        $from[] = "LEFT JOIN ".$this->getEntityTable('entity_batch')." AS ".$this->getEntityTable('entity_batch')."_report
+                        ON  ".$this->getEntityTable('financial_trxn')."_report.id = ".$this->getEntityTable('entity_batch')."_report.entity_id AND ".$this->getEntityTable('entity_batch')."_report.entity_table = 'civicrm_financial_trxn'";
+                
+                        $from[] = $this->getSQLJoinForField('id', $this->getEntityTable('entity_batch')."_report", $this->getEntityTable('batch'),'batch_id');
+                        $this->_fromEntity[] = $entityName;
+                        $alreadyIncluded = true;
                     }
+                    
                     break;
             }
+
+            // Adding pre-required joins
+            if ($fieldInfo['entity'] == "financial_account") {
+
+                echo "<pre>$fieldName: adding financial_trxn joins</pre>";
+                
+                $prerequisiteTable = "financial_trxn";
+
+                if (!in_array($prerequisiteTable,$this->_fromEntity) ) {
+
+                    $from[] = "LEFT JOIN ".$this->getEntityTable('entity_' . $prerequisiteTable)." as ".$this->getEntityTable('entity_' . $prerequisiteTable).
+                    " ON (".$this->getEntityTable('contribution').".id = ".$this->getEntityTable('entity_' . $prerequisiteTable).".entity_id ".
+                    " AND ".$this->getEntityTable('entity_' . $prerequisiteTable).".entity_table = 'civicrm_contribution')";
+                
+                    $from[] = "LEFT JOIN ".$this->getEntityTable($prerequisiteTable)." as ".$this->getEntityTable($prerequisiteTable).
+                    " ON ".$this->getEntityTable($prerequisiteTable).".id = ".$this->getEntityTable('entity_' . $prerequisiteTable).".financial_trxn_id";
+            
+                    $this->_fromEntity[] = $prerequisiteTable;
+
+                }
+            }
+
+            //if(!in_array($trialValue,$this->_fromEntity) || (isset($fieldInfo['select_name']) && $fieldInfo['select_name'] === 'option_value')) {
+            if(!$alreadyIncluded) {
+
+                echo "<pre>from for $fieldName</pre>";
+
+                //option value
+                if (isset($fieldInfo['select_name']) && $fieldInfo['select_name'] === 'option_value' ) {
+                    
+                    // custom fields + option value
+                    if ($fieldInfo['custom'] === true) { 
+                        $from[] = $this->getSQLJoinForField($fieldInfo['join_field_name'], $entityName, $this->getEntityTable($fieldInfo['join_entity']),'entity_id');
+                    }
+                    
+                    if ($fieldInfo['custom'] !== true && isset($fieldInfo['join_entity']) && isset($fieldInfo['join_field_name'])) {
+                        $from[] = $this->getSQLJoinForOptionValue($groupName,$fieldInfo['join_field_name'],$this->getEntityTable($fieldInfo['join_entity']),$fieldName);
+                    } else {
+                        $entityField = $this->getEntityField($fieldName);
+                        $from[] = $this->getSQLJoinForOptionValue($groupName,$entityField,$entityName,$fieldName);
+                    }
+
+                // custom fields
+                } else if ($fieldInfo['custom'] === true) { 
+                    $from[] = $this->getSQLJoinForField($fieldInfo['join_field_name'], $entityName, $this->getEntityTable($fieldInfo['join_entity']),'entity_id');
+                
+                // contact fields
+                } else if($fieldInfo['join_entity'] === 'contact'){ 
+                    $from[] = $this->getSQLJoinForField($fieldInfo['join_field_name'], $entityName, $this->getEntityTable($fieldInfo['join_entity']),'contact_id');
+                
+                // contribution and other entity fields
+                } else {
+                    $from[] = "LEFT JOIN $entityName as $actualTable ON $actualTable." . $this->getEntityField($fieldName) . " = " . $this->getEntityTable($fieldInfo['join_entity']) . "." . $fieldInfo['join_field_name'];
+                    $entityName = $actualTable; // so that we don;t include twice, but still include others with a different alias
+                }
+                $this->_fromEntity[] = ($groupName !== NULL)? $groupName : $entityName;
+                //echo '<pre>';print_r($this->_fromEntity);echo '</pre>';
+                //echo "<pre>after field.from = :";print_r($from);echo '</pre>';
+            }
         }
+
+        //echo "<pre>from = :";print_r($from);echo '</pre>';
+        //echo '<pre>';print_r();echo '</pre>';
         $from = array_unique($from);
     }
 
@@ -2598,7 +2189,8 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         {
           $selectStatement = $this->getEntityTableFromField($fieldName,true). "." . $fieldInfo['select_name'];
 
-        }else{ //normal clause
+        //normal clause
+        } else{ 
           $selectStatement =  $this->getEntityClauseFromField($fieldName);
 
         }
