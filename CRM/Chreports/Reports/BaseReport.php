@@ -24,6 +24,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
 
     protected $_orderBy = NULL;
     protected $_orderByFields = [];
+    protected $_orderByFieldsFrom = [];
 
     protected $_where = NULL;
     protected $_having = NULL;
@@ -983,7 +984,6 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
             
             // field not found
             if ( isset($fieldInfo['error']) ) {
-                echo "<pre>error => " . print_r($fieldName, true) . "</pre>";
                 continue;
             }
             if (isset($fieldInfo['custom'])) {
@@ -999,16 +999,26 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                 "title" => $fieldInfo["title"],
                 "default" => ( $fieldInfo["default"] === true || $fieldInfo["selected"] === true ),
                 "type" => $filterType['type'],
+                "custom_alias" =>  $entityName.'_'.$fieldName,
             ];
             //set order by fields //sort by
-            $var[$entityName]['order_bys'][$fieldName] = [
-                'title' => $fieldInfo["title"]
-            ];
+            if(isset($this->_settings['orderByDisplay']) && $this->_settings['orderByDisplay'] === false){
+                unset($var[$entityName]['order_bys'][$fieldName]);
+            }else{
+                $var[$entityName]['order_bys'][$fieldName] = [
+                    'title' => $fieldInfo["title"]
+                ];
+            }
+
             //set group by
-            $var[$entityName]['group_bys'][$fieldName] = [
-                'title' => $fieldInfo["title"],
-                "default" => ( $fieldInfo["default"] === true || $fieldInfo["selected"] === true ),
-            ];
+            if(isset($this->_settings['groupByDisplay']) && $this->_settings['groupByDisplay'] === false){
+                unset($var[$entityName]['group_bys'][$fieldName]);
+            }else{
+                $var[$entityName]['group_bys'][$fieldName] = [
+                    'title' => $fieldInfo["title"],
+                    "default" => ( $fieldInfo["default"] === true || $fieldInfo["selected"] === true ),
+                ];
+            }
 
         }
     }
@@ -1298,7 +1308,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
             } else{
                 $entityName = $this->getEntity();
             }
-            $columnInfo = $this->getFieldMapping( $entityName, $fieldName);
+            $columnInfo = $this->getFieldMapping( $this->getEntityTableFromField($fieldName), $fieldName);
             $sortBySectionAlias = ($columnInfo['custom_alias'])? $columnInfo['custom_alias'] : $columnInfo['table_name'].'_'.$fieldName;
             unset($columnHeaders[$sortBySectionAlias]);
         }
@@ -1350,37 +1360,18 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     public function updateSelectWithSortBySections(){
         $select = [];
         $columnHeader = [];
+       
         // loop
         foreach ($this->_orderByFields as $fieldName => $value) {
-            if ($fieldName == 'financial_type') {
-                $entityName = 'financial_type';
-            }
-            else if($fieldName == 'sort_name' || $fieldName == 'first_name' || $fieldName == 'last_name' || $fieldName == 'organization_name'|| $fieldName == 'exposed_id')
-            {
-               $entityName = 'contact';
-            }
-            else if($fieldName == 'phone' || $fieldName == 'email')
-            {
-               $entityName = $fieldName;
-            }
-            else if($fieldName == 'street_address' || $fieldName == 'city' || $fieldName == 'postal_code' || $fieldName == 'state_province_id' || $fieldName == 'country_id')
-            {
-               $entityName = 'address';
-            }
-            else if($fieldName == 'source')
-            {
-               $entityName = 'contribution';
-            } 
-            else{
-                $entityName = $this->getEntity();
-            }
-            $columnInfo = $this->getFieldMapping( $entityName, $fieldName);
+            
+            $columnInfo = $this->getFieldMapping( $this->getEntityTableFromField($fieldName), $fieldName);
             if(($this->isRecurringContributionReport()) && ($fieldName == 'total_amount' || $fieldName == 'last_month_amount' || $fieldName == 'completed_contributions' || $fieldName == 'start_date'))
            {
             $sortByAlias = ($columnInfo['custom_alias']) ? $columnInfo['custom_alias'] : $fieldName;
            }else{
             $sortByAlias = ($columnInfo['custom_alias']) ? $columnInfo['custom_alias'] : $columnInfo['table_name'].'_'.$fieldName;
            }
+            
             // adding sort field to column headers
             $columnHeader[$sortByAlias] = [
                 'title' => $columnInfo['title']
@@ -1388,8 +1379,10 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
             if(($this->isRecurringContributionReport()) && ($fieldName == 'total_amount' || $fieldName == 'last_month_amount' || $fieldName == 'completed_contributions' || $fieldName == 'start_date'))
            {
             $selectStatement = ($columnInfo['select_clause_alias'] && $columnInfo['custom_alias']) ? $columnInfo['select_clause_alias'] : $columnInfo['name'];
-           }else{
-            $selectStatement = ($columnInfo['select_clause_alias'] && $columnInfo['custom_alias']) ? $columnInfo['select_clause_alias'] : $columnInfo['table_name'] ."." . $columnInfo['name'];
+           }else if($this->isFiscalQuarterReport()){
+                $selectStatement = "CONCAT(MONTHNAME($value),' ', YEAR($value))";
+            } else{
+            $selectStatement = $value;
            }
            if(($this->isRecurringContributionReport()) && ($fieldName == 'total_amount' || $fieldName == 'last_month_amount' || $fieldName == 'completed_contributions' || $fieldName == 'start_date'))
            {
@@ -2013,14 +2006,15 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
           }
         return $entityField;
     }
-
+    //to be removed
     //get group name name using fieldName 
-    public function getGroupNameField($fieldName) : string {
+    public function getGroupNameField($fieldName) {
         $fieldInfo = $this->getFieldInfo($fieldName);
         if(isset($fieldInfo['custom'])){
-            $entityGroup = E::getOptionGroupNameByColumnName(E::getColumnNameByName($fieldInfo['custom_fieldName']));
+            $columnName = E::getColumnNameByName($fieldInfo['custom_fieldName']);
+            $entityGroup = E::getOptionGroupNameByColumnName($columnName);
           }else{
-            $entityGroup = $fieldInfo['group_name'];
+            $entityGroup = $fieldInfo['group_name'] ?? NULL;
           }
         return $entityGroup;
     }
@@ -2041,18 +2035,14 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     //common from clause for summary and detailed report based upon fields
     public function getCommonFromClause(&$from) {
 
-        $fieldsForFromClauses = array_merge($this->_columns,$this->_orderByFields,$this->_filters);
+        $fieldsForFromClauses = array_merge($this->_columns,$this->_orderByFieldsFrom,$this->_filters);
 
          // Add columns joins (if needed)
         foreach($fieldsForFromClauses as $fieldName => $nodata) {
             $fieldInfo   = $this->getFieldInfo($fieldName);
             $entityName  = $this->getEntityTableFromField($fieldName);
             $actualTable = $fieldInfo['table_alias'] ?? $entityName;
-            $groupName   = $fieldInfo['group_name'] ?? NULL;
-            echo "<pre>$fieldName:";print_r($fieldInfo);echo '</pre>';
-            echo "<pre>$fieldName.entityName:";print_r($entityName);echo '</pre>';
-            echo "<pre>$fieldName.actualTable:";print_r($actualTable);echo '</pre>';
-            // echo "<pre>$fieldName.groupName:";print_r($groupName);echo '</pre>';
+            $groupName = $this->getGroupNameField($fieldName);
 
             $alreadyIncluded = false;
             // option value always need a join
@@ -2109,7 +2099,6 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
             // Adding pre-required joins
             if ($fieldInfo['entity'] == "financial_account") {
 
-                echo "<pre>$fieldName: adding financial_trxn joins</pre>";
                 
                 $prerequisiteTable = "financial_trxn";
 
@@ -2129,8 +2118,6 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
 
             //if(!in_array($trialValue,$this->_fromEntity) || (isset($fieldInfo['select_name']) && $fieldInfo['select_name'] === 'option_value')) {
             if(!$alreadyIncluded) {
-
-                echo "<pre>from for $fieldName</pre>";
 
                 //option value
                 if (isset($fieldInfo['select_name']) && $fieldInfo['select_name'] === 'option_value' ) {
@@ -2161,18 +2148,14 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                     $entityName = $actualTable; // so that we don;t include twice, but still include others with a different alias
                 }
                 $this->_fromEntity[] = ($groupName !== NULL)? $groupName : $entityName;
-                //echo '<pre>';print_r($this->_fromEntity);echo '</pre>';
-                //echo "<pre>after field.from = :";print_r($from);echo '</pre>';
             }
         }
 
-        //echo "<pre>from = :";print_r($from);echo '</pre>';
-        //echo '<pre>';print_r();echo '</pre>';
         $from = array_unique($from);
     }
 
     //common from clause for summary and detailed report based upon fields
-    public function getCommonSelectClause($fieldName,&$select) {
+    public function getCommonSelectClause($fieldName) {
 
         $fieldInfo = $this->getFieldInfo($fieldName);
         // select clause from option value
@@ -2195,7 +2178,8 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
 
         }
         
-        $select[] = $selectStatement . " AS $fieldName";
+        return $selectStatement;
+        
     }
 
 }

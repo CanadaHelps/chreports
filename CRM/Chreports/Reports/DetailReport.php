@@ -100,7 +100,7 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
 
 
       // Calculated fields
-      // @todo move code below this to the functio
+      // @todo move code below this to the function
       $this->addCalculatedFieldstoSelect($select);
 
 
@@ -176,7 +176,8 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
           $this->_columnHeaders[$fieldName]['title'] = $this->getLastYearColumnTitle();;
         }else{
            //common select clause
-          $this->getCommonSelectClause($fieldName,$select);
+          $selectStatement = $this->getCommonSelectClause($fieldName);
+          $select[] = $selectStatement . " AS $fieldName";
           $this->_columnHeaders[$fieldName]['title'] = $columnInfo['title'];
         }
         //Adding columns to _columnHeaders for display purpose
@@ -357,11 +358,12 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
           //    $orderBys[] = $fieldName." ".$orderBy['order'];
           //  }else{
             $orderBys[] = $this->getEntityClauseFromField($fieldName);
+            $this->_orderByFieldsFrom[$orderBy['column']] = true;
             //$orderBys[] = $columnInfo['table_name'] . "." .  $columnInfo['name']." ".$orderBy['order'];
            //}
             // assign order by fields which has section display checked
             if($orderBy['section'])
-            $this->_orderByFields[$orderBy['column']] = $columnInfo['table_name'] . "." .  $columnInfo['name'];
+            $this->_orderByFields[$orderBy['column']] = $this->getCommonSelectClause($fieldName);
           }
         }
         if($this->getReportName() == 'top_donors')

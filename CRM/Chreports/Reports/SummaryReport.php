@@ -22,7 +22,8 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
 
           $columnInfo = $this->getFieldMapping($this->getEntityTableFromField($fieldName), $fieldName);
           //common select clause
-          $this->getCommonSelectClause($fieldName,$select);
+          $selectStatement = $this->getCommonSelectClause($fieldName);
+          $select[] = $selectStatement . " AS $fieldName";
           //Adding columns to _columnHeaders for display purpose
           $this->_columnHeaders[$fieldName]['title'] = $columnInfo['title'];
           $this->_columnHeaders[$fieldName]['type'] = $columnInfo['type'];
@@ -152,9 +153,11 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
             //end new code 
             //$columnInfo = $this->getFieldMapping($this->getEntity(), $fieldName);
             $orderBys[] = $this->getEntityClauseFromField($fieldName);
+            $this->_orderByFieldsFrom[$orderBy['column']] = true;
             // assign order by fields which has section display checked
-            if($orderBy['section'])
-            $this->_orderByFields[$orderBy['column']] = $this->getEntityClauseFromField($fieldName);
+            if($orderBy['section']){
+            $this->_orderByFields[$orderBy['column']] = $this->getCommonSelectClause($fieldName);
+            }
           }
         }
       }
