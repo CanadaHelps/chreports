@@ -109,7 +109,6 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     // TODO: why do we have both getReportingFilters and getFilters
     private function getReportingFilters(): array {
         $filterValues = [];
-
         if ($this->_settings['use_default_filters'] == TRUE) {
             $filterValues = array_fill_keys($this->_defaultFilters, []);
         }
@@ -457,6 +456,15 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         return false;
     }
 
+    //check if report is repeat contribution report
+    public function isRepeatContributionReport(): bool {
+        if($this->_settings['name'] == 'repeat_contributions_detailed' && $this->_settings['entity'] == 'contact')
+        {
+            $this->setEntity($this->_settings['entity']);
+            return true; 
+        }
+        return false;
+    }
     //check if report is opportunity report
     public function isOpportunityReport(): bool {
         if($this->_settings['name'] == 'opportunity_details' && $this->_settings['entity'] == 'grant')
@@ -564,6 +572,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                 }
             }
         }
+       
         return $filterParams;
     }
 
@@ -924,7 +933,6 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
        
         // stores field configuration so we can use it later on
         // $this->setFieldsMapping($var);
-         //echo '<pre>';print_r($var);echo '</pre>';
         // Fields
         $this->filteringReportFields($var);
         
@@ -1480,7 +1488,6 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     private function filteringReportFilterOptions(&$var) {
         foreach ($this->getReportingFilters() as $fieldName => $fieldInfo) {
             $fieldInfo = array_merge( $fieldInfo, $this->getFieldInfo($fieldName) );
-
             // field not found
             if ( isset($fieldInfo['error']) ) {
                 continue;
@@ -1832,26 +1839,33 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
             if ($fieldName == 'financial_type') {
                 $entityName = 'financial_type';
             }
-            else if($fieldName == 'sort_name' || $fieldName == 'first_name' || $fieldName == 'last_name' || $fieldName == 'organization_name'|| $fieldName == 'exposed_id')
-            {
-               $entityName = 'contact';
-            }
-            else if($fieldName == 'phone' || $fieldName == 'email')
-            {
-               $entityName = $fieldName;
-            }
-            else if($fieldName == 'street_address' || $fieldName == 'city' || $fieldName == 'postal_code' || $fieldName == 'state_province_id' || $fieldName == 'country_id')
-            {
-               $entityName = 'address';
-            }
-            else if($fieldName == 'source')
-            {
-               $entityName = 'contribution';
-            } 
-            else{
-                $entityName = $this->getEntity();
-            }
-            $columnInfo = $this->getFieldMapping( $entityName, $fieldName);
+            // else if($fieldName == 'sort_name' || $fieldName == 'first_name' || $fieldName == 'last_name' || $fieldName == 'organization_name'|| $fieldName == 'exposed_id')
+            // {
+            //    $entityName = 'contact';
+            // }
+            // else if($fieldName == 'phone' || $fieldName == 'email')
+            // {
+            //    $entityName = $fieldName;
+            // }
+            // else if($fieldName == 'street_address' || $fieldName == 'city' || $fieldName == 'postal_code' || $fieldName == 'state_province_id' || $fieldName == 'country_id')
+            // {
+            //    $entityName = 'address';
+            // }
+            // else if($fieldName == 'source')
+            // {
+            //    $entityName = 'contribution';
+            // } 
+            // else{
+            //     $entityName = $this->getEntity();
+            // }
+
+
+            //$columnInfo = $this->getFieldMapping( $entityName, $fieldName);
+
+            $fieldInfo = $this->getFieldInfo($fieldName);
+           $columnInfo = $this->getFieldMapping($this->getEntityTableFromField($fieldName), $fieldName);
+
+
             if(($this->isRecurringContributionReport()) && ($fieldName == 'total_amount' || $fieldName == 'last_month_amount' || $fieldName == 'completed_contributions' || $fieldName == 'start_date'))
            {
             $sortByAlias = ($columnInfo['custom_alias']) ? $columnInfo['custom_alias'] : $fieldName;
@@ -1866,7 +1880,36 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
            {
             $selectStatement = ($columnInfo['select_clause_alias'] && $columnInfo['custom_alias']) ? $columnInfo['select_clause_alias'] : $columnInfo['name'];
            }else{
-            $selectStatement = ($columnInfo['select_clause_alias'] && $columnInfo['custom_alias']) ? $columnInfo['select_clause_alias'] : $columnInfo['table_name'] ."." . $columnInfo['name'];
+           // $selectStatement = ($columnInfo['select_clause_alias'] && $columnInfo['custom_alias']) ? $columnInfo['select_clause_alias'] : $columnInfo['table_name'] ."." . $columnInfo['name'];
+
+
+            //sunday refactoring strnatcasecmp
+            if(isset($fieldInfo['select_name']) && $fieldInfo['select_name'] === 'option_value' )
+            {
+            if(isset($fieldInfo['custom'])){
+                $customTablename = EU::getTableNameByName($fieldInfo['group_name']);
+                $selectOption = $customTablename.'_'.$fieldName.'_value.label';
+            }else if(isset($fieldInfo['table_alias'])){ //sunday code refactoring start
+                $selectOption = $this->getEntityTable($fieldInfo['table_alias']).'_'.$fieldName.'_value.label';
+            }else{//sunday code refactoring start
+                $selectOption = $this->getEntityTable($fieldInfo['entity']).'_'.$fieldName.'_value.label';
+            }
+            $selectStatement = $selectOption;
+            }else if(isset($fieldInfo['select_name'])) //select clause from table
+            {
+            
+            $selectStatement = $this->getEntityTableFromField($fieldName,true). "." . $fieldInfo['select_name'];
+            }else{ //normal clause
+
+            //$fieldValue = (isset($fieldInfo['field_name']))? $fieldInfo['field_name']: $fieldName;
+            $selectStatement =  $this->getEntityClauseFromField($fieldName);
+            }
+
+            //sunday refactoring ends
+
+
+
+
            }
            if(($this->isRecurringContributionReport()) && ($fieldName == 'total_amount' || $fieldName == 'last_month_amount' || $fieldName == 'completed_contributions' || $fieldName == 'start_date'))
            {
@@ -1930,6 +1973,18 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         }
         foreach ($rows as $rowNum => $row) {
             //CRM-2063 - Use "Unassigned" as value in summary/Detailed  reports for NULL values
+            //sunday code refactoring
+            $reportType = $this->getReportType();
+            if($reportType == 'detailed'){
+                if (!empty($this->_params['order_bys']) && is_array($this->_params['order_bys'])) 
+                {
+                }
+            }else if($reportType == 'summary')
+            {
+
+            }
+
+            //sunday code refactoring ends
             foreach($this->_columns as $key=>$value)
             {
                 if (array_key_exists($key, $row) )
@@ -1989,6 +2044,11 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
          $finalDisplay[] = $rollupTotalRow;
          $rows = $finalDisplay;
         }
+      }
+      public function repeatcontributionStatistics(array $rows, bool $showDetailed = false): array {
+        $statistics = [];
+
+        return $statistics;
       }
     
     public function alterRecurringStatistics(array $rows, bool $showDetailed = false): array {
@@ -2231,6 +2291,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
             {
                 unset($filters[$fk]);
             }
+            //$filters['civicrm_contribution']['contribution_status_id']['default'] = [1];
         }
         return $filters;
     }
@@ -2467,7 +2528,12 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
             $entityTableName = $this->getEntityTable($fieldInfo['entity']);
             if($select)
             {
-                $entityTableName = isset($fieldInfo['dependent_table_entity'])? $this->getEntityTable($fieldInfo['dependent_table_entity']): $this->getEntityTable($fieldInfo['entity']);
+                // if($fieldInfo['table_alias']) {
+                //     $entityTableName = $this->getEntityTable($fieldInfo['table_alias']);
+                // }else{
+                    $entityTableName = isset($fieldInfo['dependent_table_entity'])? $this->getEntityTable($fieldInfo['dependent_table_entity']): $this->getEntityTable($fieldInfo['entity']);
+                //}
+               
             }
             
           }

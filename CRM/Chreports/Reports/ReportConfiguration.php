@@ -112,10 +112,18 @@ class CRM_Chreports_Reports_ReportConfiguration {
      * @return array
      */
     public function getFieldInfo( $fieldName ): array {
-        if ($this->_mappings[$fieldName])
+        //echo $fieldName;echo '</br>';
+//echo '<pre>';print_r($this->_mappings);echo '</pre>';
+
+        if ($this->_mappings[$fieldName]){
             return $this->_mappings[$fieldName];
+        }else{
+            echo 'not found'.$fieldName;echo '</br>';
+        }
         return ["error" => "not found"];
+        
     }
+
     //get operator type values for filters 
     public function getOperatorType($fieldName) : string {
         $fieldInfo = $this->getFieldInfo($fieldName);
@@ -172,6 +180,7 @@ class CRM_Chreports_Reports_ReportConfiguration {
     }
     //generate filter options based upon values defined in mapping.json file
     public function getFilterOptions($fieldName) : array {
+     //  echo '<pre>'; echo $fieldName; echo '</pre>';
         $options = [];
         $fieldInfo = $this->getFieldInfo($fieldName);
 
@@ -190,14 +199,16 @@ class CRM_Chreports_Reports_ReportConfiguration {
            // option values being created from option values using option group 
             $groupName = $fieldInfo['group_name'];
             $options =   $this->getOptionsListForOptionGroup($fieldNameVal,$fieldTable,$groupName);
-        }else if(isset($fieldInfo['field_type']) && $fieldInfo['field_type'] === boolean){ 
+        }
+        else if(isset($fieldInfo['field_type']) && $fieldInfo['field_type'] === boolean){ 
             // option values for boolean fields
             $options =   [
               '' => ts('Any'),
               TRUE => ts('Yes'),
               FALSE => ts('No'),
             ];
-        }else if(isset($fieldInfo['select_option'])){
+        }
+        else if(isset($fieldInfo['select_option'])){
             // get option values for entity table 
             $fieldNameVal = $fieldInfo['select_option'];
          $options =   $this->getOptionsListForEntity($fieldNameVal,$fieldTable);

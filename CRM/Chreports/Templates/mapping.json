@@ -102,7 +102,7 @@
     "payment_instrument_id":{
         "title": "Payment Method",
         "entity": "financial_trxn",
-        "field_name": "id",
+        "field_name": "payment_instrument_id",
         "options": true,
         "group_name": "payment_instrument",
         "field_type": "int",
@@ -117,7 +117,8 @@
         "entity": "financial_trxn",
         "field_name": "trxn_date",
         "field_type": "Datetime",
-        "table_alias": "financial_trxn_report"
+        "table_alias": "financial_trxn_report",
+        "select_name": "trxn_date"
     },
      "card_type_id": {
         "title": "Credit Card Type",
@@ -135,13 +136,15 @@
         "title": "Trans #",
         "entity": "financial_trxn",
         "field_name": "trxn_id",
-        "table_alias": "financial_trxn_report"
+        "table_alias": "financial_trxn_report",
+        "select_name": "trxn_id"
     },
     "check_number":{
         "title": "Cheque #",
         "entity": "financial_trxn",
         "field_name": "check_number",
-        "table_alias": "financial_trxn_report"
+        "table_alias": "financial_trxn_report",
+        "select_name": "check_number"
     },
     "financial_trxn_currency":{
         "title": "Currency",
@@ -172,7 +175,8 @@
         "entity": "entity_financial_trxn",
         "field_name": "amount",
         "table_alias": "entity_financial_trxn_report",
-        "field_type": "money"
+        "field_type": "money",
+        "select_name":"amount"
     },
     "sort_name": {
         "title": "Donor Name",
@@ -621,7 +625,8 @@
         "entity": "contribution",
         "field_type": "Datetime",
         "default" : "previous.year",
-        "table_alias": "contribution_primaryset"
+        "table_alias": "contribution_primaryset",
+        "select_name":"receive_date"
     },
     "repeat_contri_second_date_range": {
         "title": "Second Date Range",
@@ -629,7 +634,8 @@
         "entity": "contribution",
         "field_type": "Datetime",
         "default" : "this.year",
-        "table_alias": "contribution_secondset"
+        "table_alias": "contribution_secondset",
+        "select_name":"receive_date"
     },
     "range_amount_one": {
         "title": "Range One Amount",
@@ -699,16 +705,18 @@
         "table_alias": "financial_account_credit",
         "options": true,
         "field_type": "string",
-        "select_option": ["id","name"]
+        "select_option": ["id","name"],
+        "select_name":"name"
     },
-    "bebit_name": {
+    "debit_name": {
         "title": "GL Account Name - Debit",
         "field_name": "name",
         "entity": "financial_account",
         "table_alias": "financial_account_debit",
         "options": true,
         "field_type": "string",
-        "select_option": ["id","name"]
+        "select_option": ["id","name"],
+        "select_name":"name"
     },
     "debit_accounting_code": {
         "title": "GL Account Code - Debit",
@@ -717,7 +725,8 @@
         "table_alias": "financial_account_debit",
         "options": true,
         "field_type": "int"    ,
-        "select_option": ["accounting_code","accounting_code"]
+        "select_option": ["accounting_code","accounting_code"],
+        "select_name":"accounting_code"
     }, 
     "credit_accounting_code": {
         "title": "GL Account Code - Credit",
@@ -726,7 +735,8 @@
         "table_alias": "financial_account_credit",
         "options": true,
         "field_type": "int"    ,
-        "select_option": ["accounting_code","accounting_code"]
+        "select_option": ["accounting_code","accounting_code"],
+        "select_name":"accounting_code"
     }, 
     "debit_contact_id": {
         "title": "GL Account Owner - Debit",
@@ -735,16 +745,18 @@
         "table_alias": "contact_debit",
         "options": true,
         "field_type": "int"    ,
-        "select_option": ["id","organization_name"]
+        "select_option": ["id","organization_name"],
+        "select_name":"organization_name"
     }, 
     "credit_contact_id": {
-        "title": "GL Account Code - Credit",
+        "title": "GL Account Owner - Credit",
         "field_name": "organization_name",
         "entity": "contact",
         "table_alias": "contact_credit",
         "options": true,
         "field_type": "int"    ,
-        "select_option": ["id","organization_name"]
+        "select_option": ["id","organization_name"],
+        "select_name":"organization_name"
     }, 
     "contribution_source": {
         "title": "Source",
