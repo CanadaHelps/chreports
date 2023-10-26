@@ -25,6 +25,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     protected $_orderBy = NULL;
     protected $_orderByFields = [];
     protected $_orderByFieldsFrom = [];
+    protected $_orderByCalculatedSection = [];
 
     protected $_where = NULL;
     protected $_having = NULL;
@@ -1994,7 +1995,11 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         $fieldInfo = $this->getFieldInfo($fieldName);
         $entityTable = $fieldInfo['table_alias'] ?? $this->getEntityTableFromField($fieldName);
         $entityField = $this->getEntityField($fieldName);
-        return $entityTable.'.'.$entityField;
+        //don't include entity table for calculated fields as they don't belong to any entity
+        $entityClauseStatement = (isset($fieldInfo['calculated_field']) && $fieldInfo['calculated_field'] === true) ? 
+            $entityField : $entityTable.'.'.$entityField ;
+           
+        return $entityClauseStatement;
     }
     //get entity field name using fieldName 
     public function getEntityField($fieldName) : string {
@@ -2070,6 +2075,9 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                         AND ".$this->getEntityTable('financial_item').".entity_id = ".$this->getEntityTable('line_item').".id) ";
 
                     $from[] = $this->getSQLJoinForField('financial_account_id', $this->getEntityTable('financial_account'), $this->getEntityTable('financial_item'));
+
+                    //$this->_fromEntity[] = $this->getEntityTable('financial_item');
+                    $this->_fromEntity[] = $this->getEntityTable('financial_account');
                     $alreadyIncluded = true;
                     break;
 
@@ -2142,6 +2150,11 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                 } else if($fieldInfo['join_entity'] === 'contact'){ 
                     $from[] = $this->getSQLJoinForField($fieldInfo['join_field_name'], $entityName, $this->getEntityTable($fieldInfo['join_entity']),'contact_id');
                 
+                // contribution and other entity fields
+                } else if($fieldInfo['join_entity'] === 'address'){ 
+                    $from[] = $this->getSQLJoinForField($fieldInfo['join_field_name'], $entityName, $this->getEntityTable($fieldInfo['join_entity']),'id');
+                    
+                    $from[] = $this->getSQLJoinForField('contact_id', $this->getEntityTable('contact'), $this->getEntityTable($fieldInfo['join_entity']),'id');
                 // contribution and other entity fields
                 } else {
                     $from[] = "LEFT JOIN $entityName as $actualTable ON $actualTable." . $this->getEntityField($fieldName) . " = " . $this->getEntityTable($fieldInfo['join_entity']) . "." . $fieldInfo['join_field_name'];

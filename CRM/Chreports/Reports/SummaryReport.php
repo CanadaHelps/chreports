@@ -34,20 +34,6 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
       // @todo move code below here
       $this->addCalculatedFieldstoSelect($select);
 
-       //fiscle year report
-       if($this->isFiscalQuarterReport()){
-        if($this->getReportType() == 'fiscal')
-        {
-          $select[] = "MONTH(".$this->getEntityTable().".`receive_date`) AS monthIndex";
-          $this->_columnHeaders['monthIndex']['title'] = '';
-
-          $select[] = "MONTHNAME(".$this->getEntityTable().".`receive_date`) AS monthname";
-          $this->_columnHeaders['monthname']['title'] = '';
-        }else{
-          $select[] = "QUARTER(".$this->getEntityTable().".`receive_date`) AS quartername";
-          $this->_columnHeaders['quartername']['title'] = '';
-        }
-      }
 
       // Add default fields such as total, sum and currency
       $select[] = "COUNT(".$this->getEntityTable().".id) AS count";
@@ -59,12 +45,9 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
       $this->_columnHeaders['total_amount']['title'] = 'Total Amount';
       $this->_columnHeaders['total_amount']['type'] = CRM_Utils_Type::T_MONEY;
       
-      //don't include currency column for Monthly / Yerly report
-      if (!$this->isMonthlyYearlyReport()){
-        $select[] = "GROUP_CONCAT(DISTINCT ".$this->getEntityTable().".currency) AS currency";
-        $this->_columnHeaders['currency']['title'] = 'Currency';
-        $this->_columnHeaders['currency']['type'] = CRM_Utils_Type::T_STRING;
-      }
+      $select[] = "GROUP_CONCAT(DISTINCT ".$this->getEntityTable().".currency) AS currency";
+      $this->_columnHeaders['currency']['title'] = 'Currency';
+      $this->_columnHeaders['currency']['type'] = CRM_Utils_Type::T_STRING;
 
       //Monthly / Yerly report select clause
       if($this->isMonthlyYearlyReport()){
@@ -75,6 +58,21 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
         }
         $select[] = "YEAR(".$this->getEntityTable().".`receive_date`) AS year";
         $this->_columnHeaders['year']['title'] = 'Year Name';
+      }
+
+      //fiscle year report
+      if($this->isFiscalQuarterReport()){
+        if($this->getReportType() == 'fiscal')
+        {
+          $select[] = "MONTH(".$this->getEntityTable().".`receive_date`) AS monthIndex";
+          $this->_columnHeaders['monthIndex']['title'] = '';
+
+          $select[] = "MONTHNAME(".$this->getEntityTable().".`receive_date`) AS monthname";
+          $this->_columnHeaders['monthname']['title'] = '';
+        }else{
+          $select[] = "QUARTER(".$this->getEntityTable().".`receive_date`) AS quartername";
+          $this->_columnHeaders['quartername']['title'] = '';
+        }
       }
 
       // Combine everything
@@ -152,7 +150,7 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
             //$groupBy[] =  $this->getEntityTable($this->getEntityTableFromField($fieldName)). "." . $fieldValue;
             //end new code 
             //$columnInfo = $this->getFieldMapping($this->getEntity(), $fieldName);
-            $orderBys[] = $this->getEntityClauseFromField($fieldName);
+            $orderBys[] = $this->getEntityClauseFromField($fieldName)." ".$orderBy['order'];
             $this->_orderByFieldsFrom[$orderBy['column']] = true;
             // assign order by fields which has section display checked
             if($orderBy['section']){

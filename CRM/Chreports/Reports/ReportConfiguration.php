@@ -125,7 +125,7 @@ class CRM_Chreports_Reports_ReportConfiguration {
         $operator = $fieldInfo['options'];
         $operatorType = '';
         switch (true) {
-            case ($type === "Boolean"):
+            case ($type === "Boolean" || $fieldName==='yid'):
                 $operatorType = CRM_Report_Form::OP_SELECT;
                 break;
             case ($type === "Datetime"):

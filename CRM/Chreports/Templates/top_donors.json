@@ -27,7 +27,7 @@
         "city": {},
         "postal_code": {},
         "postal_code_suffix": {},
-        "country_id": {},
+        "country": {},
         "state_province_id": {},
         "county_id": {},
         "card_type_id": {},

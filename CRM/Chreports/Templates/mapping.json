@@ -375,64 +375,84 @@
         "title": "Street Address",
         "field_name": "street_address",
         "entity": "address",
-        "field_type": "string"
+        "field_type": "string",
+        "join_field_name":"id",
+        "join_entity":"contact"
     },
     "street_number":{
         "title": "Street Number",
         "field_name": "street_number",
         "entity": "address",
-        "field_type": "string"
+        "field_type": "string",
+        "join_field_name":"id",
+        "join_entity":"contact"
     },
     "street_name":{
         "title": "Street Name",
         "field_name": "street_name",
         "entity": "address",
-        "field_type": "string"
+        "field_type": "string",
+        "join_field_name":"id",
+        "join_entity":"contact"
     },
     "street_unit":{
         "title": "Street Unit",
         "field_name": "street_unit",
         "entity": "address",
-        "field_type": "string"
+        "field_type": "string",
+        "join_field_name":"id",
+        "join_entity":"contact"
     },
     "supplemental_address_1":{
         "title": "Supplementary Address Field 1",
         "field_name": "supplemental_address_1",
         "entity": "address",
-        "field_type": "string"
+        "field_type": "string",
+        "join_field_name":"id",
+        "join_entity":"contact"
     },
     "supplemental_address_2":{
         "title": "Supplementary Address Field 2",
         "field_name": "supplemental_address_2",
         "entity": "address",
-        "field_type": "string"
+        "field_type": "string",
+        "join_field_name":"id",
+        "join_entity":"contact"
     },
     "supplemental_address_3":{
         "title": "Supplementary Address Field 3",
         "field_name": "supplemental_address_3",
         "entity": "address",
-        "field_type": "string"
+        "field_type": "string",
+        "join_field_name":"id",
+        "join_entity":"contact"
     },
     "city": {
         "title": "City",
         "field_name": "city",
         "entity": "address",
-        "field_type": "string"
+        "field_type": "string",
+        "join_field_name":"id",
+        "join_entity":"contact"
     },
     "postal_code": {
         "title": "Postal Code",
         "field_name": "postal_code",
         "entity": "address",
-        "field_type": "string"
+        "field_type": "string",
+        "join_field_name":"id",
+        "join_entity":"contact"
     },
     "country": {
         "title": "Country",
-        "field_name": "country_id",
-        "entity": "address",
+        "field_name": "id",
+        "entity": "country",
         "field_type": "int",
         "options": true,
         "select_option": ["id","name"],
-        "dependent_table_entity":"country"
+        "join_field_name":"country_id",
+        "join_entity":"address",
+        "select_name":"name"
     },
     "province": {
         "title": "Province",
@@ -445,12 +465,14 @@
     },
     "county": {
         "title": "County",
-        "field_name": "county_id",
-        "entity": "address",
+        "field_name": "id",
+        "entity": "county",
         "field_type": "int",
         "options": true,
         "select_option": ["id","name"],
-        "dependent_table_entity":"county"
+        "join_field_name":"county_id",
+        "join_entity":"address",
+        "select_name":"name"
     },
     "grant_type_id": {
         "title": "Opportunity Type",
@@ -557,7 +579,9 @@
         "custom": true,
         "group_name": "Summary_Fields",
         "field_type": "money",
-        "custom_fieldName": "Total_Lifetime_Contributions"
+        "custom_fieldName": "Total_Lifetime_Contributions",
+        "join_field_name":"id",
+        "join_entity":"contact"
     },
     "Opportunity_Owner": {
         "title": "Opportunity Owner",
@@ -608,12 +632,14 @@
     "range_one_stat": {
         "title": "Range One Stat",
         "field_name": "total_amount",
-        "entity": "contribution"
+        "calculated_field": true,
+        "field_type": "string"
     },
     "range_two_stat": {
         "title": "Range Two Stat",
         "field_name": "total_amount",
-        "entity": "contribution"
+        "calculated_field": true,
+        "field_type": "string"
     },
     "repeat_contri_initial_date_range": {
         "title": "Initial Date Range",
@@ -652,17 +678,20 @@
     "last_four_year_total_amount": {
         "title": "Last 4rth Year Total",
         "field_name": "last_four_year_total_amount",
-        "field_type": "money"
+        "field_type": "money",
+        "calculated_field": true
     },
     "last_three_year_total_amount": {
         "title": "Last 3 Years total",
         "field_name": "last_three_year_total_amount",
-        "field_type": "money"
+        "field_type": "money",
+        "calculated_field": true
     },
     "last_two_year_total_amount": {
         "title": "Last 2 Years total",
         "field_name": "last_two_year_total_amount",
-        "field_type": "money"
+        "field_type": "money",
+        "calculated_field": true
     },
     "on_hold": {
         "title": "Email on hold",
@@ -681,10 +710,9 @@
     },
     "total_range": {
         "title": "Show no. of Top Donors",
-        "field_name": "yid",
+        "field_name": "total_range",
         "field_type": "int",
         "options": true,
-        "_comment": "Top donors report , reporting fields",
         "default_op": "eq"
     },
     "membership_id": {
@@ -828,12 +856,14 @@
     "last_year_total_amount": {
         "title": "Last Year Total",
         "field_name": "last_year_total_amount",
-        "field_type": "money"
+        "field_type": "money",
+        "calculated_field": true
     },
      "life_time_total": {
         "title": "Lifetime Total",
         "field_name": "life_time_total",
-        "field_type": "money"
+        "field_type": "money",
+        "calculated_field": true
     },
     "total_sum": {
         "title": "Contribution Aggregate",
@@ -889,5 +919,25 @@
         "title": "Opportunity ID",
         "field_name": "id",
         "entity": "grant"
+    },
+    "recurring_contribution_total_amount":{
+        "title": "This Month Amount",
+        "field_type": "money",
+        "calculated_field": true
+    },
+    "completed_contributions":{
+        "title": "Completed Contributions",
+        "field_type": "int",
+        "calculated_field": true
+    },
+    "last_month_amount":{
+        "title": "Last Month Amount",
+        "field_type": "money",
+        "calculated_field": true
+    },
+    "recurring_contribution_start_date":{
+        "title": "Start Date/First Contribution",
+        "field_type": "Datetime",
+        "calculated_field": true
     }
 }

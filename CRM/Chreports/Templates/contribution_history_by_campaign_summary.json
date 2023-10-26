@@ -3,6 +3,16 @@
     "title": "Contribution History By Camapaign (Summary)",
     "type": "summary",
     "entity": "contribution",
+    "preset_filter_values": {
+        "receive_date": {
+            "relative": "this.year"
+        },
+        "contribution_status_id": {
+            "in": [
+                "1"
+            ]
+        }
+    },
     "fields":{
         "contribution_source": {},
         "campaign_id": {},
