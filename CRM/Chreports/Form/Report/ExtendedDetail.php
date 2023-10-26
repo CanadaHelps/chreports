@@ -23,11 +23,16 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
       $statistics = [];
     return $statistics;
     }
-    if($this->_reportInstance->isGLAccountandPaymentMethodReconciliationReport())
-    return;
     $showDetailedStat = $this->_reportInstance->isOpportunityReport() ? false:true;
     if(!$this->_reportInstance->isRecurringContributionReport())
     $statistics = $this->_reportInstance->alterStatistics($rows,$showDetailedStat);
+
+    if($this->_reportInstance->isGLAccountandPaymentMethodReconciliationReport())
+    $statistics = $this->_reportInstance->alterStatistics($rows,false);
+
+    if($this->_reportInstance->isRepeatContributionReport())
+    //$statistics = $this->_reportInstance->alterRepeatContributionStatistics($rows,false);
+    return;
 
     if($this->_reportInstance->isRecurringContributionReport())
     $statistics = $this->_reportInstance->alterRecurringStatistics($rows,$showDetailedStat);
@@ -160,6 +165,10 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
         OR (".$this->generateFilterClause($this->_reportInstance->getFilters()['repeat_contri_second_date_range'], 'repeat_contri_second_date_range')."))";
       }
       foreach ($this->_reportInstance->getFilters() as $fieldName => $fieldInfo) {
+        // echo '<pre>';print_r($fieldName);echo '</pre>';
+        // echo '<pre>';print_r($fieldInfo);echo '</pre>';
+        // echo '<pre>';print_r($this->_reportInstance->getFieldInfo($fieldName));echo '</pre>';
+        //getFieldInfo
         switch ($fieldName) {
           case 'total_range':
           case 'yid': // fund_13

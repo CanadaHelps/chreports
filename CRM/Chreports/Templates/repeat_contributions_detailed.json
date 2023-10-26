@@ -42,8 +42,7 @@
         "phone",
         "organization_name",
         "email",
-        "range_one_set",
-        "range_two_set",
+       
 
 
         "address_street_address",
@@ -59,8 +58,8 @@
         "largest_contribution",
         "count_of_contributions"
         ,
-        "range_one_set",
-        "range_two_set",
+        "range_amount_one",
+        "range_amount_two",
         "repeat_contri_initial_date_range",
         "repeat_contri_second_date_range"
     ],

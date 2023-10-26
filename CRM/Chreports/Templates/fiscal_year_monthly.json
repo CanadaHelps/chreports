@@ -4,9 +4,7 @@
     "type": "fiscal",
     "entity": "contribution",
     "fields":{
-        "receive_date_start": {"default" : true},
-        "total_amount": {},
-        "no_of_contributions": {}
+        "receive_date_start": {"default" : true}
     },
     "use_default_filters" : true,
     "groupByDisplay" : false

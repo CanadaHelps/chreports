@@ -15,7 +15,7 @@
         "sort_name": {"selected" : true},
         "exposed_id": {"selected" : true},
         "receive_date": {"selected" : true},
-        "total_amount": {"default" : true}
+        "total_amount": {"selected" : true}
         
     },
     "use_default_filters" : true,

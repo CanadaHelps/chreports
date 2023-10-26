@@ -112,14 +112,10 @@ class CRM_Chreports_Reports_ReportConfiguration {
      * @return array
      */
     public function getFieldInfo( $fieldName ): array {
-        //echo $fieldName;echo '</br>';
-//echo '<pre>';print_r($this->_mappings);echo '</pre>';
-
         if ($this->_mappings[$fieldName]){
             return $this->_mappings[$fieldName];
-        }else{
-            echo 'not found'.$fieldName;echo '</br>';
         }
+            
         return ["error" => "not found"];
         
     }
@@ -142,6 +138,9 @@ class CRM_Chreports_Reports_ReportConfiguration {
                 break;
             case ($operator === true):
                 $operatorType = CRM_Report_Form::OP_MULTISELECT;
+                break;
+            case ($type === "Int"):
+                $operatorType = CRM_Report_Form::OP_INT;
                 break;
         }
         return $operatorType;
@@ -188,32 +187,35 @@ class CRM_Chreports_Reports_ReportConfiguration {
         $fieldTable = $this->getEntityTableFromField($fieldName,true);
        
         // option values being created for custom fields such as ch_fund
-        if(isset($fieldInfo['custom']) && $fieldInfo['custom'] === true ){
+        if(isset($fieldInfo['custom']) && $fieldInfo['custom'] === true && $fieldInfo['field_type'] !== boolean){
             
             $columnName = E::getColumnNameByName($fieldInfo['custom_fieldName']);
             $optionGroupName = E::getOptionGroupNameByColumnName($columnName);
             $customTablename = EU::getTableNameByName($fieldInfo['group_name']);
             $options =   $this->getOptionsListForOptionGroup($fieldName,$customTablename,$optionGroupName);
             
-        }else if(isset($fieldInfo['use_option_value']) && $fieldInfo['use_option_value'] === true){ 
+        } else if (isset($fieldInfo['use_option_value']) && $fieldInfo['use_option_value'] === true) { 
            // option values being created from option values using option group 
             $groupName = $fieldInfo['group_name'];
             $options =   $this->getOptionsListForOptionGroup($fieldNameVal,$fieldTable,$groupName);
-        }
-        else if(isset($fieldInfo['field_type']) && $fieldInfo['field_type'] === boolean){ 
-            // option values for boolean fields
+
+        // option values for boolean fields
+        } else if (isset($fieldInfo['field_type']) && $fieldInfo['field_type'] === boolean){ 
+            
             $options =   [
               '' => ts('Any'),
               TRUE => ts('Yes'),
               FALSE => ts('No'),
             ];
-        }
-        else if(isset($fieldInfo['select_option'])){
-            // get option values for entity table 
+
+        // get option values for entity table 
+        } else if (isset($fieldInfo['select_option']) ){
             $fieldNameVal = $fieldInfo['select_option'];
-         $options =   $this->getOptionsListForEntity($fieldNameVal,$fieldTable);
-        }else{
-            //get option values for fields which are not coming from db
+            $options = $this->getOptionsListForEntity($fieldNameVal,$fieldTable);
+            
+        //get option values for fields which are not coming from db
+        } else {
+            
             switch ($fieldName) {
                 case "on_hold":
                     $options = ['' => ts('Any')] + CRM_Core_PseudoConstant::emailOnHoldOptions();
