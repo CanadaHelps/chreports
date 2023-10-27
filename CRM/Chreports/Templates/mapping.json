@@ -89,7 +89,9 @@
         "field_name": "id",
         "options": true,
         "field_type": "int",
-        "select_option": ["id","name"]
+        "select_option": ["id","name"],
+        "join_field_name":"tag_id",
+        "join_entity":"entity_tag"
     },
     "gid":{
         "title": "Group",
@@ -115,13 +117,12 @@
         "entity": "financial_trxn",
         "field_name": "trxn_date",
         "field_type": "Datetime",
-        "table_alias": "financial_trxn_report"
+        "select_name": "trxn_date"
     },
      "card_type_id": {
         "title": "Credit Card Type",
         "entity": "financial_trxn",
         "field_name": "card_type_id",
-        "table_alias": "financial_trxn_report",
         "options": true,
         "group_name": "accept_creditcard",
         "field_type": "int",
@@ -133,19 +134,22 @@
         "title": "Trans #",
         "entity": "financial_trxn",
         "field_name": "trxn_id",
-        "table_alias": "financial_trxn_report"
+        "select_name": "trxn_id",
+        "join_entity": "entity_financial_trxn",
+        "join_field_name": "financial_trxn_id" 
     },
     "check_number":{
         "title": "Cheque #",
         "entity": "financial_trxn",
         "field_name": "check_number",
-        "table_alias": "financial_trxn_report"
+        "join_entity": "entity_financial_trxn",
+        "join_field_name": "financial_trxn_id" ,
+        "primary_join_field_name": "id"
     },
     "financial_trxn_currency":{
         "title": "Currency",
         "entity": "financial_trxn",
         "field_name": "currency",
-        "table_alias": "financial_trxn_report",
         "options": true,
         "group_name": "currencies_enabled",
         "field_type": "string",
@@ -157,7 +161,6 @@
         "title": "Financial Transaction Status",
         "entity": "financial_trxn",
         "field_name": "status_id",
-        "table_alias": "financial_trxn_report",
         "options": true,
         "group_name": "contribution_status",
         "field_type": "int",
@@ -169,8 +172,8 @@
         "title": "Amount",
         "entity": "entity_financial_trxn",
         "field_name": "amount",
-        "table_alias": "entity_financial_trxn_report",
-        "field_type": "money"
+        "field_type": "money",
+        "select_name":"amount"
     },
     "sort_name": {
         "title": "Donor Name",
@@ -500,36 +503,31 @@
         "title": "Opportunity Amount",
         "field_name": "amount_total",
         "entity": "grant",
-        "field_type": "money",
-        "operatorType" : "CRM_Report_Form::OP_INT"
+        "field_type": "money"
     },
     "amount_granted":{
         "title": "Amount Received",
         "field_name": "amount_granted",
         "entity": "grant",
-        "field_type": "money",
-        "operatorType" : "CRM_Report_Form::OP_INT"
+        "field_type": "money"
     },
     "application_received_date":{
         "title": "Application Deadline",
         "field_name": "application_received_date",
         "entity": "grant",
-        "field_type": "Datetime",
-        "operatorType" : "CRM_Report_Form::OP_DATE"
+        "field_type": "Datetime"
     },
     "money_transfer_date":{
         "title": "Application Deadline",
         "field_name": "money_transfer_date",
         "entity": "grant",
-        "field_type": "Datetime",
-        "operatorType" : "CRM_Report_Form::OP_DATE"
+        "field_type": "Datetime"
     },
     "grant_due_date":{
         "title": "Report Due",
         "field_name": "grant_due_date",
         "entity": "grant",
-        "field_type": "Datetime",
-        "operatorType" : "CRM_Report_Form::OP_DATE"
+        "field_type": "Datetime"
     },
     "decision_date":{
         "title": "Decision Date",
@@ -632,14 +630,16 @@
     "range_one_stat": {
         "title": "Range One Stat",
         "field_name": "total_amount",
+        "table_alias": "contribution_primaryset",
         "calculated_field": true,
-        "field_type": "string"
+        "field_type": "int"
     },
     "range_two_stat": {
         "title": "Range Two Stat",
         "field_name": "total_amount",
+        "table_alias": "contribution_secondset",
         "calculated_field": true,
-        "field_type": "string"
+        "field_type": "int"
     },
     "repeat_contri_initial_date_range": {
         "title": "Initial Date Range",
@@ -647,7 +647,8 @@
         "entity": "contribution",
         "field_type": "Datetime",
         "default" : "previous.year",
-        "table_alias": "contribution_primaryset"
+        "table_alias": "contribution_primaryset",
+        "select_name":"receive_date"
     },
     "repeat_contri_second_date_range": {
         "title": "Second Date Range",
@@ -655,19 +656,22 @@
         "entity": "contribution",
         "field_type": "Datetime",
         "default" : "this.year",
-        "table_alias": "contribution_secondset"
+        "table_alias": "contribution_secondset",
+        "select_name":"receive_date"
     },
     "range_amount_one": {
         "title": "Range One Amount",
         "field_name": "total_amount",
         "entity": "contribution",
-        "field_type": "int"
+        "table_alias": "contribution_primaryset",
+        "field_type": "money"
     },
     "range_amount_two": {
-        "title": "Range One Amount",
+        "title": "Range Two Amount",
         "field_name": "total_amount",
         "entity": "contribution",
-        "field_type": "int"
+        "table_alias": "contribution_secondset",
+        "field_type": "money"
     },
     "receive_date_start": {
         "title": "Month",
@@ -729,7 +733,8 @@
         "field_type": "string",
         "select_option": ["id","name"],
         "join_entity": "financial_trxn",
-        "join_field_name": "from_financial_account_id" 
+        "join_field_name": "from_financial_account_id" ,
+        "primary_join_field_name": "id"
     },
     "debit_name": {
         "title": "GL Account Name - Debit",
@@ -740,7 +745,8 @@
         "field_type": "string",
         "select_option": ["id","name"],
         "join_entity": "financial_trxn",
-        "join_field_name": "from_financial_account_id" 
+        "join_field_name": "to_financial_account_id" ,
+        "primary_join_field_name": "id"
     },
     "debit_accounting_code": {
         "title": "GL Account Code - Debit",
@@ -751,7 +757,8 @@
         "field_type": "int"    ,
         "select_option": ["accounting_code","accounting_code"],
         "join_entity": "financial_trxn",
-        "join_field_name": "to_financial_account_id" 
+        "join_field_name": "to_financial_account_id" ,
+        "primary_join_field_name": "id"
     }, 
     "credit_accounting_code": {
         "title": "GL Account Code - Credit",
@@ -762,7 +769,8 @@
         "field_type": "int"    ,
         "select_option": ["accounting_code","accounting_code"],
         "join_entity": "financial_trxn",
-        "join_field_name": "from_financial_account_id" 
+        "join_field_name": "from_financial_account_id" ,
+        "primary_join_field_name": "id"
     }, 
     "debit_contact_id": {
         "title": "GL Account Owner - Debit",
@@ -771,16 +779,22 @@
         "table_alias": "contact_debit",
         "options": true,
         "field_type": "int"    ,
-        "select_option": ["id","organization_name"]
+        "select_option": ["id","organization_name"],
+        "join_entity": "financial_account_debit",
+        "join_field_name": "contact_id" ,
+        "primary_join_field_name": "id"
     }, 
     "credit_contact_id": {
-        "title": "GL Account Code - Credit",
+        "title": "GL Account Owner - Credit",
         "field_name": "organization_name",
         "entity": "contact",
         "table_alias": "contact_credit",
         "options": true,
         "field_type": "int"    ,
-        "select_option": ["id","organization_name"]
+        "select_option": ["id","organization_name"],
+        "join_entity": "financial_account_credit",
+        "join_field_name": "contact_id" ,
+        "primary_join_field_name": "id"
     }, 
     "contribution_source": {
         "title": "Source",
@@ -844,7 +858,7 @@
         "select_name": "title",
         "select_option": ["id","title"],
         "field_name": "id",
-        "join_field_name":"id",
+        "join_field_name":"campaign_id",
         "join_entity":"contribution"
     },
     "amount": {
@@ -889,7 +903,11 @@
         "title": "GL Code",
         "entity": "financial_account",
         "field_name": "accounting_code",
-        "select_name": "accounting_code"
+        "select_name": "accounting_code",
+       
+        "join_entity": "financial_trxn",
+        "join_field_name": "from_financial_account_id" ,
+        "primary_join_field_name": "id"
     },
     "postal_code_suffix": {
         "title": "Post Code Suffix",

@@ -23,11 +23,16 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
       $statistics = [];
     return $statistics;
     }
-    if($this->_reportInstance->isGLAccountandPaymentMethodReconciliationReport())
-    return;
     $showDetailedStat = $this->_reportInstance->isOpportunityReport() ? false:true;
     if(!$this->_reportInstance->isRecurringContributionReport())
     $statistics = $this->_reportInstance->alterStatistics($rows,$showDetailedStat);
+
+    if($this->_reportInstance->isGLAccountandPaymentMethodReconciliationReport())
+    $statistics = $this->_reportInstance->alterStatistics($rows,false);
+
+    if($this->_reportInstance->isRepeatContributionReport())
+    //$statistics = $this->_reportInstance->alterRepeatContributionStatistics($rows,false);
+    return;
 
     if($this->_reportInstance->isRecurringContributionReport())
     $statistics = $this->_reportInstance->alterRecurringStatistics($rows,$showDetailedStat);
@@ -74,7 +79,7 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
     // }
    
     // setting out columns, filters, params,mapping from report object
-    //$this->_reportInstance->setFieldsMapping($var->getVar('_columns'));
+    $this->_reportInstance->setFieldsMapping($var->getVar('_columns'));
     $params = $var->getVar('_params');
     $this->_reportInstance->setFieldsMapping($var->getVar('_columns'));
     $this->_reportInstance->setFormParams($params);
@@ -151,14 +156,39 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
     // // This is done for the generateFilterClause() method to work
     $this->_params = $this->_reportInstance->_params;
 
+
+    $removeIndividualCluase = false;
     if(!empty($this->_reportInstance->getFilters())){
+      if (array_key_exists('repeat_contri_initial_date_range',$this->_reportInstance->getFilters()) && array_key_exists('repeat_contri_second_date_range',$this->_reportInstance->getFilters())){
+        $removeIndividualCluase = true;
+        $clauses[] = "((".$this->generateFilterClause($this->_reportInstance->getFilters()['repeat_contri_initial_date_range'], 'repeat_contri_initial_date_range').") 
+        OR (".$this->generateFilterClause($this->_reportInstance->getFilters()['repeat_contri_second_date_range'], 'repeat_contri_second_date_range')."))";
+      }
       foreach ($this->_reportInstance->getFilters() as $fieldName => $fieldInfo) {
+        
+        //getFieldInfo
+
+
+        // Calculated Fields already included in having
+        // if ( in_array($fieldInfo['dbAlias'], $this->_reportInstance->getHavingStatements()) ) {
+        //   continue;
+        // }
+        //To DO create Havinf function to include having condition
+
         switch ($fieldName) {
           case 'total_range':
           case 'yid': // fund_13
             break;
           case 'ch_fund': // fund_13
             $clauses[] = $this->generateFilterClause($fieldInfo, $fieldInfo['name']);
+            break;
+          case 'repeat_contri_initial_date_range': // fund_13
+            if(!$removeIndividualCluase)
+            $clauses[] = $this->generateFilterClause($fieldInfo, $fieldName);  
+            break;
+          case 'repeat_contri_second_date_range': // fund_13
+            if(!$removeIndividualCluase)
+            $clauses[] = $this->generateFilterClause($fieldInfo, $fieldName);   
             break;
           default:
             $clauses[] = $this->generateFilterClause($fieldInfo, $fieldName);

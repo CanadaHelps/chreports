@@ -4,7 +4,7 @@
     "type": "detailed",
     "entity": "contribution",
     "fields":{
-        "display_name":{},
+        "contact_name":{},
         "sort_name":{"selected" : true},
         "external_identifier":{},
         "contact_type":{},
@@ -24,6 +24,7 @@
         "contribution_source":{},
         "check_number":{},
         "payment_instrument_id":{},
+        "contribution_id":{},
        
         "trxn_id":{},
         
@@ -37,6 +38,8 @@
     "use_default_filters" : false,
     "filters":[
         "sort_name",
+        "contact_id",
+        "contact_type",
         "receive_date",
         "tagid",
         "gid",

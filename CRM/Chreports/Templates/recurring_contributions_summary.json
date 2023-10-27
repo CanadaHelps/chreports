@@ -12,18 +12,18 @@
         "phone":{ "selected" : true},
        
         "email":{},
-        "total_amount":{"default" : true},
+        "recurring_contribution_total_amount":{"default" : true},
         "contribution_source":{ "selected" : true},
         "completed_contributions":{ "selected" : true},
-        "start_date":{},
+        "recurring_contribution_start_date":{},
         "last_month_amount":{"default" : true},
 
 
         "street_address":{ "selected" : true},
         "city":{ "selected" : true},
         "postal_code":{},
-        "state_province_id":{ "selected" : true},
-        "country_id":{ "selected" : true}
+        "province":{ "selected" : true},
+        "country":{ "selected" : true}
     },
     "use_default_filters" : false,
     "filters":[

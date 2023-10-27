@@ -117,7 +117,9 @@ class CRM_Chreports_Reports_ReportConfiguration {
         }
             
         return ["error" => "not found"];
+        
     }
+
     //get operator type values for filters 
     public function getOperatorType($fieldName) : string {
         $fieldInfo = $this->getFieldInfo($fieldName);
@@ -131,11 +133,14 @@ class CRM_Chreports_Reports_ReportConfiguration {
             case ($type === "Datetime"):
                 $operatorType = CRM_Report_Form::OP_DATE;
                 break;
-            case ($type === "Datetime"):
-                $operatorType = CRM_Report_Form::OP_DATE;
+            case ($type === "Money"):
+                $operatorType = CRM_Report_Form::OP_INT;
                 break;
             case ($operator === true):
                 $operatorType = CRM_Report_Form::OP_MULTISELECT;
+                break;
+            case ($type === "Int"):
+                $operatorType = CRM_Report_Form::OP_INT;
                 break;
         }
         return $operatorType;
@@ -174,6 +179,7 @@ class CRM_Chreports_Reports_ReportConfiguration {
     }
     //generate filter options based upon values defined in mapping.json file
     public function getFilterOptions($fieldName) : array {
+     //  echo '<pre>'; echo $fieldName; echo '</pre>';
         $options = [];
         $fieldInfo = $this->getFieldInfo($fieldName);
 

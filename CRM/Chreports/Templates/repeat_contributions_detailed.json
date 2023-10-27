@@ -19,11 +19,11 @@
       
 
 
-        "address_street_address":{ "selected" : true},
-        "address_city":{ "selected" : true},
-        "address_state_province_id":{},
-        "address_postal_code":{ "selected" : true},
-        "address_country_id":{ "selected" : true},
+        "street_address":{ "preSelected" : true},
+        "city":{ "preSelected" : true},
+        "state_province_id":{},
+        "postal_code":{ "preSelected" : true},
+        "country_id":{ "preSelected" : true},
 
         "total_lifetime_contributions":{},
         "amount_of_last_contribution":{},
@@ -42,8 +42,7 @@
         "phone",
         "organization_name",
         "email",
-        "range_one_set",
-        "range_two_set",
+       
 
 
         "address_street_address",
@@ -59,8 +58,10 @@
         "largest_contribution",
         "count_of_contributions"
         ,
-        "range_one_set",
-        "range_two_set"
+        "range_one_stat",
+        "range_two_stat",
+        "repeat_contri_initial_date_range",
+        "repeat_contri_second_date_range"
     ],
     "groupByDisplay" : false
 }
