@@ -117,14 +117,12 @@
         "entity": "financial_trxn",
         "field_name": "trxn_date",
         "field_type": "Datetime",
-        "table_alias": "financial_trxn_report",
         "select_name": "trxn_date"
     },
      "card_type_id": {
         "title": "Credit Card Type",
         "entity": "financial_trxn",
         "field_name": "card_type_id",
-        "table_alias": "financial_trxn_report",
         "options": true,
         "group_name": "accept_creditcard",
         "field_type": "int",
@@ -136,14 +134,14 @@
         "title": "Trans #",
         "entity": "financial_trxn",
         "field_name": "trxn_id",
-        "table_alias": "financial_trxn_report",
-        "select_name": "trxn_id"
+        "select_name": "trxn_id",
+        "join_entity": "entity_financial_trxn",
+        "join_field_name": "financial_trxn_id" 
     },
     "check_number":{
         "title": "Cheque #",
         "entity": "financial_trxn",
         "field_name": "check_number",
-        "table_alias": "financial_trxn_report",
         "join_entity": "entity_financial_trxn",
         "join_field_name": "financial_trxn_id" ,
         "primary_join_field_name": "id"
@@ -152,7 +150,6 @@
         "title": "Currency",
         "entity": "financial_trxn",
         "field_name": "currency",
-        "table_alias": "financial_trxn_report",
         "options": true,
         "group_name": "currencies_enabled",
         "field_type": "string",
@@ -164,7 +161,6 @@
         "title": "Financial Transaction Status",
         "entity": "financial_trxn",
         "field_name": "status_id",
-        "table_alias": "financial_trxn_report",
         "options": true,
         "group_name": "contribution_status",
         "field_type": "int",
@@ -176,7 +172,6 @@
         "title": "Amount",
         "entity": "entity_financial_trxn",
         "field_name": "amount",
-        "table_alias": "entity_financial_trxn_report",
         "field_type": "money",
         "select_name":"amount"
     },
@@ -453,8 +448,8 @@
     },
     "country": {
         "title": "Country",
-        "field_name": "country_id",
-        "entity": "address",
+        "field_name": "id",
+        "entity": "country",
         "field_type": "int",
         "options": true,
         "select_option": ["id","name"],
@@ -473,8 +468,8 @@
     },
     "county": {
         "title": "County",
-        "field_name": "county_id",
-        "entity": "address",
+        "field_name": "id",
+        "entity": "county",
         "field_type": "int",
         "options": true,
         "select_option": ["id","name"],
@@ -508,36 +503,31 @@
         "title": "Opportunity Amount",
         "field_name": "amount_total",
         "entity": "grant",
-        "field_type": "money",
-        "operatorType" : "CRM_Report_Form::OP_INT"
+        "field_type": "money"
     },
     "amount_granted":{
         "title": "Amount Received",
         "field_name": "amount_granted",
         "entity": "grant",
-        "field_type": "money",
-        "operatorType" : "CRM_Report_Form::OP_INT"
+        "field_type": "money"
     },
     "application_received_date":{
         "title": "Application Deadline",
         "field_name": "application_received_date",
         "entity": "grant",
-        "field_type": "Datetime",
-        "operatorType" : "CRM_Report_Form::OP_DATE"
+        "field_type": "Datetime"
     },
     "money_transfer_date":{
         "title": "Application Deadline",
         "field_name": "money_transfer_date",
         "entity": "grant",
-        "field_type": "Datetime",
-        "operatorType" : "CRM_Report_Form::OP_DATE"
+        "field_type": "Datetime"
     },
     "grant_due_date":{
         "title": "Report Due",
         "field_name": "grant_due_date",
         "entity": "grant",
-        "field_type": "Datetime",
-        "operatorType" : "CRM_Report_Form::OP_DATE"
+        "field_type": "Datetime"
     },
     "decision_date":{
         "title": "Decision Date",
@@ -640,16 +630,16 @@
     "range_one_stat": {
         "title": "Range One Stat",
         "field_name": "total_amount",
-        "entity": "contribution",
+        "table_alias": "contribution_primaryset",
         "calculated_field": true,
-        "field_type": "string"
+        "field_type": "int"
     },
     "range_two_stat": {
         "title": "Range Two Stat",
         "field_name": "total_amount",
-        "entity": "contribution",
+        "table_alias": "contribution_secondset",
         "calculated_field": true,
-        "field_type": "string"
+        "field_type": "int"
     },
     "repeat_contri_initial_date_range": {
         "title": "Initial Date Range",
@@ -673,13 +663,15 @@
         "title": "Range One Amount",
         "field_name": "total_amount",
         "entity": "contribution",
-        "field_type": "int"
+        "table_alias": "contribution_primaryset",
+        "field_type": "money"
     },
     "range_amount_two": {
-        "title": "Range One Amount",
+        "title": "Range Two Amount",
         "field_name": "total_amount",
         "entity": "contribution",
-        "field_type": "int"
+        "table_alias": "contribution_secondset",
+        "field_type": "money"
     },
     "receive_date_start": {
         "title": "Month",
@@ -722,10 +714,9 @@
     },
     "total_range": {
         "title": "Show no. of Top Donors",
-        "field_name": "yid",
+        "field_name": "total_range",
         "field_type": "int",
         "options": true,
-        "_comment": "Top donors report , reporting fields",
         "default_op": "eq"
     },
     "membership_id": {
@@ -881,7 +872,6 @@
         "field_name": "last_year_total_amount",
         "field_type": "money",
         "calculated_field": true
-        
     },
      "life_time_total": {
         "title": "Lifetime Total",
@@ -913,7 +903,11 @@
         "title": "GL Code",
         "entity": "financial_account",
         "field_name": "accounting_code",
-        "select_name": "accounting_code"
+        "select_name": "accounting_code",
+       
+        "join_entity": "financial_trxn",
+        "join_field_name": "from_financial_account_id" ,
+        "primary_join_field_name": "id"
     },
     "postal_code_suffix": {
         "title": "Post Code Suffix",

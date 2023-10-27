@@ -165,10 +165,16 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
         OR (".$this->generateFilterClause($this->_reportInstance->getFilters()['repeat_contri_second_date_range'], 'repeat_contri_second_date_range')."))";
       }
       foreach ($this->_reportInstance->getFilters() as $fieldName => $fieldInfo) {
-        // echo '<pre>';print_r($fieldName);echo '</pre>';
-        // echo '<pre>';print_r($fieldInfo);echo '</pre>';
-        // echo '<pre>';print_r($this->_reportInstance->getFieldInfo($fieldName));echo '</pre>';
+        
         //getFieldInfo
+
+
+        // Calculated Fields already included in having
+        // if ( in_array($fieldInfo['dbAlias'], $this->_reportInstance->getHavingStatements()) ) {
+        //   continue;
+        // }
+        //To DO create Havinf function to include having condition
+
         switch ($fieldName) {
           case 'total_range':
           case 'yid': // fund_13

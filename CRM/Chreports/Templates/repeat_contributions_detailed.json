@@ -58,8 +58,8 @@
         "largest_contribution",
         "count_of_contributions"
         ,
-        "range_amount_one",
-        "range_amount_two",
+        "range_one_stat",
+        "range_two_stat",
         "repeat_contri_initial_date_range",
         "repeat_contri_second_date_range"
     ],

@@ -127,14 +127,14 @@ class CRM_Chreports_Reports_ReportConfiguration {
         $operator = $fieldInfo['options'];
         $operatorType = '';
         switch (true) {
-            case ($type === "Boolean"):
+            case ($type === "Boolean" || $fieldName==='yid'):
                 $operatorType = CRM_Report_Form::OP_SELECT;
                 break;
             case ($type === "Datetime"):
                 $operatorType = CRM_Report_Form::OP_DATE;
                 break;
-            case ($type === "Datetime"):
-                $operatorType = CRM_Report_Form::OP_DATE;
+            case ($type === "Money"):
+                $operatorType = CRM_Report_Form::OP_INT;
                 break;
             case ($operator === true):
                 $operatorType = CRM_Report_Form::OP_MULTISELECT;
@@ -392,7 +392,8 @@ class CRM_Chreports_Reports_ReportConfiguration {
 
         // Ensure the directory exists, create it if necessary
         if (!is_dir($filePath['base'])) {
-            return;
+            $pathDir = CRM_Core_Config::singleton()->uploadDir.'reports/saved/';
+            mkdir($pathDir, 0775, true);
         }
 
         // Encode the $config array as JSON
@@ -439,8 +440,8 @@ class CRM_Chreports_Reports_ReportConfiguration {
     public static function getFilePath(array $reportDetails, $action = 'save'): array {
         $report_id = self::escapeFileName($reportDetails['report_id']);
         if($action == 'copy' || $reportDetails['created_id']) {
-            $filePath['base'] = CRM_Core_Config::singleton()->uploadDir;
-            $filePath['source'] = $filePath['base']. 'reports/saved/'. $reportDetails['created_id']. '_' . $report_id . '_' . $reportDetails['id']. '.json';
+            $filePath['base'] = CRM_Core_Config::singleton()->uploadDir.'reports/saved/';
+            $filePath['source'] = $filePath['base']. $reportDetails['created_id']. '_' . $report_id . '_' . $reportDetails['id']. '.json';
         } else {
             $filePath['base'] = dirname(__DIR__, 1)  . "/Templates/";
             $filePath['source'] = $filePath['base']. $report_id.'.json';

@@ -25,6 +25,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     protected $_orderBy = NULL;
     protected $_orderByFields = [];
     protected $_orderByFieldsFrom = [];
+    protected $_calculatedFields = [];
 
     protected $_where = NULL;
     protected $_having = NULL;
@@ -92,6 +93,11 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
      */
     public function getEntityTable(string $entity = null): string {
         $entity = ($entity != NULL) ? $entity : $this->getEntity();
+        
+        // skip alias tables and other extensions related tables
+        if (in_array($entity, ["financial_account_debit", "financial_account_credit"]))
+            return $entity;
+
         return "civicrm_" . $entity;
     }
     
@@ -153,6 +159,11 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     public function getColumns(): array {
         return $this->_columns;
     }
+
+    public function getHavingStatements(): array {
+        return $this->_having;
+    }
+
     // manage selected params from extendedSummary
     public function getFormParams(): array {
         return $this->_params;
@@ -500,17 +511,13 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                 foreach ($entityData['filters'] as $fieldName => $field) {
                     if ( in_array($fieldName, $filterNames) ) {
                         //get all fieldinfo
-                        // $test_where_clause = $this->getEntityClauseFromField($fieldName);
-                        // echo '<pre>';print_r($test_where_clause);echo '</pre>';
-                        $field['dbAlias'] = $field['table_name'] . "." .  ((isset($field['column_name'])) ? $field['column_name'] : $field['name']);
+                        $field['dbAlias'] = $this->getEntityClauseFromField($fieldName, $field['operatorType'] == CRM_Report_Form::OP_MULTISELECT);
                         $filters[$fieldName] = $field;
                     }
                 }
             }
         }
 
-        // echo '<pre>';print_r($filters);echo '</pre>';
-        // die('test');
         $this->_filters = $filters;
     }
 
@@ -928,65 +935,65 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         $this->setFormFilterOptions($var);
     }
 
-    public function setRecurringContributionsFields(&$var) {
+    // public function setRecurringContributionsFields(&$var) {
 
-        $var['civicrm_phone']['fields']['phone']['title'] = E::ts('Phone');
-        $var['civicrm_email']['fields']['email']['title'] = E::ts('Email');
+    //     $var['civicrm_phone']['fields']['phone']['title'] = E::ts('Phone');
+    //     $var['civicrm_email']['fields']['email']['title'] = E::ts('Email');
 
-        $specificCols2 = [
-            'civicrm_address' => [
-                'dao' => 'CRM_Core_DAO_Address',
-                'fields' => [ 
-                  'street_address' => ['title' => E::ts('Address - Primary')],
-                  'city' => ['title' => E::ts('City')],
-                  'postal_code' => ['title' => E::ts('Postal Code')],
-                  'state_province_id' => ['title' => E::ts('State/Province')],
-                  'country_id' => ['title' => E::ts('Country')],
-                ],
-                'grouping' => 'contact-fields',
-              ],
-              'civicrm_contribution' => [
-                'dao' => 'CRM_Contribute_BAO_Contribution',
-                'fields' => [
-                  'total_amount' => [
-                    'title' => E::ts('This Month Amount'),
-                    'required' => TRUE,
-                    'dbAlias' => "temp.this_month_amount",
-                  ],
-                  'source' => [
-                    'title' => E::ts('Contribution Source'),
-                  ],
-                  'completed_contributions' => [
-                    'title' => E::ts('Completed Contributions'),
-                    'dbAlias' => 'temp.completed_contributions',
-                  ],
-                  'start_date' => [
-                    'title' => E::ts('Start Date/First Contribution'),
-                    'type' => CRM_Utils_Type::T_DATE + CRM_Utils_Type::T_TIME,
-                    'dbAlias' => 'temp.start_date',
-                  ],
-                  'last_month_amount' => [
-                    'title' => E::ts('Last Month Amount'),
-                    'type' => CRM_Utils_TYPE::T_MONEY,
-                    'required' => TRUE,
-                    'dbAlias' => "temp.last_month_amount",
-                  ],
-                ],
-                'filters' => [
-                  'receive_date' => [
-                    'title' => E::ts('Receive Date'),
-                    'default' => 'this.month',
-                    'operatorType' => CRM_Report_form::OP_DATETIME,
-                    'type' => CRM_Utils_TYPE::T_DATE + CRM_Utils_Type::T_TIME,
-                  ],
-                  'campaign_id' => $var['civicrm_contribution']['filters']['campaign_id']
-                ],
-                'grouping' => 'contribute-fields',
-              ],
-        ];
-        $var = array_merge($var, $specificCols2);
+    //     $specificCols2 = [
+    //         'civicrm_address' => [
+    //             'dao' => 'CRM_Core_DAO_Address',
+    //             'fields' => [ 
+    //               'street_address' => ['title' => E::ts('Address - Primary')],
+    //               'city' => ['title' => E::ts('City')],
+    //               'postal_code' => ['title' => E::ts('Postal Code')],
+    //               'state_province_id' => ['title' => E::ts('State/Province')],
+    //               'country_id' => ['title' => E::ts('Country')],
+    //             ],
+    //             'grouping' => 'contact-fields',
+    //           ],
+    //           'civicrm_contribution' => [
+    //             'dao' => 'CRM_Contribute_BAO_Contribution',
+    //             'fields' => [
+    //               'total_amount' => [
+    //                 'title' => E::ts('This Month Amount'),
+    //                 'required' => TRUE,
+    //                 'dbAlias' => "temp.this_month_amount",
+    //               ],
+    //               'source' => [
+    //                 'title' => E::ts('Contribution Source'),
+    //               ],
+    //               'completed_contributions' => [
+    //                 'title' => E::ts('Completed Contributions'),
+    //                 'dbAlias' => 'temp.completed_contributions',
+    //               ],
+    //               'start_date' => [
+    //                 'title' => E::ts('Start Date/First Contribution'),
+    //                 'type' => CRM_Utils_Type::T_DATE + CRM_Utils_Type::T_TIME,
+    //                 'dbAlias' => 'temp.start_date',
+    //               ],
+    //               'last_month_amount' => [
+    //                 'title' => E::ts('Last Month Amount'),
+    //                 'type' => CRM_Utils_TYPE::T_MONEY,
+    //                 'required' => TRUE,
+    //                 'dbAlias' => "temp.last_month_amount",
+    //               ],
+    //             ],
+    //             'filters' => [
+    //               'receive_date' => [
+    //                 'title' => E::ts('Receive Date'),
+    //                 'default' => 'this.month',
+    //                 'operatorType' => CRM_Report_form::OP_DATETIME,
+    //                 'type' => CRM_Utils_TYPE::T_DATE + CRM_Utils_Type::T_TIME,
+    //               ],
+    //               'campaign_id' => $var['civicrm_contribution']['filters']['campaign_id']
+    //             ],
+    //             'grouping' => 'contribute-fields',
+    //           ],
+    //     ];
+    //     $var = array_merge($var, $specificCols2);
 
-      }
+    //   }
 
     private function setFormColumnOptions(&$var) {
 
@@ -1459,18 +1466,6 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         }
         foreach ($rows as $rowNum => $row) {
             //CRM-2063 - Use "Unassigned" as value in summary/Detailed  reports for NULL values
-            //sunday code refactoring
-            $reportType = $this->getReportType();
-            if($reportType == 'detailed'){
-                if (!empty($this->_params['order_bys']) && is_array($this->_params['order_bys'])) 
-                {
-                }
-            }else if($reportType == 'summary')
-            {
-
-            }
-
-            //sunday code refactoring ends
             foreach($this->_columns as $key=>$value)
             {
                 if (array_key_exists($key, $row) )
@@ -2052,36 +2047,41 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
             $entityTableName = $this->getEntityTable($fieldInfo['entity']);
             if($select)
             {
-                // if($fieldInfo['table_alias']) {
-                //     $entityTableName = $this->getEntityTable($fieldInfo['table_alias']);
-                // }else{
-                    $entityTableName = isset($fieldInfo['dependent_table_entity'])? $this->getEntityTable($fieldInfo['dependent_table_entity']): $this->getEntityTable($fieldInfo['entity']);
-                //}
-               
+               $entityTableName = isset($fieldInfo['dependent_table_entity'])? $this->getEntityTable($fieldInfo['dependent_table_entity']): $this->getEntityTable($fieldInfo['entity']);
             }
             
           }
         return $entityTableName;
     }
     //get entity clause field through fieldName 'tablename.columnName'
-    public function getEntityClauseFromField($fieldName) : string {
+    public function getEntityClauseFromField($fieldName, $forceId = false) : string {
         $fieldInfo = $this->getFieldInfo($fieldName);
+        $isCalculatedField = isset($fieldInfo['calculated_field']) && $fieldInfo['calculated_field'] === true;
         $entityTable = $fieldInfo['table_alias'] ?? $this->getEntityTableFromField($fieldName);
-        $entityField = $this->getEntityField($fieldName);
-        // if($fieldInfo['calculated_field'])
-        // return $fieldName;
-        return $entityTable.'.'.$entityField;
+        $entityField = ($forceId) ? 'id' : $this->getEntityField($fieldName);
+        //don't include entity table for calculated fields as they don't belong to any entity
+        $entityClauseStatement = ($isCalculatedField) ? $this->getCalculatedFieldStatement($fieldName) : $entityTable.'.'.$entityField ;
+           
+        return $entityClauseStatement;
     }
     //get entity field name using fieldName 
     public function getEntityField($fieldName) : string {
         $fieldInfo = $this->getFieldInfo($fieldName);
         if(isset($fieldInfo['custom'])){
             $entityField = E::getColumnNameByName($fieldInfo['custom_fieldName']);
-          }else{
-            $entityField = (isset($fieldInfo['field_name']))? $fieldInfo['field_name']: $fieldName;
-          }
+        }else{
+            $entityField = $fieldInfo['field_name'] ?? $fieldName;
+        }
         return $entityField;
     }
+
+    public function getCalculatedFieldStatement($fieldName): string {
+        if ( isset($this->_calculatedFields[$fieldName]) ) {
+            return $this->_calculatedFields[$fieldName][$fieldName];
+        }
+        return $fieldName;
+    }
+
     //to be removed
     //get group name name using fieldName 
     public function getGroupNameField($fieldName) {
@@ -2120,8 +2120,6 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
             $actualTable = $fieldInfo['table_alias'] ?? $entityName;
             $groupName = $this->getGroupNameField($fieldName);
 
-           // echo '<pre>top entity';print_r($this->_fromEntity);echo '</pre>';
-
             $alreadyIncluded = false;
             // option value always need a join
             if ( isset($fieldInfo['select_name']) && $fieldInfo['select_name'] === 'option_value' ) {
@@ -2130,10 +2128,9 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
             } else if ($groupName !== NULL && in_array($groupName,$this->_fromEntity)) {
                 $alreadyIncluded = true;
             // field belong to entity table already joined
-            } else if ( in_array($entityName,$this->_fromEntity)  ) {
+            } else if ( in_array($actualTable,$this->_fromEntity)  ) {
                 $alreadyIncluded = true;
             }
-          //  echo '<pre>';print_r($fieldName);echo '</pre>';
             // specific cases that do not fit in regular process
             switch ($fieldName) {
                 case 'gl_account': // GL Account
@@ -2149,25 +2146,26 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
 
                     $from[] = $this->getSQLJoinForField('financial_account_id', $this->getEntityTable('financial_account'), $this->getEntityTable('financial_item'));
                     $alreadyIncluded = true;
+                    //To avaoid loading 'financial_account' join multiple times
                     $this->_fromEntity[] = $this->getEntityTable('financial_account');
                     break;
 
-                case 'credit_contact_id':
-                    $from[] = "LEFT JOIN ".$this->getEntityTable('contact')." as civicrm_contact_credit ON civicrm_contact_credit.id = ".$this->getEntityTable('financial_account')."_credit.contact_id";
+                case 'range_one_stat':
+                    $from[] = "LEFT JOIN ".$this->getEntityTable('contribution')." as civicrm_contribution_primaryset ON ".$this->getEntityTable('contribution').".id = civicrm_contribution_primaryset.id";
                     $alreadyIncluded = true;
                     break;
-
-                case 'debit_contact_id':
-                    $from[] = "LEFT JOIN ".$this->getEntityTable('contact')." as civicrm_contact_debit ON civicrm_contact_debit.id = ".$this->getEntityTable('financial_account')."_debit.contact_id";
+                case 'range_two_stat':
+                    $from[] = "LEFT JOIN ".$this->getEntityTable('contribution')." as civicrm_contribution_secondset  ON ".$this->getEntityTable('contribution').".id = civicrm_contribution_secondset.id";
                     $alreadyIncluded = true;
                     break;
 
                 case ($entityName === 'civicrm_batch'):
                     if (!$alreadyIncluded) {
-                        $from[] = "LEFT JOIN ".$this->getEntityTable('entity_batch')." AS ".$this->getEntityTable('entity_batch')."_report
-                        ON  ".$this->getEntityTable('financial_trxn')."_report.id = ".$this->getEntityTable('entity_batch')."_report.entity_id AND ".$this->getEntityTable('entity_batch')."_report.entity_table = 'civicrm_financial_trxn'";
+                        $from[] = "LEFT JOIN ".$this->getEntityTable('entity_batch').
+                            " ON  ".$this->getEntityTable('financial_trxn').".id = ".$this->getEntityTable('entity_batch').".entity_id". 
+                            " AND ".$this->getEntityTable('entity_batch').".entity_table = 'civicrm_financial_trxn'";
                 
-                        $from[] = $this->getSQLJoinForField('id', $this->getEntityTable('entity_batch')."_report", $this->getEntityTable('batch'),'batch_id');
+                        $from[] = $this->getSQLJoinForField('batch_id', $this->getEntityTable('batch'), $this->getEntityTable('entity_batch'),'id');
                         $this->_fromEntity[] = $entityName;
                         $alreadyIncluded = true;
                     }
@@ -2175,13 +2173,15 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                     break;
             }
 
-            // Adding pre-required joins
-            if ($fieldInfo['entity'] == "financial_account") {
+            // adding financial_account_debit / credit
+            if ( $fieldInfo['entity'] == "financial_account" || 
+                (($fieldInfo['join_entity'] == "financial_account_debit" || $fieldInfo['join_entity'] == "financial_account_credit") 
+                    && !in_array($fieldInfo['join_entity'],$this->_fromEntity)) || $fieldInfo['join_entity'] == "address") {
 
-                
+                // adding financial_trxn joins
                 $prerequisiteTable = "financial_trxn";
 
-                if (!in_array($prerequisiteTable,$this->_fromEntity) ) {
+                if (!in_array($this->getEntityTable($prerequisiteTable),$this->_fromEntity) ) {
 
                     $from[] = "LEFT JOIN ".$this->getEntityTable('entity_' . $prerequisiteTable)." as ".$this->getEntityTable('entity_' . $prerequisiteTable).
                     " ON (".$this->getEntityTable('contribution').".id = ".$this->getEntityTable('entity_' . $prerequisiteTable).".entity_id ".
@@ -2190,11 +2190,41 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                     $from[] = "LEFT JOIN ".$this->getEntityTable($prerequisiteTable)." as ".$this->getEntityTable($prerequisiteTable).
                     " ON ".$this->getEntityTable($prerequisiteTable).".id = ".$this->getEntityTable('entity_' . $prerequisiteTable).".financial_trxn_id";
             
-                    $this->_fromEntity[] = $prerequisiteTable;
+                    $this->_fromEntity[] = $this->getEntityTable($prerequisiteTable);
                     
-                    
-
                 }
+
+                // adding financial_account joins
+                if ( !in_array("financial_account_debit",$this->_fromEntity) && !in_array("financial_account_credit",$this->_fromEntity) ) {
+        
+                    $prerequisiteTable = "financial_account";
+
+                    $from[] = "LEFT JOIN ".$this->getEntityTable($prerequisiteTable)." as financial_account_debit".
+                        " ON financial_account_debit.id = ".$this->getEntityTable('financial_trxn').".to_financial_account_id";
+                    $from[] = "LEFT JOIN ".$this->getEntityTable($prerequisiteTable)." as financial_account_credit".
+                        " ON financial_account_credit.id = ".$this->getEntityTable('financial_trxn').".from_financial_account_id";
+                            
+                    $this->_fromEntity[] = "financial_account_debit";
+                    $this->_fromEntity[] = "financial_account_credit";
+
+                    
+                
+                }
+
+                //Adding predefine address joins for join_entity
+                if ($fieldInfo['join_entity'] == "address" && !in_array($this->getEntityTable($fieldInfo['entity']),$this->_fromEntity)) {
+        
+                    if(!in_array($this->getEntityTable($fieldInfo['join_entity']),$this->_fromEntity))
+                    {
+                        $from[] = $this->getSQLJoinForField('id', $this->getEntityTable($fieldInfo['join_entity']), $this->getEntityTable('contact'),'contact_id');
+                        $this->_fromEntity[] = $this->getEntityTable('address');
+                    }       
+                    $from[] = $this->getSQLJoinForField($fieldInfo['join_field_name'], $entityName, $this->getEntityTable($fieldInfo['join_entity']),'id');
+                    $this->_fromEntity[] = $this->getEntityTable($fieldInfo['entity']);
+                }
+        
+                
+
             }
 
             //if(!in_array($trialValue,$this->_fromEntity) || (isset($fieldInfo['select_name']) && $fieldInfo['select_name'] === 'option_value')) {
@@ -2227,26 +2257,21 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                 } else if($fieldInfo['join_entity'] === 'entity_tag'){ 
                     $from[] = $this->getSQLJoinForField('id', $this->getEntityTable($fieldInfo['join_entity']), $this->getEntityTable('contact'),'entity_id');
                     $from[] = $this->getSQLJoinForField($fieldInfo['join_field_name'], $entityName, $this->getEntityTable($fieldInfo['join_entity']),'id');
+                
                 // contribution and other entity fields
                 } else {
-                   echo '<pre>';print_r($entityName);echo '</pre>';
-                    echo '<pre>';print_r($this->_fromEntity);echo '</pre>';
-                    echo '<pre>';print_r($join_entity);echo '</pre>';
-                    //if (!in_array($entityName,$this->_fromEntity) ) 
-
-
-                    $from[] = "LEFT JOIN $entityName as $actualTable ON $actualTable." . $this->getEntityField($fieldName) . " = " . $this->getEntityTable($fieldInfo['join_entity']) . "." . $fieldInfo['join_field_name'];
+                    $joinFieldName = ( preg_match('/_id$/', $fieldInfo['join_field_name']) ) ? 'id' : $this->getEntityField($fieldName);    
+                    $from[] = "LEFT JOIN $entityName as $actualTable ON $actualTable." . $joinFieldName . " = " . $this->getEntityTable($fieldInfo['join_entity']) . "." . $fieldInfo['join_field_name'];
+                    
+                    if ( isset($fieldInfo['join_extra']) ) {
+                        $from[] = "AND " . $fieldInfo['join_extra'];
+                    }
                     $entityName = $actualTable; // so that we don;t include twice, but still include others with a different alias
-                    echo '<pre>saved entity';print_r($entityName);echo '</pre>';
+                   // echo '<pre>saved entity';print_r($entityName);echo '</pre>';
                 }
                 $this->_fromEntity[] = ($groupName !== NULL)? $groupName : $entityName;
             }
         }
-
-        // echo '<pre>';print_r($this->_fromEntity);echo '</pre>';
-        // echo '<pre>';print_r($from);echo '</pre>';
-
-        // die('test');
         $from = array_unique($from);
     }
 
