@@ -25,15 +25,13 @@
         "title": "Date Received",
         "entity": "contribution",
         "field_name": "receive_date",
-        "field_type": "Datetime",
-        "operatorType": true
+        "field_type": "Datetime"
     },
     "receipt_date":{
         "title": "Receipt Date",
         "entity": "contribution",
         "field_name": "receipt_date",
-        "field_type": "Datetime",
-        "operatorType": true
+        "field_type": "Datetime"
     },
     "contribution_status_id":{
         "title": "Contribution Status",
@@ -283,15 +281,12 @@
         "title": "Birth Date",
         "field_name": "birth_date",
         "entity": "contact",
-        "field_type": "Datetime",
-        "operatorType": true
+        "field_type": "Datetime"
     },
     "age": {
         "title": "Age",
-        "field_name": "age",
-        "entity": "contact",
         "dbAlias": "TIMESTAMPDIFF(YEAR, civicrm_contact.birth_date, CURDATE())",
-        "operatorType": true
+        "calculated_field": true
     },
     "job_title": {
         "title": "Contact Job Title",
@@ -358,7 +353,7 @@
         "entity": "contact" ,
         "options": true,
         "group_name": "languages",
-        "field_type": "int",
+        "field_type": "string",
         "use_option_value": true,
         "select_option": ["name","label"]
     },
@@ -459,12 +454,14 @@
     },
     "province": {
         "title": "Province",
-        "field_name": "state_province_id",
-        "entity": "address",
+        "field_name": "id",
+        "entity": "state_province",
         "field_type": "int",
         "options": true,
         "select_option": ["id","name"],
-        "dependent_table_entity":"state_province"
+        "join_field_name":"state_province_id",
+        "join_entity":"address",
+        "select_name":"name"
     },
     "county": {
         "title": "County",
@@ -533,8 +530,7 @@
         "title": "Decision Date",
         "field_name": "decision_date",
         "entity": "grant",
-        "field_type": "Datetime",
-        "operatorType" : "CRM_Report_Form::OP_DATE"
+        "field_type": "Datetime"
     },
     "rationale":{
         "title": "Rationale",
@@ -702,6 +698,9 @@
         "field_name": "on_hold",
         "field_type": "int",
         "options": true,
+        "entity": "email",
+        "join_field_name":"id",
+        "join_entity":"contact",
         "_comment": "static dropdown options ['' => ts('Any')] + CRM_Core_PseudoConstant::emailOnHoldOptions()"
     },
     "yid": {
@@ -731,7 +730,7 @@
         "table_alias": "financial_account_credit",
         "options": true,
         "field_type": "string",
-        "select_option": ["id","name"],
+        "select_option": ["name","name"],
         "join_entity": "financial_trxn",
         "join_field_name": "from_financial_account_id" ,
         "primary_join_field_name": "id"
@@ -743,7 +742,7 @@
         "table_alias": "financial_account_debit",
         "options": true,
         "field_type": "string",
-        "select_option": ["id","name"],
+        "select_option": ["name","name"],
         "join_entity": "financial_trxn",
         "join_field_name": "to_financial_account_id" ,
         "primary_join_field_name": "id"
@@ -926,7 +925,9 @@
         "title": "Address Name",
         "field_name": "name",
         "entity": "address",
-        "field_type": "string"
+        "field_type": "string",
+        "join_field_name":"id",
+        "join_entity":"contact"
     },
     "contribution_id":{
         "title": "Contribution ID",
@@ -957,5 +958,385 @@
         "title": "Start Date/First Contribution",
         "field_type": "Datetime",
         "calculated_field": true
+    },
+    "preferred_communication_method":{
+        "title": "Preferred Communication Method",
+        "field_name": "preferred_communication_method",
+        "field_type": "int",
+        "entity": "contact",
+        "options": true,
+        "group_name": "preferred_communication_method",
+        "use_option_value": true,
+        "select_name": "option_value",
+        "select_option": ["id","label"]
+    },
+    "formal_title":{
+        "title": "Formal Title",
+        "field_name": "formal_title",
+        "field_type": "string",
+        "entity": "contact"
+    },
+    "deceased_date":{
+        "title": "Deceased Date",
+        "entity": "contact",
+        "field_name": "deceased_date",
+        "field_type": "Datetime"
+    },
+    "location_type_id":{
+        "title": "Location Type",
+        "field_name": "id",
+        "field_type": "int",
+        "entity": "location_type",
+        "options": true,
+        "select_option": ["id","display_name"],
+        "join_field_name":"location_type_id",
+        "join_entity":"address",
+        "select_name":"display_name"
+    },
+    "address_id":{
+        "title": "Address ID",
+        "field_name": "id",
+        "field_type": "int",
+        "entity": "address",
+        "join_field_name":"id",
+        "join_entity":"contact"
+    },
+    "is_primary_address":{
+        "title": "Primary Address",
+        "field_name": "is_primary",
+        "field_type": "int",
+        "entity": "address",
+        "join_field_name":"id",
+        "join_entity":"contact"
+    },
+    "phone_numeric":{
+        "title": " Phone (numbers only)",
+        "field_name": "phone_numeric",
+        "field_type": "string",
+        "entity": "phone",
+        "join_field_name":"id",
+        "join_entity":"contact"
+    },
+    "contribution_trxn_id":{
+        "title": "Transaction ID",
+        "field_name": "trxn_id",
+        "field_type": "string",
+        "entity": "contribution"
+    },
+    "thankyou_date":{
+        "title": "Thank-you Date",
+        "entity": "contribution",
+        "field_name": "thankyou_date",
+        "field_type": "Datetime"
+    },
+    "fee_amount" : {
+        "title": "Fee Amount",
+        "entity": "contribution",
+        "field_name": "fee_amount",
+        "field_type": "money"
+    },
+    "net_amount" : {
+        "title": "Net Amount",
+        "entity": "contribution",
+        "field_name": "net_amount",
+        "field_type": "money"
+    },
+    "contribution_currency":{
+        "title": "Currency",
+        "entity": "contribution",
+        "field_name": "currency",
+        "options": true,
+        "group_name": "currencies_enabled",
+        "field_type": "string",
+        "use_option_value": true,
+        "select_name": "option_value",
+        "select_option": ["value","label"]
+    },
+    "payment_processor_id":{
+        "title": " Payment Processor ID",
+        "field_name": "id",
+        "field_type": "int",
+        "entity": "payment_processor",
+        "join_field_name":"contact_id",
+        "join_entity":"contribution_recur"
+    },
+    "recur_contribution_status_id":{
+        "title": " Recurring Contribution Status",
+        "field_name": "contribution_status_id",
+        "field_type": "int",
+        "entity": "contribution_recur",
+        "join_field_name":"contribution_recur_id",
+        "join_entity":"contribution",
+        "options": true,
+        "group_name": "contribution_status",
+        "use_option_value": true,
+        "select_name": "option_value",
+        "select_option": ["value","label"]
+    },
+    "frequency_interval":{
+        "title": "Frequency interval",
+        "field_name": "frequency_interval",
+        "field_type": "int",
+        "entity": "contribution_recur",
+        "join_field_name":"contribution_recur_id",
+        "join_entity":"contribution"
+    },
+    "frequency_unit":{
+        "title": "Frequency Unit",
+        "field_name": "frequency_unit",
+        "field_type": "int",
+        "entity": "contribution_recur",
+        "join_field_name":"contribution_recur_id",
+        "join_entity":"contribution"
+    },
+    "installments":{
+        "title": "Installments",
+        "field_name": "installments",
+        "field_type": "int",
+        "entity": "contribution_recur",
+        "join_field_name":"contribution_recur_id",
+        "join_entity":"contribution"
+    },
+    "installments_amount":{
+        "title": "Installments Amount",
+        "field_name": "amount",
+        "field_type": "money",
+        "entity": "contribution_recur",
+        "join_field_name":"contribution_recur_id",
+        "join_entity":"contribution"
+    },
+    "recur_start_date":{
+        "title": "Recurring Start Date",
+        "field_name": "start_date",
+        "field_type": "Datetime",
+        "entity": "contribution_recur",
+        "join_field_name":"contribution_recur_id",
+        "join_entity":"contribution"
+    },
+    "recur_end_date":{
+        "title": "Recurring End Date",
+        "field_name": "end_date",
+        "field_type": "Datetime",
+        "entity": "contribution_recur",
+        "join_field_name":"contribution_recur_id",
+        "join_entity":"contribution"
+    },
+    "recur_create_date":{
+        "title": "Recurring Create Date",
+        "field_name": "create_date",
+        "field_type": "Datetime",
+        "entity": "contribution_recur",
+        "join_field_name":"contribution_recur_id",
+        "join_entity":"contribution"
+    },
+    "recur_modified_date":{
+        "title": "Recurring Modified Date",
+        "field_name": "modified_date",
+        "field_type": "Datetime",
+        "entity": "contribution_recur",
+        "join_field_name":"contribution_recur_id",
+        "join_entity":"contribution"
+    },
+    "recur_cancel_date":{
+        "title": "Recurring Cancel Date",
+        "field_name": "cancel_date",
+        "field_type": "Datetime",
+        "entity": "contribution_recur",
+        "join_field_name":"contribution_recur_id",
+        "join_entity":"contribution"
+    },
+    "recur_failure_retry_date":{
+        "title": "Recurring Failure Retry Date",
+        "field_name": "failure_retry_date",
+        "field_type": "Datetime",
+        "entity": "contribution_recur",
+        "join_field_name":"contribution_recur_id",
+        "join_entity":"contribution"
+    },
+    "recur_cancel_reason":{
+        "title": "Recurring Cancellation Reason",
+        "field_name": "cancel_reason",
+        "field_type": "string",
+        "entity": "contribution_recur",
+        "join_field_name":"contribution_recur_id",
+        "join_entity":"contribution"
+    },
+    "recur_failure_count":{
+        "title": "Recurring Failure Count",
+        "field_name": "failure_count",
+        "field_type": "int",
+        "entity": "contribution_recur",
+        "join_field_name":"contribution_recur_id",
+        "join_entity":"contribution"
+    },
+    "recur_next_sched_contribution_date":{
+        "title": "Next Scheduled Contribution Date",
+        "field_name": "next_sched_contribution_date",
+        "field_type": "Datetime",
+        "entity": "contribution_recur",
+        "join_field_name":"contribution_recur_id",
+        "join_entity":"contribution"
+    },
+    "is_recurring": {
+        "title": "Is Recurring",
+        "custom": true,
+        "options": true,
+        "group_name": "Contribution_Details",
+        "field_type": "boolean",
+        "custom_fieldName": "SG_Flag",
+        "join_field_name":"id",
+        "join_entity":"contribution"
+    },
+    "contribution_note": {
+        "title": "Contribution Note",
+        "custom": true,
+        "group_name": "Contribution_Details",
+        "field_type": "string",
+        "custom_fieldName": "Note",
+        "join_field_name":"id",
+        "join_entity":"contribution"
+    },
+    "receipted_amount": {
+        "title": "Receipted Amount",
+        "custom": true,
+        "group_name": "Contribution_Details",
+        "field_type": "money",
+        "custom_fieldName": "Note",
+        "join_field_name":"id",
+        "join_entity":"contribution"
+    },
+    "fees_covered": {
+        "title": "Fees Covered",
+        "custom": true,
+        "options": true,
+        "group_name": "Contribution_Details",
+        "field_type": "boolean",
+        "custom_fieldName": "Fees_Covered",
+        "join_field_name":"id",
+        "join_entity":"contribution"
+    },
+    "disbursment_date": {
+        "title": "Disbursement Date",
+        "custom": true,
+        "group_name": "Contribution_Details",
+        "custom_fieldName": "Disbursement_Date",
+        "join_field_name":"id",
+        "join_entity":"contribution",
+        "field_type":"Datetime"
+    },
+    "excluded_from_tax_receipting": {
+        "title": "Excluded From Tax Receipting",
+        "custom": true,
+        "group_name": "Contribution_Details",
+        "custom_fieldName": "Exclude_From_Receipting",
+        "join_field_name":"id",
+        "join_entity":"contribution",
+        "field_type":"boolean"
+    },
+    "contribution_receipted": {
+        "title": "Contribution Receipted",
+        "custom": true,
+        "group_name": "Contribution_Details",
+        "custom_fieldName": "Exclude_From_Receipting",
+        "join_field_name":"id",
+        "join_entity":"contribution",
+        "field_type":"boolean"
+    },
+    "receipt_number": {
+        "title": "Receipt Number",
+        "custom": true,
+        "group_name": "Contribution_Details",
+        "custom_fieldName": "Receipt_Number",
+        "join_field_name":"id",
+        "join_entity":"contribution",
+        "field_type":"string"
+    },
+    "in_memory_of": {
+        "title": "In Memory Of",
+        "custom": true,
+        "options": true,
+        "group_name": "Contribution_Memoir",
+        "custom_fieldName": "in_memoir",
+        "join_field_name":"id",
+        "join_entity":"contribution",
+        "field_type":"boolean"
+    },
+    "in_honour_of": {
+        "title": "In Honour Of",
+        "custom": true,
+        "options": true,
+        "group_name": "Contribution_Memoir",
+        "custom_fieldName": "in_honour",
+        "join_field_name":"id",
+        "join_entity":"contribution",
+        "field_type":"boolean"
+    },
+    "name_of_honoree": {
+        "title": "Name Of Honoree",
+        "custom": true,
+        "group_name": "Contribution_Memoir",
+        "custom_fieldName": "Name_of_Honoree",
+        "join_field_name":"id",
+        "join_entity":"contribution",
+        "field_type":"string"
+    },
+    "contribution_message": {
+        "title": "Message",
+        "custom": true,
+        "group_name": "Contribution_Memoir",
+        "custom_fieldName": "Message",
+        "join_field_name":"id",
+        "join_entity":"contribution",
+        "field_type":"string"
+    },
+    "contact_id": {
+        "title": "Contact ID",
+        "field_name": "id",
+        "field_type": "int",
+        "entity": "contact"
+    },
+    "custom_question": {
+        "title": "Custom Question",
+        "custom": true,
+        "group_name": "custom_question",
+        "custom_fieldName": "contribution_custom_question",
+        "join_field_name":"id",
+        "join_entity":"contribution",
+        "field_type":"string"
+    },
+    "custom_answer": {
+        "title": "Custom Answer",
+        "custom": true,
+        "group_name": "custom_question",
+        "custom_fieldName": "contribution_custom_answer",
+        "join_field_name":"id",
+        "join_entity":"contribution",
+        "field_type":"string"
+    },
+    "is_deleted": {
+        "title": "Is Deleted",
+        "field_name": "is_deleted",
+        "entity": "contact",
+        "field_type":"boolean",
+        "options": true
+    },
+    "financial_trxn_payment_method": {
+        "title": "Fianancial Transaction Payment Method",
+        "entity": "financial_trxn",
+        "field_name": "payment_instrument_id",
+        "options": true,
+        "group_name": "payment_instrument",
+        "field_type": "int",
+        "use_option_value": true,
+        "select_name": "option_value",
+        "select_option": ["value","label"]
+    },
+    "financial_trxn_payment_processor": {
+        "title": "Fianancial Payment Processor",
+        "field_name": "id",
+        "field_type": "int",
+        "entity": "payment_processor",
+        "join_field_name":"payment_processor_id",
+        "join_entity":"financial_trxn"
     }
 }

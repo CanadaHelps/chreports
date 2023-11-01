@@ -297,7 +297,7 @@ class CRM_Chreports_Reports_ReportConfiguration {
      */
     public function setDefaultFilterValues(): void {
         $params = $this->getFormParams();
-        if(isset($this->_settings['preset_filter_values'])) {
+        if(isset($this->_preselected_filter)) {
             $defaultFilterParams = $this->createCustomFilterParams();
             foreach($defaultFilterParams as $k => $v) {
                 if(!$params[$k] && $v) {

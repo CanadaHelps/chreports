@@ -18,12 +18,14 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
   }
 
   public function statistics(&$rows) {
-    if($this->_reportInstance->isLYBNTSYBNTReport())
-    {
-      $statistics = [];
-    return $statistics;
-    }
-    $showDetailedStat = $this->_reportInstance->isOpportunityReport() ? false:true;
+    // if($this->_reportInstance->isLYBNTSYBNTReport())
+    // {
+    //   $statistics = [];
+    // return $statistics;
+    // }
+    if($this->_reportInstance->isGLAccountandPaymentMethodReconciliationReport())
+    return;
+    $showDetailedStat = ($this->_reportInstance->isOpportunityReport()||$this->_reportInstance->isLYBNTSYBNTReport()) ? false:true;
     if(!$this->_reportInstance->isRecurringContributionReport())
     $statistics = $this->_reportInstance->alterStatistics($rows,$showDetailedStat);
 

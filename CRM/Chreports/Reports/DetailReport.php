@@ -303,9 +303,16 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
           ];
         //  $selectedCalculatedStatement = "COUNT(civicrm_contribution_secondset.id) AS  ,SUM(civicrm_contribution_secondset.total_amount)";
           break;
+        case 'age':
+          $statements = [ 
+            $fieldName => "TIMESTAMPDIFF(YEAR, civicrm_contact.birth_date, CURDATE())"
+          ];
+          break;
       }
       if (count($statements) > 0) {
         $this->_calculatedFields[$fieldName] = $statements;
+        // for staistics calculated fields
+        $this->_statisticsCalculatedFields[$fieldName] = ['title' =>$_columnHeader[$fieldName]['title'],'select'=>$statements];
         foreach($statements as $fieldName => $statement) {
           $select[] = $statement.' AS '.$fieldName;
           if ( preg_match('/(MIN|SUM|AVG|COUNT|MAX|MIN)/', $statement )) {
@@ -338,7 +345,7 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
       if($this->getReportName() == 'sybunt')
       {
           $having[] = $this->whereClauseLast4Year("lastContributionTime");
-          $this->_limit = '';
+          //$this->_limit = '';
       }else if($this->getReportName() == 'lybunt'){
           $having[] = $this->whereClauseLastYear("lastContributionTime");
       }
@@ -420,15 +427,18 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
           //  {
           //    $orderBys[] = $fieldName." ".$orderBy['order'];
           //  }else{
-            $orderBys[] = $this->getEntityClauseFromField($fieldName)." ".$orderBy['order'];
+            $fieldInfo = $this->getFieldInfo($orderBy['column']);
+            $isCalculatedField = isset($fieldInfo['calculated_field']) && $fieldInfo['calculated_field'] === true;
+
+            $orderBys[] = ($isCalculatedField) ? $fieldName." ".$orderBy['order'] : $this->getEntityClauseFromField($fieldName)." ".$orderBy['order'];
             $this->_orderByFieldsFrom[$orderBy['column']] = true;
             //$orderBys[] = $columnInfo['table_name'] . "." .  $columnInfo['name']." ".$orderBy['order'];
            //}
-            $fieldInfo = $this->getFieldInfo($orderBy['column']);
-            $isCalculatedField = isset($fieldInfo['calculated_field']) && $fieldInfo['calculated_field'] === true;
+            
             // assign order by fields which has section display checked
-            if($orderBy['section']){}
+            if($orderBy['section']){
             $this->_orderByFields[$orderBy['column']] = ($isCalculatedField) ? $this->getCalculatedFieldStatement($orderBy['column']) : $this->getCommonSelectClause($fieldName);
+            }
           }
         }
         if($this->getReportName() == 'top_donors')

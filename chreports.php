@@ -716,11 +716,12 @@ function chreports_civicrm_preProcess($formName, &$form) {
     $defaults = $reportInstance->setDefaultOptionSortBy($defaults);
 
     // if there are any Preselect Filters in Json, prepopulare on form load
-    if($reportInstance->getSettings()['preset_filter_values']) {
+    if($reportInstance->getPreSetFilterValues()) {
       $filterParams = $reportInstance->createCustomFilterParams();
       foreach($filterParams as $filterKey => $filterValue) {
-        $defaults[$filterKey] = $filterValue;
+        $defaultSelectedFilter[$filterKey] = $filterValue;
       }
+      $form->setVar('_formValues', $defaultSelectedFilter);
     }
 
     $form->setVar('_defaults', $defaults);

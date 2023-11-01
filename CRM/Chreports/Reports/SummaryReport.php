@@ -34,21 +34,6 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
       // @todo move code below here
       $this->addCalculatedFieldstoSelect($select);
 
-
-      // Add default fields such as total, sum and currency
-      $select[] = "COUNT(".$this->getEntityTable().".id) AS count";
-      $this->_columnHeaders['count']['title'] = 'Number of Contributions';
-      $this->_columnHeaders['count']['type'] = CRM_Utils_Type::T_INT;
-
-      // Total Amount
-      $select[] = "SUM(".$this->getEntityTable('contribution').".`total_amount`) AS total_amount";
-      $this->_columnHeaders['total_amount']['title'] = 'Total Amount';
-      $this->_columnHeaders['total_amount']['type'] = CRM_Utils_Type::T_MONEY;
-      
-      $select[] = "GROUP_CONCAT(DISTINCT ".$this->getEntityTable().".currency) AS currency";
-      $this->_columnHeaders['currency']['title'] = 'Currency';
-      $this->_columnHeaders['currency']['type'] = CRM_Utils_Type::T_STRING;
-
       //Monthly / Yerly report select clause
       if($this->isMonthlyYearlyReport()){
         if($this->getReportType() == 'monthly')
@@ -74,6 +59,24 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
           $this->_columnHeaders['quartername']['title'] = '';
         }
       }
+      
+      // Add default fields such as total, sum and currency
+      $select[] = "COUNT(".$this->getEntityTable().".id) AS count";
+      $this->_columnHeaders['count']['title'] = 'Number of Contributions';
+      $this->_columnHeaders['count']['type'] = CRM_Utils_Type::T_INT;
+
+      // Total Amount
+      $select[] = "SUM(".$this->getEntityTable('contribution').".`total_amount`) AS total_amount";
+      $this->_columnHeaders['total_amount']['title'] = 'Total Amount';
+      $this->_columnHeaders['total_amount']['type'] = CRM_Utils_Type::T_MONEY;
+      
+      $select[] = "GROUP_CONCAT(DISTINCT ".$this->getEntityTable().".currency) AS currency";
+      $this->_columnHeaders['currency']['title'] = 'Currency';
+      $this->_columnHeaders['currency']['type'] = CRM_Utils_Type::T_STRING;
+
+      
+
+      
 
       // Combine everything
       $this->_selectClauses = $select;

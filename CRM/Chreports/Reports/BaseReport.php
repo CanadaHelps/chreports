@@ -27,6 +27,9 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     protected $_orderByFieldsFrom = [];
     protected $_calculatedFields = [];
 
+    protected $_preselected_filter = [];
+    protected $_statisticsCalculatedFields = [];
+
     protected $_where = NULL;
     protected $_having = NULL;
     protected $_limit = NULL;
@@ -120,7 +123,8 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
             $filterValues = array_fill_keys($this->_defaultFilters, []);
         }
         if (count($this->_settings['filters']) > 0) {
-            $filterValues = array_merge($filterValues, array_fill_keys($this->_settings['filters'], []));
+            //$filterValues = array_merge($filterValues, array_fill_keys($this->_settings['filters'], []));
+            $filterValues = array_merge($filterValues,$this->_settings['filters']);
         }
         return $filterValues;
     }
@@ -141,7 +145,14 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         }
         return $defaultFields;
     }
+    // manage pre set filters
+    // public function setFieldsMapping(array $mapping) {
+    //     $this->_mapping = $mapping;
+    // }
 
+    public function getPreSetFilterValues(): array {
+        return $this->_preselected_filter;
+    }
     // manage mapping fields from extendedSummary
     public function setFieldsMapping(array $mapping) {
         $this->_mapping = $mapping;
@@ -511,7 +522,8 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                 foreach ($entityData['filters'] as $fieldName => $field) {
                     if ( in_array($fieldName, $filterNames) ) {
                         //get all fieldinfo
-                        $field['dbAlias'] = $this->getEntityClauseFromField($fieldName, $field['operatorType'] == CRM_Report_Form::OP_MULTISELECT);
+                        //$field['dbAlias'] = $this->getEntityClauseFromField($fieldName, $field['operatorType'] == CRM_Report_Form::OP_MULTISELECT);
+                        $field['dbAlias'] = $this->getEntityClauseFromField($fieldName);
                         $filters[$fieldName] = $field;
                     }
                 }
@@ -558,7 +570,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
      */
     public function createCustomFilterParams(): array {
         $filterParams = [];
-        $filterPresets = $this->getSettings()['preset_filter_values'];
+        $filterPresets = $this->_preselected_filter;
 
         foreach ($filterPresets as $fieldName => $data) {
             // Handle the 'null' and 'not null' cases
@@ -1046,6 +1058,11 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     
     private function setFormFilterOptions(&$var) {
         foreach ($this->getReportingFilters() as $fieldName => $fieldInfo) {
+
+            //check if filter value needs to be pre set
+            if(count($fieldInfo) > 0) { 
+                $this->_preselected_filter[$fieldName] = $fieldInfo;
+            }
             $fieldInfo = array_merge( $fieldInfo, $this->getFieldInfo($fieldName) );
             // field not found
             if ( isset($fieldInfo['error']) ) {
@@ -1081,13 +1098,13 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         }
 
         //set default values mentioned in json file
-        $filterPresets = $this->getSettings()['preset_filter_values'];
-        foreach ($filterPresets as $fieldName => $data) {
-            $entityName = $this->getEntityTableFromField($fieldName);
-            foreach ($data as $operation => $value) {
-                $var[$entityName]['filters'][$fieldName]['default'] = $value;
-            }
-        }
+        //$filterPresets = $this->getSettings()['preset_filter_values'];
+        // foreach ($filterPresets as $fieldName => $data) {
+        //     $entityName = $this->getEntityTableFromField($fieldName);
+        //     foreach ($data as $operation => $value) {
+        //         $var[$entityName]['filters'][$fieldName]['default'] = $value;
+        //     }
+        // }
        
     }
 
@@ -1411,6 +1428,8 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
            }
            
         }
+        echo '<pre>';print_r($this->_select);echo '</pre>';
+        echo '<pre>';print_r($select);echo '</pre>';
         $this->_select = array_merge( $this->_select, $select);
         $this->_selectClauses = array_merge( $this->_selectClauses, $select);
         $this->_columnHeaders = array_merge( $this->_columnHeaders, $columnHeader);
@@ -1618,7 +1637,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
      */
     public function alterStatistics(array $rows, bool $showDetailed = false): array {
         $statistics = [];
-
+        $showSybntLybnt = false;
         // Check if we have multiple currencies
         $groupByCurrency = false;
         foreach ($rows as $rowNum => $row) {
@@ -1643,6 +1662,19 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         $select[] = "COUNT(DISTINCT ".$this->getEntityTable($statEntity).".id ) as count";
         $select[] = "SUM(".$this->getEntityTable($statEntity).".".$statTotalAmountField.") as total_amount";
         $select[] = $this->getEntityTable($statEntity).".currency as currency";
+
+        if($this->getReportName() == 'sybunt' || $this->getReportName() == 'lybunt')
+        {
+            $showSybntLybnt = true;
+            $select[] = "MAX(".$this->getEntityTable('contribution').".receive_date) as lastContributionTime";
+            
+            foreach (array_keys($rows[0]) as $columnName) {
+                if(in_array($columnName,['last_four_year_total_amount','last_three_year_total_amount','last_two_year_total_amount','last_year_total_amount'])){
+                    $select[] = $this->getCalculatedFieldStatement($columnName).' as '.$columnName;
+                }
+            }
+            $last_four_year_total_amount = $last_three_year_total_amount = $last_two_year_total_amount =$last_year_total_amount = [];
+        }
 
         if ($showDetailed) {
             $select[] = "ROUND(AVG(".$this->getEntityTable('contribution').".`total_amount`), 2) as avg";
@@ -1687,6 +1719,21 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                 $currFees[$dao->currency] += $dao->fees;
                 $currNet[$dao->currency] += $dao->net;
                 $currAvg[$dao->currency] += $dao->avg;
+            }
+
+            if ($showSybntLybnt) {
+                //defining currency fees,Net and avg based upon currency
+                if($dao->last_four_year_total_amount)
+                $last_four_year_total_amount[] += $dao->last_four_year_total_amount;
+
+                if($dao->last_three_year_total_amount)
+                $last_three_year_total_amount[] += $dao->last_three_year_total_amount;
+
+                if($dao->last_two_year_total_amount)
+                $last_two_year_total_amount[] += $dao->last_two_year_total_amount;
+
+                if($dao->last_year_total_amount)
+                $last_year_total_amount[] += $dao->last_year_total_amount;
             }
         }
 
@@ -1738,6 +1785,42 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                 'value' => implode(',  ', $netAmount),
                 'type' => CRM_Utils_Type::T_STRING,
             ];
+        }
+
+        if ($showSybntLybnt) {
+            // total Average count
+            if(count($last_four_year_total_amount) > 0){
+                $statistics['counts']['last_four_year_total_amount'] = [
+                    'title' => $this->_columnHeaders['last_four_year_total_amount']['title'],
+                    'value' => array_sum($last_four_year_total_amount),
+                    'type' => CRM_Utils_Type::T_MONEY,
+                ];
+            }   
+            
+            // total fees count
+            if(count($last_three_year_total_amount) > 0){
+                $statistics['counts']['last_three_year_total_amount'] = [
+                    'title' => $this->_columnHeaders['last_three_year_total_amount']['title'],
+                    'value' => array_sum($last_three_year_total_amount),
+                    'type' => CRM_Utils_Type::T_MONEY,
+                ];
+            }
+            
+            // total Net count
+            if(count($last_two_year_total_amount) > 0){
+                $statistics['counts']['last_two_year_total_amount'] = [
+                    'title' => $this->_columnHeaders['last_two_year_total_amount']['title'],
+                    'value' => array_sum($last_two_year_total_amount),
+                    'type' => CRM_Utils_Type::T_MONEY,
+                ];
+            }
+            if(count($last_year_total_amount) > 0){
+                $statistics['counts']['last_year_total_amount'] = [
+                    'title' => $this->_columnHeaders['last_year_total_amount']['title'],
+                    'value' =>array_sum($last_year_total_amount),
+                    'type' => CRM_Utils_Type::T_MONEY,
+                ];
+            }
         }
 
         return $statistics;
@@ -2051,6 +2134,10 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
             }
             
           }
+          if($entityTableName == NULL)
+          {
+            echo '<pre> missing entity table ';print_r($fieldName);echo '</pre>';
+          }
         return $entityTableName;
     }
     //get entity clause field through fieldName 'tablename.columnName'
@@ -2260,6 +2347,8 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                 
                 // contribution and other entity fields
                 } else {
+                    if(!in_array($entityName,$this->_fromEntity))
+                    {
                     $joinFieldName = ( preg_match('/_id$/', $fieldInfo['join_field_name']) ) ? 'id' : $this->getEntityField($fieldName);    
                     $from[] = "LEFT JOIN $entityName as $actualTable ON $actualTable." . $joinFieldName . " = " . $this->getEntityTable($fieldInfo['join_entity']) . "." . $fieldInfo['join_field_name'];
                     
@@ -2268,6 +2357,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                     }
                     $entityName = $actualTable; // so that we don;t include twice, but still include others with a different alias
                    // echo '<pre>saved entity';print_r($entityName);echo '</pre>';
+                }
                 }
                 $this->_fromEntity[] = ($groupName !== NULL)? $groupName : $entityName;
             }

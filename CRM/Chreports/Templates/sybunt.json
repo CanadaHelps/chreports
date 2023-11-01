@@ -58,19 +58,25 @@
         "card_type_id": {}
     },
     "use_default_filters" : false,
-    "filters":[
-        "sort_name",
-        "contact_type",
-        "do_not_phone",
-        "do_not_email",
-        "do_not_sms",
-        "do_not_mail",
-        "is_opt_out",
-        "on_hold",
-        "yid",
-        "financial_type_id",
-        "contribution_status_id",
-        "card_type_id"
-    ],
+    "filters":{
+        "sort_name": {},
+        "contact_type": {},
+        "do_not_phone": {},
+        "do_not_email": {},
+        "do_not_sms": {},
+        "do_not_mail": {},
+        "is_opt_out": {},
+        "on_hold": {},
+        "yid": {
+            "calendar": 2023
+        },
+        "financial_type_id": {},
+        "contribution_status_id": {
+            "in": [
+                "1"
+            ]
+        },
+        "card_type_id": {}
+    },
     "groupByDisplay" : false
 }
