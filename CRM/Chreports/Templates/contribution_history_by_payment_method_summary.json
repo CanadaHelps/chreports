@@ -8,5 +8,12 @@
             "default" : true
         }
     },
-    "use_default_filters" : true
+    "use_default_filters" : true,
+    "filters":{
+        "contribution_status_id": {
+            "in": [
+                "1"
+            ]
+        }
+    }
 }

@@ -18,26 +18,26 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
   }
 
   public function statistics(&$rows) {
-    // if($this->_reportInstance->isLYBNTSYBNTReport())
-    // {
-    //   $statistics = [];
-    // return $statistics;
-    // }
-    if($this->_reportInstance->isGLAccountandPaymentMethodReconciliationReport())
-    return;
-    $showDetailedStat = ($this->_reportInstance->isOpportunityReport()||$this->_reportInstance->isLYBNTSYBNTReport()) ? false:true;
-    if(!$this->_reportInstance->isRecurringContributionReport())
+    //return;
+    //  if($this->_reportInstance->isRecurringContributionReport())
+    // return;
+    
+    $showDetailedStat = ($this->_reportInstance->isOpportunityReport() || $this->_reportInstance->isGLAccountandPaymentMethodReconciliationReport()
+    || $this->_reportInstance->isRepeatContributionReport() || $this->_reportInstance->isRecurringContributionReport() || $this->_reportInstance->isLYBNTSYBNTReport()) ? false:true;
+    //if(!$this->_reportInstance->isRecurringContributionReport())
     $statistics = $this->_reportInstance->alterStatistics($rows,$showDetailedStat);
 
-    if($this->_reportInstance->isGLAccountandPaymentMethodReconciliationReport())
-    $statistics = $this->_reportInstance->alterStatistics($rows,false);
+   // if($this->_reportInstance->isGLAccountandPaymentMethodReconciliationReport())
+   // $statistics = $this->_reportInstance->alterStatistics($rows,false);
 
-    if($this->_reportInstance->isRepeatContributionReport())
+    // if($this->_reportInstance->isRepeatContributionReport())
+    // $statistics = $this->_reportInstance->alterStatistics($rows,false);
     //$statistics = $this->_reportInstance->alterRepeatContributionStatistics($rows,false);
-    return;
+   // return;
 
-    if($this->_reportInstance->isRecurringContributionReport())
-    $statistics = $this->_reportInstance->alterRecurringStatistics($rows,$showDetailedStat);
+    // if($this->_reportInstance->isRecurringContributionReport())
+    // $statistics = $this->_reportInstance->alterStatistics($rows,$showDetailedStat);
+   // $statistics = $this->_reportInstance->alterRecurringStatistics($rows,$showDetailedStat);
     if ($statistics) {
       $count = count($rows);
       // requires access to form
@@ -127,16 +127,35 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
       $var->setVar('_where', "WHERE " . implode(' AND ', $clauses));
     }
     $this->_reportInstance->setWhere($var->getVar('_where'));
+
+    //HAVING
+    $havingClause = $this->buildHavingClause();
+    if (!empty($havingClause)) {
+      $var->setVar('_having', "HAVING " . implode(' AND ', $havingClause));
+    }
+
     //print_r($var->getVar('_limit'));
     //print_r($var->getVar('_groupLimit'));
     $var->setVar('_limit', $this->_reportInstance->getLimit());
+  }
+  private function buildHavingClause(): array {
+    $havingclauses = [];
+    foreach ($this->_reportInstance->getFilters() as $fieldName => $fieldInfo) {
+      if ( in_array($fieldInfo['dbAlias'], $this->_reportInstance->getHavingStatements()) ) {
+         // Calculated Fields included in having
+        $havingclauses[] = $this->generateFilterClause($fieldInfo, $fieldName);
+      }
+    }
+    return $havingclauses;
   }
   private function buildWhereClause(): array {
     $clauses = [];
       
     if($this->_reportInstance->isRecurringContributionReport())
     {
-      $clauses[] = 'IF('.$this->_reportInstance->getEntityTable('contribution').'.contribution_recur_id IS NOT NULL, 1, IF(sg_flag_38 IS NOT NULL, 1, 0)) = 1';
+      $customTablename = E::getTableNameByName('Contribution_Details');
+      $columnName = E::getColumnNameByName('SG_Flag');
+      $clauses[] = 'IF('.$this->_reportInstance->getEntityTable('contribution').'.contribution_recur_id IS NOT NULL, 1, IF('.$customTablename.'.'.$columnName.' IS NOT NULL, 1, 0)) = 1';
       $clauses[] = $this->_reportInstance->getEntityTable('contribution').'.contribution_status_id = 1';
     }
 
@@ -172,9 +191,9 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
 
 
         // Calculated Fields already included in having
-        // if ( in_array($fieldInfo['dbAlias'], $this->_reportInstance->getHavingStatements()) ) {
-        //   continue;
-        // }
+// if ( in_array($fieldInfo['dbAlias'], $this->_reportInstance->getHavingStatements()) ) {
+//           continue;
+//         }
         //To DO create Havinf function to include having condition
 
         switch ($fieldName) {
@@ -193,6 +212,7 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
             $clauses[] = $this->generateFilterClause($fieldInfo, $fieldName);   
             break;
           default:
+            if ( !in_array($fieldInfo['dbAlias'], $this->_reportInstance->getHavingStatements()) )
             $clauses[] = $this->generateFilterClause($fieldInfo, $fieldName);
             break;
         }

@@ -24,18 +24,23 @@
         
     },
     "use_default_filters" : false,
-    "filters":[
-        "grant_type",
-        "grant_status_id",
-        "amount_granted",
-        "grant_amount_total",
-        "application_received_date",
-        "grant_due_date",
-        "decision_date",
-        "application_submitted",
-        "probability",
-        "Opportunity_Name",
-        "Opportunity_Owner"
-    ],
+    "filters":{
+        "grant_type":{},
+        "grant_status_id":{},
+        "amount_granted":{},
+        "grant_amount_total":{},
+        "application_received_date":{},
+        "grant_due_date":{},
+        "decision_date":{},
+        "application_submitted":{},
+        "probability":{},
+        "Opportunity_Name":{},
+        "Opportunity_Owner":{},
+        "contribution_status_id": {
+            "in": [
+                "1"
+            ]
+        }
+    },
     "groupByDisplay" : false
 }

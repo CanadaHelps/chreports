@@ -137,13 +137,20 @@ function chreports_civicrm_entityTypes(&$entityTypes) {
 function chreports_civicrm_buildForm($formName, &$form) {
   if (in_array($formName, [
     'CRM_Report_Form_Contact_Summary',
-    'CRM_Chreports_Form_Report_ExtendedDetail',
+    'CRM_Chreports_Form_Report_ExtendSummary',
     'CRM_Chreports_Form_Report_GLSummaryReport',
     'CRM_Chreports_Form_Report_ExtendedDetail'
   ])) {
     CRM_Core_Resources::singleton()->addScript(
       "CRM.$(function($) {
         $('.report-layout.display').wrap('<div class=\"new\" style=\"overflow:scroll; width:100%;\"></div>');
+        $( '.report-layout.display tr.crm-report-sectionHeader' ).each(function() {
+          if( $( this ).has('.crm-report-sectionHeader')){
+            if ($( this ).find('th').children().text().indexOf('none') > -1) {
+              $( this ).find('th').children().text($( this ).find('th').children().text().replace('none', 'Unassigned'))
+            }
+          }
+        });
       });"
     );
   }

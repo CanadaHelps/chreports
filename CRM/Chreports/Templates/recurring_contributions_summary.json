@@ -26,12 +26,19 @@
         "country":{ "selected" : true}
     },
     "use_default_filters" : false,
-    "filters":[
-        "sort_name",
-        "receive_date",
-        "tagid",
-        "gid",
-        "campaign_id"
-    ],
+    "filters":{
+        "sort_name":{},
+        "receive_date":{},
+        "tagid":{},
+        "gid":{},
+        "campaign_id":{},
+        "filters":{
+            "contribution_status_id": {
+                "in": [
+                    "1"
+                ]
+            }
+        }
+    },
     "groupByDisplay" : false
 }

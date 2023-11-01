@@ -7,5 +7,12 @@
         "receive_date_start": {"default" : true}
     },
     "use_default_filters" : true,
-    "groupByDisplay" : false
+    "groupByDisplay" : false,
+    "filters":{
+        "contribution_status_id": {
+            "in": [
+                "1"
+            ]
+        }
+    }
 }

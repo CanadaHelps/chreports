@@ -34,18 +34,22 @@
         "total_amount": {"default" : true}
     },
     "use_default_filters" : false,
-    "filters":[
-        "receive_date",
-        "receipt_date",
-        "total_range",
-        "financial_type_id",
-        "contribution_status_id",
-        "financial_account",
-        "card_type_id",
-        "tagid",
-        "disbursement_date",
-        "gid",
-        "on_hold"
-    ],
+    "filters":{
+        "receive_date":{},
+        "receipt_date":{},
+        "total_range":{},
+        "financial_type_id":{},
+        "contribution_status_id": {
+            "in": [
+                "1"
+            ]
+        },
+        "financial_account":{},
+        "card_type_id":{},
+        "tagid":{},
+        "disbursement_date":{},
+        "gid":{},
+        "on_hold":{}
+    },
     "groupByDisplay" : false
 }

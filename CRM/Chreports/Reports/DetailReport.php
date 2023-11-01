@@ -173,8 +173,8 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
         ELSE 
         CONCAT(ROUND(((SUM(civicrm_contribution_secondset.total_amount) -SUM(civicrm_contribution_primaryset.total_amount))/ SUM(civicrm_contribution_primaryset.total_amount))*100, 2),'%')
     END AS per_change";
-        $this->_columnHeaders['count']['title'] = 'per_change';
-        $this->_columnHeaders['count']['type'] = CRM_Utils_Type::T_STRING;
+        $this->_columnHeaders['per_change']['title'] = 'Per Change';
+        $this->_columnHeaders['per_change']['type'] = CRM_Utils_Type::T_STRING;
       }
       
       //contact Table ID details
@@ -550,8 +550,9 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
       //temporary commented code ends
       if(parent::isRecurringContributionReport()){
         $tablename = E::getTableNameByName('Contribution_Details');
+        $columnName = E::getColumnNameByName('SG_Flag');
         $from[] = " LEFT JOIN {$tablename} ON {$tablename}.entity_id =  ".$this->getEntityTable('contribution').".id 
-        AND sg_flag_38 = 1";
+        AND ".$tablename.".".$columnName." = 1";
       }
       
       // Add filter joins (if needed)

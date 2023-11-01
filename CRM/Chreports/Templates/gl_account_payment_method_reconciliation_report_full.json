@@ -36,31 +36,34 @@
         "card_type_id":{}
     },
     "use_default_filters" : false,
-    "filters":[
-        "sort_name",
-        "contact_id",
-        "contact_type",
-        "receive_date",
-        "tagid",
-        "gid",
-        "campaign_id",
-        "amount",
-        "debit_accounting_code",
-        "debit_contact_id",
-        "credit_accounting_code",
-        "credit_contact_id",
-        "debit_name",
-        "credit_name",
-        "financial_type_id",
-        "contribution_id",
-        "receive_date",
-        "receipt_date",
-        "contribution_source",
-        "payment_instrument_id",
-        "currency",
-        "trxn_date",
-        "contribution_status_id",
-        "card_type_id"
-    ],
+    "filters":{
+        "sort_name":{},
+        "contact_id":{},
+        "contact_type":{},
+        "receive_date":{},
+        "tagid":{},
+        "gid":{},
+        "campaign_id":{},
+        "amount":{},
+        "debit_accounting_code":{},
+        "debit_contact_id":{},
+        "credit_accounting_code":{},
+        "credit_contact_id":{},
+        "debit_name":{},
+        "credit_name":{},
+        "financial_type_id":{},
+        "contribution_id":{},
+        "receipt_date":{},
+        "contribution_source":{},
+        "payment_instrument_id":{},
+        "currency":{},
+        "trxn_date":{},
+        "contribution_status_id": {
+            "in": [
+                "1"
+            ]
+        },
+        "card_type_id":{}
+    },
     "groupByDisplay" : false
 }

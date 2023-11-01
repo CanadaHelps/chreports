@@ -1,16 +1,6 @@
 { 
     "name": "contribution_history_by_source_summary",
     "title": "Contribution History By Source (Summary)",
-    "preset_filter_values": {
-        "receive_date": {
-            "relative": "this.year"
-        },
-        "contribution_status_id": {
-            "in": [
-                "1"
-            ]
-        }
-    },
     "type": "summary",
     "entity": "contribution",
     "fields":{
@@ -21,5 +11,12 @@
         "contribution_source": {},
         "contribution_page_id": {}
     },
-    "use_default_filters" : true
+    "use_default_filters" : true,
+    "filters":{
+        "contribution_status_id": {
+            "in": [
+                "1"
+            ]
+        }
+    }
 }

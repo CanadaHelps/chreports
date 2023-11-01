@@ -13,7 +13,12 @@
         "contribution_page_id": {}
     },
     "use_default_filters" : true,
-    "filters":[
-        "ch_fund"
-    ]
+    "filters":{
+        "ch_fund":{},
+        "contribution_status_id": {
+            "in": [
+                "1"
+            ]
+        }
+    }
 }

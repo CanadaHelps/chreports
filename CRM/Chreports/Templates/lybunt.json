@@ -56,32 +56,37 @@
         "campaign_id":{"selected" : true}
     },
     "use_default_filters" : false,
-    "filters":[
-        "sort_name",
-        "gender",
-        "birth_date",
-        "contact_type",
-        "contact_sub_type",
-        "is_deceased",
-        "do_not_phone",
-        "do_not_email",
-        "do_not_sms",
-        "do_not_mail",
-        "is_opt_out",
-        "on_hold",
-        "yid",
-        "financial_type_id",
-        "contribution_status_id",
-        "card_type_id",
-        "street_address",
-        "postal_code",
-        "city",
-        "postal_code",
-        "country_id",
-        "state_province_id",
-        "county_id",
-        "tagid",
-        "gid"
-    ],
+    "filters":{
+        "sort_name":{},
+        "gender":{},
+        "birth_date":{},
+        "contact_type":{},
+        "contact_sub_type":{},
+        "is_deceased":{},
+        "do_not_phone":{},
+        "do_not_email":{},
+        "do_not_sms":{},
+        "do_not_mail":{},
+        "is_opt_out":{},
+        "on_hold":{},
+        "yid": {
+            "calendar": 2023
+        },
+        "financial_type_id":{},
+        "contribution_status_id": {
+            "in": [
+                "1"
+            ]
+        },
+        "card_type_id":{},
+        "street_address":{},
+        "postal_code":{},
+        "city":{},
+        "country_id":{},
+        "state_province_id":{},
+        "county_id":{},
+        "tagid":{},
+        "gid":{}
+    },
     "groupByDisplay" : false
 }

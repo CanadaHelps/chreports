@@ -19,8 +19,13 @@
         
     },
     "use_default_filters" : true,
-    "filters":[
-        "gl_account"
-    ],
+    "filters":{
+        "gl_account":{},
+        "contribution_status_id": {
+            "in": [
+                "1"
+            ]
+        }
+    },
     "groupByDisplay" : false
 }
