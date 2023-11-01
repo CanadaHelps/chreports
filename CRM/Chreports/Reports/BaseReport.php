@@ -27,6 +27,8 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     protected $_orderByFieldsFrom = [];
     protected $_calculatedFields = [];
 
+    protected $_statisticsCalculatedFields = [];
+
     protected $_where = NULL;
     protected $_having = NULL;
     protected $_limit = NULL;
@@ -374,73 +376,73 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         $var = array_merge($var, $specificCols);
     }
 
-    public function setAddressField(&$var) {
-        return;
-        $addressCols = [
-            'civicrm_address' => [
-                'dao' => 'CRM_Core_DAO_Address',
-                'fields' => [
-                    'address_name' => [
-                        'title' => ts('Address Name'),
-                        'default' => FALSE,
-                        'name' => 'name',
-                    ],
-                'street_address' => [
-                    'title' => ts('Address'),
-                    'default' => FALSE,
-                ],
-                'supplemental_address_1' => [
-                    'title' => ts('Supplementary Address Field 1'),
-                    'default' => FALSE,
-                ],
-                'supplemental_address_2' => [
-                    'title' => ts('Supplementary Address Field 2'),
-                    'default' => FALSE,
-                ],
-                'supplemental_address_3' => [
-                    'title' => ts('Supplementary Address Field 3'),
-                    'default' => FALSE,
-                ],
-                'street_number' => [
-                    'title' => ts('Street Number'),
-                    'default' => FALSE,
-                ],
-                'street_name' => [
-                    'title' => ts('Street Name'),
-                    'default' => FALSE,
-                ],
-                'street_unit' => [
-                    'title' => ts('Street Unit'),
-                    'default' => FALSE,
-                ],
-                'city' => [
-                    'title' => 'City',
-                    'default' => FALSE,
-                ],
-                'state_province_id' => [
-                    'title' => 'Province',
-                    'default' => FALSE,
-                    'alter_display' => 'alterStateProvinceID',
-                ],
-                'postal_code' => [
-                    'title' => 'Postal Code',
-                    'default' => FALSE,
-                ],
-                'postal_code_suffix' => [
-                    'title' => 'Postal Code Suffix',
-                    'default' => FALSE,
-                ],
-                'country_id' => [
-                    'title' => 'Country',
-                    'default' => FALSE,
-                    'alter_display' => 'alterCountryID',
-                ],
-                ],
-                'grouping' => 'location-fields',
-            ],
-        ];
-        $var = array_merge($var, $addressCols);
-    }
+    // public function setAddressField(&$var) {
+    //     return;
+    //     $addressCols = [
+    //         'civicrm_address' => [
+    //             'dao' => 'CRM_Core_DAO_Address',
+    //             'fields' => [
+    //                 'address_name' => [
+    //                     'title' => ts('Address Name'),
+    //                     'default' => FALSE,
+    //                     'name' => 'name',
+    //                 ],
+    //             'street_address' => [
+    //                 'title' => ts('Address'),
+    //                 'default' => FALSE,
+    //             ],
+    //             'supplemental_address_1' => [
+    //                 'title' => ts('Supplementary Address Field 1'),
+    //                 'default' => FALSE,
+    //             ],
+    //             'supplemental_address_2' => [
+    //                 'title' => ts('Supplementary Address Field 2'),
+    //                 'default' => FALSE,
+    //             ],
+    //             'supplemental_address_3' => [
+    //                 'title' => ts('Supplementary Address Field 3'),
+    //                 'default' => FALSE,
+    //             ],
+    //             'street_number' => [
+    //                 'title' => ts('Street Number'),
+    //                 'default' => FALSE,
+    //             ],
+    //             'street_name' => [
+    //                 'title' => ts('Street Name'),
+    //                 'default' => FALSE,
+    //             ],
+    //             'street_unit' => [
+    //                 'title' => ts('Street Unit'),
+    //                 'default' => FALSE,
+    //             ],
+    //             'city' => [
+    //                 'title' => 'City',
+    //                 'default' => FALSE,
+    //             ],
+    //             'state_province_id' => [
+    //                 'title' => 'Province',
+    //                 'default' => FALSE,
+    //                 'alter_display' => 'alterStateProvinceID',
+    //             ],
+    //             'postal_code' => [
+    //                 'title' => 'Postal Code',
+    //                 'default' => FALSE,
+    //             ],
+    //             'postal_code_suffix' => [
+    //                 'title' => 'Postal Code Suffix',
+    //                 'default' => FALSE,
+    //             ],
+    //             'country_id' => [
+    //                 'title' => 'Country',
+    //                 'default' => FALSE,
+    //                 'alter_display' => 'alterCountryID',
+    //             ],
+    //             ],
+    //             'grouping' => 'location-fields',
+    //         ],
+    //     ];
+    //     $var = array_merge($var, $addressCols);
+    // }
     
     //get type of the report from settings
     public function getReportType(): string {
@@ -511,7 +513,15 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                 foreach ($entityData['filters'] as $fieldName => $field) {
                     if ( in_array($fieldName, $filterNames) ) {
                         //get all fieldinfo
-                        $field['dbAlias'] = $this->getEntityClauseFromField($fieldName, $field['operatorType'] == CRM_Report_Form::OP_MULTISELECT);
+                        //check if field name do not contain 'id' string and operator type is 'OP_MULTISELECT' add following
+                        //condition
+                        $fieldInfo = $this->getFieldInfo($fieldName);
+                        if( !preg_match('/_id$/', $fieldInfo['field_name']) )
+                        {
+                            $field['dbAlias'] = $this->getEntityClauseFromField($fieldName, $field['operatorType'] == CRM_Report_Form::OP_MULTISELECT);
+                        }else{
+                            $field['dbAlias'] = $this->getEntityClauseFromField($fieldName);
+                        }
                         $filters[$fieldName] = $field;
                     }
                 }
@@ -1464,18 +1474,31 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
             }
             $rows[] = $rollupTotalRow;
         }
+        $unassignedDataFields = [];
+        $reportType = $this->getReportType();
+        if(array_column($this->_params['order_bys'], 'section')) {
+        foreach($this->_params['order_bys'] as $orderbyColumnKey=>$orderbyColumnValue)
+        {
+            if($orderbyColumnValue['section'])
+            $unassignedDataFields[] = $orderbyColumnValue['column'];
+        }
+        if($reportType == 'summary')
+        $unassignedDataFields = array_filter(array_unique( array_merge($unassignedDataFields, array_keys($this->_columns))));
+        } else {
+            if($reportType == 'summary')
+            $unassignedDataFields = array_filter(array_unique( array_merge($unassignedDataFields, array_keys($this->_columns))));
+        }
         foreach ($rows as $rowNum => $row) {
             //CRM-2063 - Use "Unassigned" as value in summary/Detailed  reports for NULL values
             foreach($this->_columns as $key=>$value)
             {
-                if (array_key_exists($key, $row) )
+                if (array_key_exists($key, $row) && in_array($key,$unassignedDataFields))
                 {
                     $fieldNameKey = ($row[$key]!= NULL)? $row[$key] : 'Unassigned';
                     $rows[$rowNum][$key] = $fieldNameKey;
                     //create function to convert field name to link for detailed report for sort_name and total_amount field
-                    $this->fieldWithLink($key,$rows,$row,$rowNum);
                 }
-               
+                $this->fieldWithLink($key,$rows,$row,$rowNum);
             }
         }
         //change rows to display report results of monthly/yearly reports accordingly
@@ -1526,49 +1549,49 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
          $rows = $finalDisplay;
         }
       }
-      public function repeatcontributionStatistics(array $rows, bool $showDetailed = false): array {
-        $statistics = [];
+    //   public function repeatcontributionStatistics(array $rows, bool $showDetailed = false): array {
+    //     $statistics = [];
 
-        return $statistics;
-      }
+    //     return $statistics;
+    //   }
 
-      public function alterRepeatContributionStatistics(array $rows, bool $showDetailed = false): array {
-        $statistics = [];
-        if($this->isRepeatContributionReport())
-        {
-            $contriQuery = "COUNT(civicrm_contribution_primaryset.id)       as count,
-            SUM(civicrm_contribution_primaryset.total_amount)          as amount,
-            ROUND(AVG(SUM(civicrm_contribution_primaryset.total_amount)), 2)  as avg,
-            COUNT(civicrm_contribution_secondset.id)       as count2,
-            SUM(civicrm_contribution_secondset.total_amount)           as amount2,
-            ROUND(AVG(SUM(civicrm_contribution_secondset.total_amount)), 2)  as avg2, ".$this->_from.' '.$this->_where;
+    //   public function alterRepeatContributionStatistics(array $rows, bool $showDetailed = false): array {
+    //     $statistics = [];
+    //     if($this->isRepeatContributionReport())
+    //     {
+    //         $contriQuery = "COUNT(civicrm_contribution_primaryset.id)       as count,
+    //         SUM(civicrm_contribution_primaryset.total_amount)          as amount,
+    //         ROUND(AVG(SUM(civicrm_contribution_primaryset.total_amount)), 2)  as avg,
+    //         COUNT(civicrm_contribution_secondset.id)       as count2,
+    //         SUM(civicrm_contribution_secondset.total_amount)           as amount2,
+    //         ROUND(AVG(SUM(civicrm_contribution_secondset.total_amount)), 2)  as avg2, ".$this->_from.' '.$this->_where;
     
-            $contriSQL = "SELECT {$contriQuery} {$this->_groupBy}";
-            $contriDAO = CRM_Core_DAO::executeQuery($contriSQL);
-            $thisMonthAmount=$lastMonthAmount=[];
-            $count=0;
-            while ($contriDAO->fetch()) {
-                if(!empty($contriDAO->total_amount))
-                $thisMonthAmount[] += $contriDAO->total_amount;
-                if(!empty($contriDAO->total_amount))
-                $lastMonthAmount[] += $contriDAO->last_month_amount;
+    //         $contriSQL = "SELECT {$contriQuery} {$this->_groupBy}";
+    //         $contriDAO = CRM_Core_DAO::executeQuery($contriSQL);
+    //         $thisMonthAmount=$lastMonthAmount=[];
+    //         $count=0;
+    //         while ($contriDAO->fetch()) {
+    //             if(!empty($contriDAO->total_amount))
+    //             $thisMonthAmount[] += $contriDAO->total_amount;
+    //             if(!empty($contriDAO->total_amount))
+    //             $lastMonthAmount[] += $contriDAO->last_month_amount;
             
-            }
-            $statistics['counts']['total_amount'] = [
-                'title' => ts('This Month Total Amount'),
-                'value' => array_sum($thisMonthAmount),
-                'type' => CRM_Utils_Type::T_MONEY
-            ];
+    //         }
+    //         $statistics['counts']['total_amount'] = [
+    //             'title' => ts('This Month Total Amount'),
+    //             'value' => array_sum($thisMonthAmount),
+    //             'type' => CRM_Utils_Type::T_MONEY
+    //         ];
 
-            // total contribution count
-            $statistics['counts']['last_month_amount'] = [
-                'title' => ts('Last Month Total Amount'),
-                'value' => array_sum($lastMonthAmount),
-                'type' => CRM_Utils_Type::T_MONEY
-            ];
-            return $statistics;
-        }
-    }
+    //         // total contribution count
+    //         $statistics['counts']['last_month_amount'] = [
+    //             'title' => ts('Last Month Total Amount'),
+    //             'value' => array_sum($lastMonthAmount),
+    //             'type' => CRM_Utils_Type::T_MONEY
+    //         ];
+    //         return $statistics;
+    //     }
+    // }
     
     public function alterRecurringStatistics(array $rows, bool $showDetailed = false): array {
         $statistics = [];
@@ -1618,6 +1641,8 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
      */
     public function alterStatistics(array $rows, bool $showDetailed = false): array {
         $statistics = [];
+        $showRepeatContributionStats = false;
+        $showRecurringContributionStats = false;
 
         // Check if we have multiple currencies
         $groupByCurrency = false;
@@ -1644,6 +1669,33 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         $select[] = "SUM(".$this->getEntityTable($statEntity).".".$statTotalAmountField.") as total_amount";
         $select[] = $this->getEntityTable($statEntity).".currency as currency";
 
+        //Name report by report define select statement
+        if($this->getReportName() == 'repeat_contributions_detailed' || $this->getReportName() == 'recurring_contributions_summary')
+        {
+            if($this->getReportName() == 'repeat_contributions_detailed') {
+                $showRepeatContributionStats = true;
+                $range_one_statistics = $range_two_statistics = $range_one_avg =$range_two_avg = $range_one_total_contribution_count = $range_two_total_contribution_count =  [];
+            }
+            
+            if($this->getReportName() == 'recurring_contributions_summary') {
+                $showRecurringContributionStats = true;
+                $recurringContribThisMonthStats =  $recurringContribLastMonthStats = [];
+            }
+            
+    
+            foreach ($this->_statisticsCalculatedFields as $columnName => $row) {
+                if(COUNT($row['select'])>1) {
+                    foreach ($row['select'] as $aliasFieldRef => $selectCondition) {
+                        $select[] = $selectCondition.' as '.$aliasFieldRef; 
+                        if($columnName == $aliasFieldRef)
+                           $select[] = $selectCondition."  as avg_".$columnName;  
+                    }
+                    
+                }else{
+                    $select[] = $row['select'][$columnName].'as '.$columnName;
+                }
+            }           
+        }
         if ($showDetailed) {
             $select[] = "ROUND(AVG(".$this->getEntityTable('contribution').".`total_amount`), 2) as avg";
             $select[] = "SUM(".$this->getEntityTable('contribution').".fee_amount) as fee_amount";
@@ -1661,7 +1713,9 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         $currencies = $currAmount = $currCount = $totalAmount = [];
         $totalCount = 0;
 
-        $currFees = $currNet = $currAvg = $feeAmount = $netAmount = $avgAmount = [];
+        $currFees = $currNet = $currAvg = $feeAmount = $netAmount = $avgAmount = 
+        $repeatContributionInitialtotalAmount = $repeatContributionSecondtotalAmount = $repeatContributionInitialavgAmount =
+        $repeatContributionSecondavgAmount = $recurContributionThisMonthAmount = $recurContributionLastMonthAmount = [];
 
         while ($dao->fetch()) {
         
@@ -1688,6 +1742,37 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                 $currNet[$dao->currency] += $dao->net;
                 $currAvg[$dao->currency] += $dao->avg;
             }
+
+            if($showRecurringContributionStats)
+            {
+                if($dao->recurring_contribution_total_amount)
+                $recurringContribThisMonthStats[$dao->currency] += $dao->recurring_contribution_total_amount;
+
+                if($dao->last_month_amount)
+                $recurringContribLastMonthStats[$dao->currency] += $dao->last_month_amount;
+
+            }
+            if ($showRepeatContributionStats) {
+
+                //defining range one and two statistics, total contribution count and avg based upon currency
+                if($dao->range_one_stat)
+                $range_one_statistics[$dao->currency] += $dao->range_one_stat;
+
+                if($dao->avg_range_one_stat)
+                $range_one_avg[$dao->currency] += $dao->avg_range_one_stat;
+
+                if($dao->primary_total_contribution_count)
+                $range_one_total_contribution_count[$dao->currency] += $dao->primary_total_contribution_count;
+
+                if($dao->range_two_stat)
+                $range_two_statistics[$dao->currency] += $dao->range_two_stat;
+
+                if($dao->avg_range_two_stat)
+                $range_two_avg[$dao->currency] += $dao->avg_range_two_stat;
+
+                if($dao->second_total_contribution_count)
+                $range_two_total_contribution_count[$dao->currency] += $dao->second_total_contribution_count;
+            }
         }
 
         foreach ($currencies as $currency) {
@@ -1702,6 +1787,28 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                 $netAmount[]    = CRM_Utils_Money::format($currNet[$currency], $currency) . $currencyCountText;
                 $predetermine   = ($currAvg[$currency]/$currCount[$currency]);
                 $avgAmount[]    = CRM_Utils_Money::format($predetermine, $currency) .$currencyCountText;
+            }
+
+            if($showRecurringContributionStats) {
+               $recurContributionThisMonthAmount[]    = CRM_Utils_Money::format($recurringContribThisMonthStats[$currency], $currency) ;
+               $recurContributionLastMonthAmount[]    = CRM_Utils_Money::format($recurringContribLastMonthStats[$currency], $currency) ;
+            }
+
+            if ($showRepeatContributionStats) {
+                $currencyCountText = " (" . $range_one_total_contribution_count[$currency] . ") (".$currency.")";    
+                $currencyCountText2 = " (" . $range_two_total_contribution_count[$currency] . ") (".$currency.")";    
+                $repeatContributionInitialtotalAmount[]    = CRM_Utils_Money::format($range_one_statistics[$currency], $currency) . $currencyCountText;
+                $repeatContributionSecondtotalAmount[]    = CRM_Utils_Money::format($range_two_statistics[$currency], $currency) . $currencyCountText2;
+                if($range_one_avg[$currency] && $range_one_total_contribution_count[$currency])
+                {
+                    $predetermineRepeatContrib1   = ($range_one_avg[$currency]/$range_one_total_contribution_count[$currency]);
+                    $repeatContributionInitialavgAmount[]    = CRM_Utils_Money::format($predetermineRepeatContrib1, $currency) .$currencyCountText;
+                }
+                if($range_two_avg[$currency] && $range_two_total_contribution_count[$currency])
+                {
+                    $predetermineRepeatContrib2   = ($range_two_avg[$currency]/$range_two_total_contribution_count[$currency]);
+                    $repeatContributionSecondavgAmount[]    = CRM_Utils_Money::format($predetermineRepeatContrib2, $currency) .$currencyCountText2;
+                }        
             }
         }
         // total amount
@@ -1740,6 +1847,79 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
             ];
         }
 
+        if($showRecurringContributionStats) {
+            unset($statistics['counts']['amount']);
+            unset($statistics['counts']['count']);
+            if(count($recurringContribThisMonthStats) > 0){
+                $statistics['counts']['recurring_contribution_total_amount'] = [
+                    'title' => $this->_statisticsCalculatedFields['recurring_contribution_total_amount']['title'],
+                    'value' => implode(',  ', $recurContributionThisMonthAmount),
+                    'type' => CRM_Utils_Type::T_MONEY,
+                ];
+            }   
+            if(count($recurringContribLastMonthStats) > 0){
+                $statistics['counts']['last_month_amount'] = [
+                    'title' => $this->_statisticsCalculatedFields['last_month_amount']['title'],
+                    'value' => implode(',  ', $recurContributionLastMonthAmount),
+                    'type' => CRM_Utils_Type::T_MONEY,
+                ];
+            }   
+        }
+
+        if ($showRepeatContributionStats) {
+            unset($statistics['counts']['amount']);
+            unset($statistics['counts']['count']);
+            $statistics['counts']['range_one_title'] = array('title' => ts('Initial Date Range:'));
+            if(count($range_one_statistics) > 0){
+                $statistics['counts']['range_one_stat'] = [
+                    'title' => ts('Total Amount'),
+                    'value' => implode(',  ', $repeatContributionInitialtotalAmount),
+                    'type' => CRM_Utils_Type::T_MONEY,
+                ];
+            }   
+
+            if(count($range_one_total_contribution_count) > 0){
+                $statistics['counts']['primary_total_contribution_count'] = [
+                    'title' =>ts('Total Donations'),
+                    'value' => $range_one_total_contribution_count[$currency]
+                ];
+            }
+
+            if(count($range_one_avg) > 0){
+                $statistics['counts']['avg_range_one_stat'] = [
+                    'title' => 'Average',
+                    'value' => implode(',  ', $repeatContributionInitialavgAmount),
+                    'type' => CRM_Utils_Type::T_MONEY,
+                ];
+            }
+
+            $statistics['counts']['range_two_title'] = array(
+                'title' => ts('Second Date Range:'),
+              );
+
+            if(count($range_two_statistics) > 0){
+                $statistics['counts']['range_two_stat'] = [
+                    'title' => ts('Total Amount'),
+                    'value' => implode(',  ', $repeatContributionSecondtotalAmount),
+                    'type' => CRM_Utils_Type::T_MONEY,
+                ];
+            }
+
+            if(count($range_two_total_contribution_count) > 0){
+                $statistics['counts']['second_total_contribution_count'] = [
+                    'title' =>ts('Total Donations'),
+                    'value' => $range_two_total_contribution_count[$currency]
+                ];
+            }      
+            
+            if(count($range_two_avg) > 0){
+                $statistics['counts']['avg_range_two_stat'] = [
+                    'title' => 'Average',
+                    'value' => implode(',  ', $repeatContributionSecondavgAmount),
+                    'type' => CRM_Utils_Type::T_MONEY,
+                ];
+            }
+        }
         return $statistics;
     }
 
@@ -2059,6 +2239,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         $isCalculatedField = isset($fieldInfo['calculated_field']) && $fieldInfo['calculated_field'] === true;
         $entityTable = $fieldInfo['table_alias'] ?? $this->getEntityTableFromField($fieldName);
         $entityField = ($forceId) ? 'id' : $this->getEntityField($fieldName);
+        //$entityField =  $this->getEntityField($fieldName);
         //don't include entity table for calculated fields as they don't belong to any entity
         $entityClauseStatement = ($isCalculatedField) ? $this->getCalculatedFieldStatement($fieldName) : $entityTable.'.'.$entityField ;
            
@@ -2151,13 +2332,75 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                     break;
 
                 case 'range_one_stat':
-                    $from[] = "LEFT JOIN ".$this->getEntityTable('contribution')." as civicrm_contribution_primaryset ON ".$this->getEntityTable('contribution').".id = civicrm_contribution_primaryset.id";
-                    $alreadyIncluded = true;
-                    break;
                 case 'range_two_stat':
-                    $from[] = "LEFT JOIN ".$this->getEntityTable('contribution')." as civicrm_contribution_secondset  ON ".$this->getEntityTable('contribution').".id = civicrm_contribution_secondset.id";
+                    if($fieldName === 'range_one_stat')
+                    {
+                        $aliasTableName = 'civicrm_contribution_primaryset';
+                        $filterFieldName = 'repeat_contri_initial_date_range';
+                    }
+                    if($fieldName === 'range_two_stat')
+                    {
+                        $aliasTableName = 'civicrm_contribution_secondset';
+                        $filterFieldName = 'repeat_contri_second_date_range';
+                    }
+                    $from[] = "LEFT JOIN ".$this->getEntityTable('contribution')." as ".$aliasTableName." ON ".$this->getEntityTable('contribution').".id = civicrm_contribution_primaryset.id";
+                    if (in_array($filterFieldName,$this->getFieldNamesForFilters())){
+                        if($this->_params[$filterFieldName.'_relative'])
+                        $relative = $this->_params[$filterFieldName.'_relative'];
+                        if($this->_params[$filterFieldName.'_from'])
+                        $from = $this->_params[$filterFieldName.'_from'];
+                        if($this->_params[$filterFieldName.'_to'])
+                        $to = $this->_params[$filterFieldName.'_to'];
+                        $intialFilterDateRange = CRM_Utils_Date::getFromTo($relative, $from, $to);
+                        $firstDateRange = $intialFilterDateRange[0];
+                        $secondDateRange = $intialFilterDateRange[1];
+                        if(isset($firstDateRange) && isset($secondDateRange))
+                        $from[] = "AND ( ".$aliasTableName.".receive_date >= ".$firstDateRange.") 
+                        AND ( ".$aliasTableName.".receive_date <= ".$secondDateRange.")";
+                    }
                     $alreadyIncluded = true;
+                    $this->_fromEntity[] = $aliasTableName;
                     break;
+                // case 'range_one_stat':
+                //     $from[] = "LEFT JOIN ".$this->getEntityTable('contribution')." as civicrm_contribution_primaryset ON ".$this->getEntityTable('contribution').".id = civicrm_contribution_primaryset.id";
+                //     $filterFieldName = 'repeat_contri_initial_date_range';
+                //     if (in_array($filterFieldName,$this->getFieldNamesForFilters())){
+                //         if($this->_params[$filterFieldName.'_relative'])
+                //         $relative = $this->_params[$filterFieldName.'_relative'];
+                //         if($this->_params[$filterFieldName.'_from'])
+                //         $from = $this->_params[$filterFieldName.'_from'];
+                //         if($this->_params[$filterFieldName.'_to'])
+                //         $to = $this->_params[$filterFieldName.'_to'];
+                //         $intialFilterDateRange = CRM_Utils_Date::getFromTo($relative, $from, $to);
+                //         $firstDateRange = $intialFilterDateRange[0];
+                //         $secondDateRange = $intialFilterDateRange[1];
+                //         if(isset($firstDateRange) && isset($secondDateRange))
+                //         $from[] = "AND ( civicrm_contribution_primaryset.receive_date >= ".$firstDateRange.") 
+                //         AND ( civicrm_contribution_primaryset.receive_date <= ".$secondDateRange.")";
+                //     }
+                //     $alreadyIncluded = true;
+                //     $this->_fromEntity[] = 'civicrm_contribution_primaryset';
+                //     break;
+                // case 'range_two_stat':
+                //     $from[] = "LEFT JOIN ".$this->getEntityTable('contribution')." as civicrm_contribution_secondset  ON ".$this->getEntityTable('contribution').".id = civicrm_contribution_secondset.id";
+                //     $filterFieldName = 'repeat_contri_second_date_range';
+                //     if (in_array($filterFieldName,$this->getFieldNamesForFilters())){
+                //         if($this->_params[$filterFieldName.'_relative'])
+                //         $relative = $this->_params[$filterFieldName.'_relative'];
+                //         if($this->_params[$filterFieldName.'_from'])
+                //         $from = $this->_params[$filterFieldName.'_from'];
+                //         if($this->_params[$filterFieldName.'_to'])
+                //         $to = $this->_params[$filterFieldName.'_to'];
+                //         $intialFilterDateRange = CRM_Utils_Date::getFromTo($relative, $from, $to);
+                //         $firstDateRange = $intialFilterDateRange[0];
+                //         $secondDateRange = $intialFilterDateRange[1];
+                //         if(isset($firstDateRange) && isset($secondDateRange))
+                //         $from[] = "AND ( civicrm_contribution_secondset.receive_date >= ".$firstDateRange.") 
+                //         AND ( civicrm_contribution_secondset.receive_date <= ".$secondDateRange.")";
+                //     }
+                //     $alreadyIncluded = true;
+                //     $this->_fromEntity[] = 'civicrm_contribution_secondset';
+                //     break;
 
                 case ($entityName === 'civicrm_batch'):
                     if (!$alreadyIncluded) {
@@ -2260,6 +2503,13 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                 
                 // contribution and other entity fields
                 } else {
+                    // echo '<pre>entity name';print_r($this->_fromEntity);echo '</pre>';
+                    // echo '<pre>entity name';print_r($entityName);echo '</pre>';
+                    // echo '<pre>actual table';print_r($actualTable);echo '</pre>';
+                    if(!in_array($entityName,$this->_fromEntity))
+                    {
+
+                    
                     $joinFieldName = ( preg_match('/_id$/', $fieldInfo['join_field_name']) ) ? 'id' : $this->getEntityField($fieldName);    
                     $from[] = "LEFT JOIN $entityName as $actualTable ON $actualTable." . $joinFieldName . " = " . $this->getEntityTable($fieldInfo['join_entity']) . "." . $fieldInfo['join_field_name'];
                     
@@ -2267,6 +2517,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                         $from[] = "AND " . $fieldInfo['join_extra'];
                     }
                     $entityName = $actualTable; // so that we don;t include twice, but still include others with a different alias
+                    }
                    // echo '<pre>saved entity';print_r($entityName);echo '</pre>';
                 }
                 $this->_fromEntity[] = ($groupName !== NULL)? $groupName : $entityName;

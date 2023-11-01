@@ -61,7 +61,21 @@
         "range_one_stat",
         "range_two_stat",
         "repeat_contri_initial_date_range",
-        "repeat_contri_second_date_range"
+        "repeat_contri_second_date_range",
+        "contribution_status_id"
     ],
-    "groupByDisplay" : false
+    "groupByDisplay" : false,
+    "preset_filter_values": {
+        "repeat_contri_initial_date_range": {
+            "relative": "previous.year"
+        },
+        "repeat_contri_second_date_range": {
+            "relative": "this.year"
+        },
+        "contribution_status_id": {
+            "in": [
+                "1"
+            ]
+        }
+    }
 }
