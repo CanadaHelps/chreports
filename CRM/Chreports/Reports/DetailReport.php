@@ -200,15 +200,10 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
       $this->_columnHeaders['total_lifetime_contributions']['title'] = $fieldInfo['title'];
       $this->_columnHeaders['total_lifetime_contributions']['type'] = $this->getFilterType('total_lifetime_contributions')['type'];
 
-      $fieldInfo = $this->getFieldInfo('Amount_of_last_contribution');
-      $select[] = $this->getCommonSelectClause('Amount_of_last_contribution') ." AS Amount_of_last_contribution";
-      $this->_columnHeaders['Amount_of_last_contribution']['title'] = $fieldInfo['title'];
-      $this->_columnHeaders['Amount_of_last_contribution']['type'] = $this->getFilterType('Amount_of_last_contribution')['type'];
-
-      // $columnName = E::getColumnNameByName('Amount_of_last_contribution');
-      // $select[] = $customTablename.".".$columnName." AS Amount_of_last_contribution";
-      // $this->_columnHeaders['Amount_of_last_contribution']['title'] = 'Amount of last contribution';
-      // $this->_columnHeaders['Amount_of_last_contribution']['type'] = CRM_Utils_Type::T_MONEY;
+      $fieldInfo = $this->getFieldInfo('amount_of_last_contribution');
+      $select[] = $this->getCommonSelectClause('amount_of_last_contribution') ." AS amount_of_last_contribution";
+      $this->_columnHeaders['amount_of_last_contribution']['title'] = $fieldInfo['title'];
+      $this->_columnHeaders['amount_of_last_contribution']['type'] = $this->getFilterType('amount_of_last_contribution')['type'];
 
       $select[] = "GROUP_CONCAT(DISTINCT ".$this->getEntityTable('contribution').".currency) AS currency";
       $this->_columnHeaders['currency']['title'] = 'Currency';

@@ -31,18 +31,20 @@
         "state_province_id": {},
         "county_id": {},
         "card_type_id": {},
-        "total_amount": {"default" : true}
+        "total_lifetime_contributions": {"default" : true}
     },
     "use_default_filters" : false,
     "filters":{
         "receive_date":{},
         "receipt_date":{},
-        "total_range":{},
         "financial_type_id":{},
         "contribution_status_id": {
             "in": [
                 "1"
             ]
+        },
+        "total_range": {
+            "eq": 20
         },
         "financial_account":{},
         "card_type_id":{},

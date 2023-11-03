@@ -707,9 +707,7 @@
     "total_range": {
         "title": "Show no. of Top Donors",
         "field_name": "total_range",
-        "field_type": "int",
-        "options": true,
-        "default_op": "eq"
+        "field_type": "int"
     },
     "membership_id": {
         "title": "GL Account Name - Credit",
