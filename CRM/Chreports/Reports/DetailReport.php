@@ -154,8 +154,7 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
         $this->_columnHeaders['count']['title'] = 'contribution_id';
         $this->_columnHeaders['count']['type'] = CRM_Utils_Type::T_INT;
         //get sg_flag_38 custom field table and value;
-         $customTablename = EU::getTableNameByName('Contribution_Details');
-         $columnName = E::getColumnNameByName('SG_Flag');
+        list($customTablename,$columnName) = $this->getCustomTableNameColumnName('SG_Flag');
 
        // die('test');
         $select[] = "IF(".$this->getEntityTable('contribution').".contribution_recur_id IS NOT NULL, 1, IF(".$customTablename.".".$columnName." IS NOT NULL, 1, 0)) as is_recurring";
@@ -549,8 +548,7 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
       // }
       //temporary commented code ends
       if(parent::isRecurringContributionReport()){
-        $tablename = E::getTableNameByName('Contribution_Details');
-        $columnName = E::getColumnNameByName('SG_Flag');
+        list($tablename,$columnName) = $this->getCustomTableNameColumnName('SG_Flag');
         $from[] = " LEFT JOIN {$tablename} ON {$tablename}.entity_id =  ".$this->getEntityTable('contribution').".id 
         AND ".$tablename.".".$columnName." = 1";
       }
