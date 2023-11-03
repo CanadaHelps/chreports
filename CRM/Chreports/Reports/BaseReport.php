@@ -235,11 +235,11 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         return $this->_pagination;
     }
     //manage limit from extendedClasses
-    public function getLimit(): string {
+    public function getLimit() {
         return $this->_limit;
     }
      // manage columns from extendedSummary
-     public function setLimit(string $limit) {
+     public function setLimit( $limit = NULL) {
         $this->_limit = $limit;
     }
 
@@ -2246,8 +2246,8 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                 
                 // contribution and other entity fields
                 } else {
-                    
-                    if(!in_array($entityName,$this->_fromEntity))
+                    $recheckEntityName = $fieldInfo['table_alias'] ?? $entityName;
+                    if(!in_array($recheckEntityName,$this->_fromEntity))
                     {
 
                     
