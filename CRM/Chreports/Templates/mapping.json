@@ -640,19 +640,13 @@
         "title": "Initial Date Range",
         "field_name": "receive_date",
         "entity": "contribution",
-        "field_type": "Datetime",
-        "default" : "previous.year",
-        "table_alias": "civicrm_contribution",
-        "select_name":"receive_date"
+        "field_type": "Datetime"
     },
     "repeat_contri_second_date_range": {
         "title": "Second Date Range",
         "field_name": "receive_date",
         "entity": "contribution",
-        "field_type": "Datetime",
-        "default" : "this.year",
-        "table_alias": "civicrm_contribution",
-        "select_name":"receive_date"
+        "field_type": "Datetime"
     },
     "range_amount_one": {
         "title": "Range One Amount",

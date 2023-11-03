@@ -21,30 +21,28 @@
     },
     "use_default_filters" : false,
     "filters":{
+        "sort_name": {},
+        "first_name": {},
+        "last_name": {},
+        "tagid":{},
+        "gid":{},
         "receive_date":{},
         "receipt_date":{},
+        "contribution_source":{},
+        "non_deductible_amount":{},
+        "financial_type_id":{},
+        "contribution_page_id":{},
+        "campaign_id":{},
+        "total_amount":{},
         "contribution_status_id": {
             "in": [
                 "1"
             ]
         },
-        "contribution_page_id":{},
-        "financial_type_id":{},
-        "contribution_recur_id":{},
-        "total_amount":{},
-        "non_deductible_amount":{},
-        "total_sum":{},
-        "total_count":{},
-        "campaign_id":{},
-        "batch_id":{},
-        "amount":{},
-        "tagid":{},
-        "gid":{},
-        "total_avg":{},
-        "contribution_source":{},
         "payment_instrument_id":{},
         "campaign_type":{},
-        "ch_fund":{}
+        "ch_fund":{},
+        "batch_id":{}
     },
     "groupByDisplay" : false
 }

@@ -31,7 +31,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     protected $_statisticsCalculatedFields = [];
 
     protected $_where = NULL;
-    protected $_having = NULL;
+    protected $_having = [];
     protected $_limit = NULL;
    
     public $_filters = NULL;
@@ -525,7 +525,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                         //check if field name do not contain 'id' string and operator type is 'OP_MULTISELECT' add following
                         //condition
                         $fieldInfo = $this->getFieldInfo($fieldName);
-                        if( !preg_match('/_id$/', $fieldInfo['field_name']) )
+                        if( !preg_match('/_id$/', $fieldInfo['field_name']) && isset($fieldInfo['table_alias']))
                         {
                             $field['dbAlias'] = $this->getEntityClauseFromField($fieldName, $field['operatorType'] == CRM_Report_Form::OP_MULTISELECT);
                         }else{
@@ -2026,6 +2026,26 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         return $fieldName;
     }
 
+     /**
+     * 
+     * Returns Custom field Table Name and Custom Column Name 
+     *
+     * @param string $fieldName  Name of the field
+     * @return array
+     */
+    public function getCustomTableNameColumnName($fieldName): array {
+        $customField = \Civi\Api4\CustomField::get()
+      ->addSelect('name', 'column_name', 'custom_group_id:name', 'custom_group_id.table_name')
+      ->addWhere('name', '=', $fieldName)
+      ->execute()
+      ->first();
+      if(isset($customField) && !empty($customField['custom_group_id.table_name']) && !empty($customField['column_name']))
+      {
+        return [$customField['custom_group_id.table_name'],$customField['column_name']];
+      }
+      return [];
+    }
+
     //to be removed
     //get group name name using fieldName 
     public function getGroupNameField($fieldName) {
@@ -2124,46 +2144,6 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                     $alreadyIncluded = true;
                     $this->_fromEntity[] = $aliasTableName;
                     break;
-                // case 'range_one_stat':
-                //     $from[] = "LEFT JOIN ".$this->getEntityTable('contribution')." as civicrm_contribution_primaryset ON ".$this->getEntityTable('contribution').".id = civicrm_contribution_primaryset.id";
-                //     $filterFieldName = 'repeat_contri_initial_date_range';
-                //     if (in_array($filterFieldName,$this->getFieldNamesForFilters())){
-                //         if($this->_params[$filterFieldName.'_relative'])
-                //         $relative = $this->_params[$filterFieldName.'_relative'];
-                //         if($this->_params[$filterFieldName.'_from'])
-                //         $from = $this->_params[$filterFieldName.'_from'];
-                //         if($this->_params[$filterFieldName.'_to'])
-                //         $to = $this->_params[$filterFieldName.'_to'];
-                //         $intialFilterDateRange = CRM_Utils_Date::getFromTo($relative, $from, $to);
-                //         $firstDateRange = $intialFilterDateRange[0];
-                //         $secondDateRange = $intialFilterDateRange[1];
-                //         if(isset($firstDateRange) && isset($secondDateRange))
-                //         $from[] = "AND ( civicrm_contribution_primaryset.receive_date >= ".$firstDateRange.") 
-                //         AND ( civicrm_contribution_primaryset.receive_date <= ".$secondDateRange.")";
-                //     }
-                //     $alreadyIncluded = true;
-                //     $this->_fromEntity[] = 'civicrm_contribution_primaryset';
-                //     break;
-                // case 'range_two_stat':
-                //     $from[] = "LEFT JOIN ".$this->getEntityTable('contribution')." as civicrm_contribution_secondset  ON ".$this->getEntityTable('contribution').".id = civicrm_contribution_secondset.id";
-                //     $filterFieldName = 'repeat_contri_second_date_range';
-                //     if (in_array($filterFieldName,$this->getFieldNamesForFilters())){
-                //         if($this->_params[$filterFieldName.'_relative'])
-                //         $relative = $this->_params[$filterFieldName.'_relative'];
-                //         if($this->_params[$filterFieldName.'_from'])
-                //         $from = $this->_params[$filterFieldName.'_from'];
-                //         if($this->_params[$filterFieldName.'_to'])
-                //         $to = $this->_params[$filterFieldName.'_to'];
-                //         $intialFilterDateRange = CRM_Utils_Date::getFromTo($relative, $from, $to);
-                //         $firstDateRange = $intialFilterDateRange[0];
-                //         $secondDateRange = $intialFilterDateRange[1];
-                //         if(isset($firstDateRange) && isset($secondDateRange))
-                //         $from[] = "AND ( civicrm_contribution_secondset.receive_date >= ".$firstDateRange.") 
-                //         AND ( civicrm_contribution_secondset.receive_date <= ".$secondDateRange.")";
-                //     }
-                //     $alreadyIncluded = true;
-                //     $this->_fromEntity[] = 'civicrm_contribution_secondset';
-                //     break;
 
                 case ($entityName === 'civicrm_batch'):
                     if (!$alreadyIncluded) {
