@@ -205,6 +205,11 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
       $this->_columnHeaders['amount_of_last_contribution']['title'] = $fieldInfo['title'];
       $this->_columnHeaders['amount_of_last_contribution']['type'] = $this->getFilterType('amount_of_last_contribution')['type'];
 
+      // $columnName = E::getColumnNameByName('Amount_of_last_contribution');
+      // $select[] = $customTablename.".".$columnName." AS Amount_of_last_contribution";
+      // $this->_columnHeaders['Amount_of_last_contribution']['title'] = 'Amount of last contribution';
+      // $this->_columnHeaders['Amount_of_last_contribution']['type'] = CRM_Utils_Type::T_MONEY;
+
       $select[] = "GROUP_CONCAT(DISTINCT ".$this->getEntityTable('contribution').".currency) AS currency";
       $this->_columnHeaders['currency']['title'] = 'Currency';
       $this->_columnHeaders['currency']['type'] = CRM_Utils_Type::T_STRING;

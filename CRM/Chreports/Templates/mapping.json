@@ -97,7 +97,9 @@
         "field_name": "id",
         "options": true,
         "field_type": "int",
-        "select_option": ["id","title"]
+        "select_option": ["id","title"],
+        "join_field_name":"group_id",
+        "join_entity":"group_contact"
     },
     "payment_instrument_id":{
         "title": "Payment Method",
@@ -115,7 +117,9 @@
         "entity": "financial_trxn",
         "field_name": "trxn_date",
         "field_type": "Datetime",
-        "select_name": "trxn_date"
+        "select_name": "trxn_date",
+        "join_entity": "entity_financial_trxn",
+        "join_field_name": "financial_trxn_id" 
     },
      "card_type_id": {
         "title": "Credit Card Type",
@@ -254,7 +258,7 @@
         "field_name": "contact_type",
         "entity": "contact",
         "options": true,
-        "field_type": "int",
+        "field_type": "string",
         "select_option": ["contact_type"]
     },
     "contact_sub_type": {
@@ -721,7 +725,7 @@
         "table_alias": "financial_account_credit",
         "options": true,
         "field_type": "string",
-        "select_option": ["name","name"],
+        "select_option": ["id","name"],
         "join_entity": "financial_trxn",
         "join_field_name": "from_financial_account_id" 
     },
@@ -732,7 +736,7 @@
         "table_alias": "financial_account_debit",
         "options": true,
         "field_type": "string",
-        "select_option": ["name","name"],
+        "select_option": ["id","name"],
         "join_entity": "financial_trxn",
         "join_field_name": "to_financial_account_id" 
     },
