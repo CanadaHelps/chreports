@@ -520,7 +520,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         foreach ($this->getAllFieldsMapping() as $entityTable => $entityData) {
             if (array_key_exists('filters', $entityData)) {
                 foreach ($entityData['filters'] as $fieldName => $field) {
-                    if ( in_array($fieldName, $filterNames) ) {
+                    if ( in_array($fieldName, $filterNames) ) {                                                                                                                                                                                                                                                           
                         //get all fieldinfo
                         //check if field name do not contain 'id' string and operator type is 'OP_MULTISELECT' add following
                         //condition
@@ -1449,8 +1449,8 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                 $currAvg[$dao->currency]    = $currAvg[$dao->currency]      ?? 0;
             
                 //defining currency fees,Net and avg based upon currency
-                $currFees[$dao->currency] += $dao->fees;
-                $currNet[$dao->currency] += $dao->net;
+                $currFees[$dao->currency] += $dao->fee_amount;
+                $currNet[$dao->currency] += $dao->net_amount;
                 $currAvg[$dao->currency] += $dao->avg;
             }
 
@@ -2157,10 +2157,24 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                     }
                     
                     break;
+                //prerequisite group join
+                case ($entityName === 'civicrm_group'):
+                    if (!$alreadyIncluded) {
+                        $from[] = "LEFT JOIN ".$this->getEntityTable($fieldInfo['join_entity']).
+                            " ON  ".$this->getEntityTable($fieldInfo['join_entity']).".contact_id = ".$this->getEntityTable('contact').".id";
+                    
+                        $from[] = $this->getSQLJoinForField($fieldInfo['join_field_name'], $entityName, $this->getEntityTable($fieldInfo['join_entity']),'id');
+                        $from[] = "AND ".$this->getEntityTable($fieldInfo['join_entity']).".status = 'Added'";
+                        $this->_fromEntity[] = $entityName;
+                        $alreadyIncluded = true;
+                    }
+                        
+                        break;
             }
 
             // adding financial_account_debit / credit
-            if ( $fieldInfo['entity'] == "financial_account" || 
+            //Adding aditional condition for  "financial_trxn"  entity
+            if ( $fieldInfo['entity'] == "financial_account" || $fieldInfo['entity'] == "financial_trxn" ||
                 (($fieldInfo['join_entity'] == "financial_account_debit" || $fieldInfo['join_entity'] == "financial_account_credit") 
                     && !in_array($fieldInfo['join_entity'],$this->_fromEntity)) || $fieldInfo['join_entity'] == "address") {
 
@@ -2181,21 +2195,25 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                 }
 
                 // adding financial_account joins
-                if ( !in_array("financial_account_debit",$this->_fromEntity) && !in_array("financial_account_credit",$this->_fromEntity) ) {
+                if($fieldInfo['join_entity'] == "financial_account_debit" || $fieldInfo['join_entity'] == "financial_account_credit")
+                {
+                    if ( !in_array("financial_account_debit",$this->_fromEntity) && !in_array("financial_account_credit",$this->_fromEntity) ) {
         
-                    $prerequisiteTable = "financial_account";
-
-                    $from[] = "LEFT JOIN ".$this->getEntityTable($prerequisiteTable)." as financial_account_debit".
-                        " ON financial_account_debit.id = ".$this->getEntityTable('financial_trxn').".to_financial_account_id";
-                    $from[] = "LEFT JOIN ".$this->getEntityTable($prerequisiteTable)." as financial_account_credit".
-                        " ON financial_account_credit.id = ".$this->getEntityTable('financial_trxn').".from_financial_account_id";
-                            
-                    $this->_fromEntity[] = "financial_account_debit";
-                    $this->_fromEntity[] = "financial_account_credit";
-
+                        $prerequisiteTable = "financial_account";
+    
+                        $from[] = "LEFT JOIN ".$this->getEntityTable($prerequisiteTable)." as financial_account_debit".
+                            " ON financial_account_debit.id = ".$this->getEntityTable('financial_trxn').".to_financial_account_id";
+                        $from[] = "LEFT JOIN ".$this->getEntityTable($prerequisiteTable)." as financial_account_credit".
+                            " ON financial_account_credit.id = ".$this->getEntityTable('financial_trxn').".from_financial_account_id";
+                                
+                        $this->_fromEntity[] = "financial_account_debit";
+                        $this->_fromEntity[] = "financial_account_credit";
+    
+                        
                     
-                
+                    }
                 }
+                
 
                 //Adding predefine address joins for join_entity
                 if ($fieldInfo['join_entity'] == "address" && !in_array($this->getEntityTable($fieldInfo['entity']),$this->_fromEntity)) {

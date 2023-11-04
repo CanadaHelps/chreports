@@ -63,6 +63,11 @@
                 "1"
             ]
         },
+        "financial_trxn_status_id": {
+            "in": [
+                "1"
+            ]
+        },
         "card_type_id":{}
     },
     "groupByDisplay" : false
