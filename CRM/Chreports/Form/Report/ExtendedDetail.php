@@ -119,7 +119,9 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
     
     // WHERE
     // requires access to form
-    $clauses = $this->buildWhereClause();
+    //check 'View Results' action is there or not
+    $isForce = ($var->getVar('_force') === 1)? true : false;
+    $clauses = $this->buildWhereClause($isForce);
     if (empty($clauses)) {
       $var->setVar('_where', "WHERE ( 1 ) ");
       $var->setVar('_having', "");
@@ -134,8 +136,6 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
       $var->setVar('_having', "HAVING " . implode(' AND ', $havingClause));
     }
 
-    //print_r($var->getVar('_limit'));
-    //print_r($var->getVar('_groupLimit'));
     $var->setVar('_limit', $this->_reportInstance->getLimit());
   }
   private function buildHavingClause(): array {
@@ -148,7 +148,7 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
     }
     return $havingclauses;
   }
-  private function buildWhereClause(): array {
+  private function buildWhereClause(bool $forceFilter): array {
     $clauses = [];
       
     if($this->_reportInstance->isRecurringContributionReport())
@@ -167,15 +167,17 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
     $clauses[] = $this->_reportInstance->getEntityTable('contact').'.is_deleted = 0';
     
     // Filters
-    // Create params from the default JSON config file
-    $this->_reportInstance->setDefaultFilterValues();
+    // forcefully apply default filter values to params only for 'View Results' action
+    if($forceFilter){
+      // Create params from the default JSON config file
+      $this->_reportInstance->setDefaultFilterValues();
 
-    // // Set the new filters (if applicable)
-    $this->_reportInstance->setFilters();
+      // // Set the new filters (if applicable)
+      $this->_reportInstance->setFilters();
 
-    // // This is done for the generateFilterClause() method to work
-    $this->_params = $this->_reportInstance->_params;
-
+      // // This is done for the generateFilterClause() method to work
+      $this->_params = $this->_reportInstance->_params;
+    }
 
     $removeIndividualCluase = false;
     if(!empty($this->_reportInstance->getFilters())){
