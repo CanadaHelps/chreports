@@ -218,7 +218,7 @@ class CRM_Chreports_Reports_ReportConfiguration {
             
             switch ($fieldName) {
                 case "on_hold":
-                    $options = ['' => ts('Any')] + CRM_Core_PseudoConstant::emailOnHoldOptions();
+                    $options = CRM_Core_PseudoConstant::emailOnHoldOptions();
                     break;
                 case "yid":
                     $yearsInPast = 10;
