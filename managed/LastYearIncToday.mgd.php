@@ -8,7 +8,7 @@ return array(
     'params' => array(
       'version' => 3,
       'report_id' => 'chreports/contrib_period_detailed',
-      'title' => ts('Last Year inc. Today'),
+      'title' => ts('Last 12 months (Quarterly)'),
       'name' => 'contrib_quarterly_past_year',
       "description" => "Total amounts raised last calendar year by quarters",
       'permission' => 'access CiviReport',
