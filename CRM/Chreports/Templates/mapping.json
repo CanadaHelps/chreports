@@ -826,7 +826,8 @@
         "select_option": ["value","label"],
         "custom_fieldName": "Fund",
         "join_field_name":"id",
-        "join_entity":"contribution"
+        "join_entity":"contribution",
+        "select_name": "option_value"
     },
     "campaign_type": {
         "title": "Campaign Type",

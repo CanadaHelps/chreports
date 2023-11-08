@@ -467,6 +467,229 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
     return TRUE;
   }
 
+  public function upgrade_2301() {
+
+    $this->ctx->log->info('Change template id in option_value table');
+
+    $templateParams = [
+      [
+        'report_id'=>'chreports/contrib_detailed',
+        'name'=>'CRM_Chreports_Form_Report_ExtendedDetail',
+        'label' => 'Extended Contribution Detail',
+        'component' => 'CiviContribute',
+        'weight' => 103
+      ],
+      [
+        'report_id'=>'chreports/sybunt',
+        'name'=>'CRM_Chreports_Form_Report_ExtendedDetail',
+        'label' => 'SYBUNT',
+        'component' => 'CiviContribute',
+        'weight' => 101
+      ],
+      [
+        'report_id'=>'chreports/contrib_summary',
+        'name'=>'CRM_Chreports_Form_Report_ExtendSummary',
+        'label' => 'Extended Contribution Summary',
+        'component' => 'CiviContribute',
+        'weight' => 102
+      ],
+      [
+        'report_id'=>'chreports/lybunt',
+        'name'=>'CRM_Chreports_Form_Report_ExtendedDetail',
+        'label' => 'LYBUNT',
+        'component' => 'CiviContribute',
+        'weight' => 107
+      ],
+      [
+        'report_id'=>'chreports/contrib_glaccount',
+        'name'=>'CRM_Chreports_Form_Report_ExtendedDetail',
+        'label' => 'GL Account & Payment Method Reconciliation',
+        'component' => 'CiviContribute',
+        'weight' => 32
+      ],
+      [
+        'report_id'=>'chreports/contrib_period_detailed',
+        'name'=>'CRM_Chreports_Form_Report_ExtendSummary',
+        'label' => 'Contribution Summary Report',
+        'component' => 'CiviContribute',
+        'weight' => 4
+      ],
+      [
+        'report_id'=>'chreports/contrib_period_summary',
+        'name'=>'CRM_Chreports_Form_Report_ExtendSummary',
+        'label' => 'Extended Report - Contribution Pivot Chart',
+        'component' => 'CiviContribute',
+        'weight' => 4
+      ],
+      [
+        'report_id'=>'chreports/top_donors',
+        'name'=>'CRM_Chreports_Form_Report_ExtendedDetail',
+        'label' => 'Top Donors Report',
+        'component' => 'CiviContribute',
+        'weight' => 13
+      ],
+      [
+        'report_id'=>'chreports/opportunity_detailed',
+        'name'=>'CRM_Chreports_Form_Report_ExtendedDetail',
+        'label' => 'Opportunity Report',
+        'component' => 'CiviGrant',
+        'weight' => 30
+      ],
+      [
+        'report_id'=>'chreports/contrib_period_compare',
+        'name'=>'CRM_Chreports_Form_Report_ExtendedDetail',
+        'label' => 'Recurring Report',
+        'component' => 'CiviContribute',
+        'weight' => 4
+      ]
+    ];
+    foreach($templateParams as $templateId => $templateParam) {
+
+      $results = \Civi\Api4\OptionValue::create(TRUE)
+      ->addValue('option_group_id.name', 'report_template')
+      ->addValue('label', $templateParam['label'])
+      ->addValue('value', $templateParam['report_id'])
+      ->addValue('name', $templateParam['name'])
+      ->addValue('component_id:name', $templateParam['component'])
+      ->addValue('is_active', TRUE)
+      ->addValue('is_reserved', TRUE)
+      ->addValue('weight', $templateParam['weight'])
+      ->execute();
+    }
+    
+    // $this->ctx->log->info('Change report name and form values through upgrader function');
+    $newReportParams = [
+      'contrib_detailed_campaign' => [
+        'name'=>'Contribution History by Campaign (Detailed)',
+        'report_id'=>'chreports/contrib_detailed',
+        'title' => 'Contribution History by Campaign (Detailed)'
+      ],
+      'contrib_detailed_campaign_group' => [
+        'name'=>'Contribution History by Campaign Group (Detailed)',
+        'report_id'=>'chreports/contrib_detailed',
+        'title' => 'Contribution History by Campaign Group (Detailed)'
+      ],
+      'contrib_detailed_fund' => [
+        'name'=>'Contribution History by Fund (Detailed)',
+        'report_id'=>'chreports/contrib_detailed',
+        'title' => 'Contribution History by Fund (Detailed)'
+      ],
+      'contrib_sybunt' => [
+        'name'=>'SYBNT',
+        'report_id'=>'chreports/sybunt',
+        'title' => 'SYBNT'
+      ],
+      'contrib_summary_campaign' =>  [
+        'name'=>'Contribution History by Campaign (Summary)',
+        'report_id'=>'chreports/contrib_summary',
+        'title' => 'Contribution History by Campaign (Summary)'
+      ],
+      'contrib_summary_campaign_group' => [
+        'name'=>'Contribution History by Campaign Group (Summary)',
+        'report_id'=>'chreports/contrib_summary',
+        'title' => 'Contribution History by Campaign Group (Summary)'
+      ],
+      'contrib_summary_chfund' =>  [
+        'name'=>'Contribution History by CH Fund (Summary)',
+        'report_id'=>'chreports/contrib_summary',
+        'title' => 'Contribution History by CH Fund (Summary)'
+      ],
+      'contrib_summary_fund' =>  [
+        'name'=>'Contribution History by Fund (Summary)',
+        'report_id'=>'chreports/contrib_summary',
+        'title' => 'Contribution History by Fund (Summary)'
+      ],
+      'contrib_summary_source' => [
+        'name'=>'Contribution History by Source (Summary)',
+        'report_id'=>'chreports/contrib_summary',
+        'title' => 'Contribution History by Source (Summary)'
+      ],
+      'contrib_detailed_glaccount' => [
+        'name'=>'Contribution History by GL Account (Detailed)',
+        'report_id'=>'chreports/contrib_detailed',
+        'title' => 'Contribution History by GL Account (Detailed)'
+      ],
+      'contrib_summary_glaccount' => [
+        'name'=>'Contribution History by GL Account (Summary)',
+        'report_id'=>'chreports/contrib_summary',
+        'title' => 'Contribution History by GL Account (Summary)'
+      ],
+      'contrib_recurring' => [
+        'name'=>'Recurring Contributions (Summary)',
+        'report_id'=>'chreports/contrib_detailed',
+        'title' => 'Recurring Contributions'
+      ],
+      'contrib_lybunt' => [
+        'name'=>'LYBNT',
+        'report_id'=>'chreports/lybunt',
+        'title' => 'LYBNT'
+      ],
+      'contrib_glaccount_payment_reconciliation' =>  [
+        'name'=>'GL Account & Payment Method Reconciliation Report (Full)',
+        'report_id'=>'chreports/contrib_glaccount',
+        'title' => 'GL Account & Payment Method Reconciliation Report (Full)'
+      ],
+      'contrib_summary_payment_method' =>  [
+        'name'=>'Contribution History By Payment Method (Summary)',
+        'report_id'=>'chreports/contrib_summary',
+        'title' => 'Contribution History By Payment Method (Summary)'
+      ],
+      'contrib_monthly_fiscal_year' =>  [
+        'name'=>'Fiscal Year to Date',
+        'report_id'=>'chreports/contrib_period_detailed',
+        'title' => 'Fiscal Year to Date (Monthly)'
+      ],
+      'contrib_quarterly_past_year' => [
+        'name'=>'Last Year inc. Today',
+        'report_id'=>'chreports/contrib_period_detailed',
+        'title' => 'Last 12 months (Quarterly)'
+      ],
+      'contact_top_donors' => [
+        'name'=>'Top contributors',
+        'report_id'=>'chreports/top_donors',
+        'title' => 'Top contributors'
+      ],
+      'contrib_monthly_campaign' => [
+        'name'=>'Contribution History by Campaign (Monthly)',
+        'report_id'=>'chreports/contrib_period_summary',
+        'title' => 'Contribution History by Campaign (Monthly)'
+      ],
+      'contrib_yearly_campaign' =>  [
+        'name'=>'Contribution History by Campaign (Yearly)',
+        'report_id'=>'chreports/contrib_period_summary',
+        'title' => 'Contribution History by Campaign (Yearly)'
+      ],
+      'contrib_monthly_fund' => [
+        'name'=>'Contribution History by Fund (Monthly)',
+        'report_id'=>'chreports/contrib_period_summary',
+        'title' => 'Contribution History by Fund (Monthly)'
+      ],
+      'contrib_yearly_fund' => [
+        'name'=>'Contribution History by Fund (Yearly)',
+        'report_id'=>'chreports/contrib_period_summary',
+        'title' => 'Contribution History by Fund (Yearly)'
+      ],
+      'opportunity_detailed' =>  [
+        'name'=>'Opportunity Details',
+        'report_id'=>'chreports/opportunity_detailed',
+        'title' => 'Opportunity Details'
+      ]
+    ];
+   
+    foreach($newReportParams as $newName => $reportParam) {
+      $existingName = $reportParam['name'];
+      $newTemplateID = $reportParam['report_id'];
+      $newtitle = $reportParam['title'];
+      $sql = "UPDATE civicrm_report_instance SET `name` = '".$newName."',`report_id` = '".$newTemplateID."', `title`= '".$newtitle."', `form_values` = NULL
+      WHERE `name` = '".$existingName."'";
+      watchdog("debug", 'query second' .$sql);
+      CRM_Core_DAO::executeQuery($sql);
+      
+    }
+      
+    return TRUE;
+  }
+
   /**
    * Example: Run an external SQL script.
    *

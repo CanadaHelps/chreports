@@ -1,0 +1,25 @@
+{ 
+    "name": "contrib_yearly_fund",
+    "title": "Contribution History By Fund (Yearly)",
+    "type": "summary",
+    "period": "yearly",
+    "entity": "contribution",
+    "fields":{
+        "contribution_source": {},
+        "campaign_id": {},
+        "financial_type": { 
+            "selected" : true
+        },
+        "contribution_page_id": {}
+    },
+    "use_default_filters" : true,
+    "groupByDisplay" : false,
+    "orderByDisplay" : false,
+    "filters":{
+        "contribution_status_id": {
+            "in": [
+                "1"
+            ]
+        }
+    }
+}

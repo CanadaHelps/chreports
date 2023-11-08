@@ -1,0 +1,69 @@
+{ 
+    "name": "contrib_glaccount_payment_reconciliation",
+    "title": "GL Account & Payment Method Reconciliation Report (Full)",
+    "type": "detailed",
+    "entity": "contribution",
+    "fields":{
+        "contact_name":{},
+        "sort_name":{"selected" : true},
+        "external_identifier":{},
+        "contact_type":{},
+        "debit_accounting_code":{},
+        "debit_contact_id":{},
+        "credit_accounting_code":{},
+        "credit_contact_id":{},
+        "debit_name":{},
+        "credit_name":{"default" : true},
+        "financial_type_id":{},
+        "batch_title":{},
+        "batch_name":{},
+        "receive_date":{},
+        "invoice_id":{},
+        "invoice_number":{},
+        "contribution_status_id":{},
+        "contribution_source":{},
+        "check_number":{},
+        "payment_instrument_id":{},
+        "contribution_id":{},
+       
+        "trxn_id":{},
+        
+        "amount":{},       
+        "id": {"default" : true},
+        "contact_source":{},
+
+        "trxn_date":{},
+        "card_type_id":{}
+    },
+    "use_default_filters" : false,
+    "filters":{
+        "sort_name":{},
+        "contact_id":{},
+        "contact_type":{},
+        "receive_date":{},
+        "tagid":{},
+        "gid":{},
+        "campaign_id":{},
+        "amount":{},
+        "debit_accounting_code":{},
+        "debit_contact_id":{},
+        "credit_accounting_code":{},
+        "credit_contact_id":{},
+        "debit_name":{},
+        "credit_name":{},
+        "financial_type_id":{},
+        "contribution_id":{},
+        "receipt_date":{},
+        "contribution_source":{},
+        "payment_instrument_id":{},
+        "currency":{},
+        "trxn_date":{},
+        "contribution_status_id": {
+            "in": [
+                "1"
+            ]
+        },
+        "card_type_id":{}
+    },
+    "groupByDisplay" : false
+}

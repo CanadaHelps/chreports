@@ -1,0 +1,22 @@
+{ 
+    "name": "contrib_summary_campaign_group",
+    "title": "Contribution History By Camapaign Group (Summary)",
+    "type": "summary",
+    "entity": "contribution",
+    "fields":{
+        "contribution_source": {},
+        "campaign_id": {
+            "default" : true
+        },
+        "financial_type_id": {},
+        "contribution_page_id": {}
+    },
+    "use_default_filters" : true,
+    "filters":{
+        "contribution_status_id": {
+            "in": [
+                "1"
+            ]
+        }
+    }
+}

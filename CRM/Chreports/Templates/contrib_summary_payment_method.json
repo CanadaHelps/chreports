@@ -1,0 +1,19 @@
+{ 
+    "name": "contrib_summary_payment_method",
+    "title": "Contribution History By Payment Method (Summary)",
+    "type": "summary",
+    "entity": "contribution",
+    "fields":{
+        "payment_instrument_id": {
+            "default" : true
+        }
+    },
+    "use_default_filters" : true,
+    "filters":{
+        "contribution_status_id": {
+            "in": [
+                "1"
+            ]
+        }
+    }
+}

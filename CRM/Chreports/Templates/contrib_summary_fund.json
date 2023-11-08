@@ -1,0 +1,22 @@
+{ 
+    "name": "contrib_summary_fund",
+    "title": "Contribution History By Source (Summary)",
+    "type": "summary",
+    "entity": "contribution",
+    "fields":{
+        "contribution_source": {
+            "default" : true
+        },
+        "campaign_id": {},
+        "financial_type_id": {},
+        "contribution_page_id": {}
+    },
+    "use_default_filters" : true,
+    "filters":{
+        "contribution_status_id": {
+            "in": [
+                "1"
+            ]
+        }
+    }
+}

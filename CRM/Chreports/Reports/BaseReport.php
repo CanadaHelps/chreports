@@ -385,74 +385,10 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         $var = array_merge($var, $specificCols);
     }
 
-    // public function setAddressField(&$var) {
-    //     return;
-    //     $addressCols = [
-    //         'civicrm_address' => [
-    //             'dao' => 'CRM_Core_DAO_Address',
-    //             'fields' => [
-    //                 'address_name' => [
-    //                     'title' => ts('Address Name'),
-    //                     'default' => FALSE,
-    //                     'name' => 'name',
-    //                 ],
-    //             'street_address' => [
-    //                 'title' => ts('Address'),
-    //                 'default' => FALSE,
-    //             ],
-    //             'supplemental_address_1' => [
-    //                 'title' => ts('Supplementary Address Field 1'),
-    //                 'default' => FALSE,
-    //             ],
-    //             'supplemental_address_2' => [
-    //                 'title' => ts('Supplementary Address Field 2'),
-    //                 'default' => FALSE,
-    //             ],
-    //             'supplemental_address_3' => [
-    //                 'title' => ts('Supplementary Address Field 3'),
-    //                 'default' => FALSE,
-    //             ],
-    //             'street_number' => [
-    //                 'title' => ts('Street Number'),
-    //                 'default' => FALSE,
-    //             ],
-    //             'street_name' => [
-    //                 'title' => ts('Street Name'),
-    //                 'default' => FALSE,
-    //             ],
-    //             'street_unit' => [
-    //                 'title' => ts('Street Unit'),
-    //                 'default' => FALSE,
-    //             ],
-    //             'city' => [
-    //                 'title' => 'City',
-    //                 'default' => FALSE,
-    //             ],
-    //             'state_province_id' => [
-    //                 'title' => 'Province',
-    //                 'default' => FALSE,
-    //                 'alter_display' => 'alterStateProvinceID',
-    //             ],
-    //             'postal_code' => [
-    //                 'title' => 'Postal Code',
-    //                 'default' => FALSE,
-    //             ],
-    //             'postal_code_suffix' => [
-    //                 'title' => 'Postal Code Suffix',
-    //                 'default' => FALSE,
-    //             ],
-    //             'country_id' => [
-    //                 'title' => 'Country',
-    //                 'default' => FALSE,
-    //                 'alter_display' => 'alterCountryID',
-    //             ],
-    //             ],
-    //             'grouping' => 'location-fields',
-    //         ],
-    //     ];
-    //     $var = array_merge($var, $addressCols);
-    // }
-    
+    //get type of the report period settings
+    public function getReportPeriod(): string {
+        return $this->_settings['period']?? '';
+    }
     //get type of the report from settings
     public function getReportType(): string {
         return $this->_settings['type'];
@@ -463,7 +399,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     }
      //get type of the report from settings
      public function isFiscalQuarterReport(): bool {
-        if($this->_settings['type'] == 'fiscal' || $this->_settings['type'] == 'quarterly')
+        if(($this->_settings['period'] == 'monthly' && $this->_settings['name'] == 'contrib_monthly_fiscal_year' ) || $this->_settings['period'] == 'quarterly')
         {
             return true; 
         }
@@ -471,7 +407,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     }
     //get type of the report from settings
     public function isMonthlyYearlyReport(): bool {
-        if($this->_settings['type'] == 'monthly' || $this->_settings['type'] == 'yearly')
+        if(($this->_settings['period'] == 'monthly' && $this->_settings['name'] !== 'contrib_monthly_fiscal_year') || $this->_settings['period'] == 'yearly')
         {
             $this->_limit = '';
             return true; 
@@ -498,7 +434,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     }
     //check if report is opportunity report
     public function isLYBNTSYBNTReport(): bool {
-        if($this->_settings['name'] == 'sybunt' || $this->_settings['name'] == 'lybunt')
+        if($this->_settings['name'] == 'contrib_sybunt' || $this->_settings['name'] == 'contrib_lybunt')
         {
             return true; 
         }
@@ -1085,10 +1021,11 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         if($this->isMonthlyYearlyReport()){
             unset($columnHeaders['count']);
             $reportType = $this->getReportType();
+            $reportPeriod = $this->getReportPeriod();
             
             //
             foreach ($var as $rowId => $row) {
-                if($reportType == 'monthly')
+                if($reportPeriod == 'monthly')
                 {
                     $columnTitle = date("M", mktime(0, 0, 0, (int) $row['month'], 10)) . ' ' . $row['year'];
                     $columnKey = 'total_amount_'.$row['month'].'_'.$row['year'];
@@ -1098,7 +1035,8 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                 } 
                 $columnHeaders[$columnKey] = ['title' => $columnTitle,'type'=> CRM_Utils_Type::T_MONEY];
              }
-             if($reportType == 'monthly')
+             
+             if($reportPeriod == 'monthly')
              {
                 unset($columnHeaders['month']);
              }
@@ -1173,7 +1111,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
             $resultingRow = [];
             foreach($rows as $rowNum => $row)
             {
-                if($this->getReportType() == 'quarterly')
+                if($this->getReportPeriod() == 'quarterly')
                 {
                     $year = date('Y', strtotime($row['receive_date_start']));
                     $resultingRow[$year][] = $row;
@@ -1181,7 +1119,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                 $rollupTotalRow['total_amount'] += $row['total_amount'];
                 $rollupTotalRow['count'] += $row['count'];
             }
-            if($this->getReportType() == 'quarterly'){
+            if($this->getReportPeriod() == 'quarterly'){
                 $finalDisplay = [];
                 foreach($resultingRow as $key => $rowValue)
                 {
@@ -1264,12 +1202,12 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                 $count += $result['count'];
                 $total_amount += $result['total_amount'];
                 $rollupTotalRow['total_amount'] += $result['total_amount'];
-                if($this->getReportType() == 'yearly' )
+                if($this->getReportPeriod() == 'yearly' )
                 {
                     $columnHeaderValue['total_amount_'.$result['year']] = $result['total_amount'];
                     $rollupTotalRow['total_amount_'.$result['year']] += $result['total_amount'];
                     
-                }else if($this->getReportType() == 'monthly')
+                }else if($this->getReportPeriod() == 'monthly')
                 {
                     $columnHeaderValue['total_amount_'.$result['month'].'_'.$result['year']] = $result['total_amount'];
                     $rollupTotalRow['total_amount_'.$result['month'].'_'.$result['year']] += $result['total_amount'];
@@ -1367,7 +1305,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         $select[] = "SUM(".$this->getEntityTable($statEntity).".".$statTotalAmountField.") as total_amount";
         $select[] = $this->getEntityTable($statEntity).".currency as currency";
 
-        if($this->getReportName() == 'sybunt' || $this->getReportName() == 'lybunt')
+        if($this->getReportName() == 'contrib_lybunt' || $this->getReportName() == 'contrib_sybunt')
         {
             $showSybntLybnt = true;
             $select[] = "MAX(".$this->getEntityTable('contribution').".receive_date) as lastContributionTime";
@@ -1726,6 +1664,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                     if(!in_array($row['receive_date_start'],['Total','Grand Total'])){
                     $latestContribReport = $this->getReportInstanceDetailsByName('Latest Contributions (Dashlet)');
                     $dateReformat=date("F Y",strtotime($row['receive_date_start']));
+                    //if($this->getReportType() == 'monthly')
                     if($this->getReportType() == 'fiscal')
                     {
                         $dateStart = date('Ym01', strtotime($row['receive_date_start']));
@@ -2262,7 +2201,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                 // contact fields
                 } else if($fieldInfo['join_entity'] === 'contact'){ 
                     //to prevent multiple enteries for the contact to be added , we are considering only primary key entry for address,phone, email entities
-                    $isPrimary_clause = ($fieldInfo['entity'] == 'phone' ||$fieldInfo['entity'] == 'email'|| $fieldInfo['entity'] == 'address')? ' AND '.$this->getEntityTable($fieldInfo['entity']).'.is_primary = 1 ' : '';
+                    $isPrimary_clause = (in_array($fieldInfo['entity'], ['phone' , 'email', 'address']))? ' AND '.$this->getEntityTable($fieldInfo['entity']).'.is_primary = 1 ' : '';
                     $from[] = $this->getSQLJoinForField($fieldInfo['join_field_name'], $entityName, $this->getEntityTable($fieldInfo['join_entity']),'contact_id').$isPrimary_clause;
                 
                 //entity_tag fields

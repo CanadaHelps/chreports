@@ -728,6 +728,7 @@ function chreports_civicrm_preProcess($formName, &$form) {
       foreach($filterParams as $filterKey => $filterValue) {
         $defaultSelectedFilter[$filterKey] = $filterValue;
       }
+      //$defaults[$filterKey] = $filterValue;
       $form->setVar('_formValues', $defaultSelectedFilter);
     }
 
