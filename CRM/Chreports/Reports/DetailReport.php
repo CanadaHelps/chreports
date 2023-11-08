@@ -181,6 +181,7 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
       $this->_columnHeaders['civicrm_contact_id']['title'] = 'contact_id';
       $this->_columnHeaders['civicrm_contact_id']['type'] = CRM_Utils_Type::T_INT;
 
+      //if($this->getReportName() == 'contact_top_donors')
       if($this->getReportName() == 'top_donors')
       {
       $select[] = "COUNT(".$this->getEntityTable('contribution').".id) AS count";
@@ -216,7 +217,7 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
 
       }
 
-      if($this->getReportName() == 'sybunt' || $this->getReportName() == 'lybunt')
+      if($this->getReportName() == 'contrib_lybunt' || $this->getReportName() == 'contrib_sybunt')
       {
         $select[] = "MAX(".$this->getEntityTable('contribution').".receive_date) as lastContributionTime";
       }
@@ -341,11 +342,11 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
         switch ($fieldName) {
         case 'yid': // fund_13
          
-      if($this->getReportName() == 'sybunt')
+      if($this->getReportName() == 'contrib_sybunt')
       {
           $having[] = $this->whereClauseLast4Year("lastContributionTime");
           //$this->_limit = '';
-      }else if($this->getReportName() == 'lybunt'){
+      }else if($this->getReportName() == 'contrib_lybunt'){
           $having[] = $this->whereClauseLastYear("lastContributionTime");
       }
           break;
@@ -365,7 +366,7 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
       $orderBys = [];
       if (!empty($this->_params['order_bys']) && is_array($this->_params['order_bys'])) 
       {
-      if($this->getReportName() == 'sybunt' || $this->getReportName() == 'lybunt')
+      if($this->getReportName() == 'contrib_sybunt' || $this->getReportName() == 'contrib_lybunt')
       {
         $orderBys[] = "ISNULL(exposed_id)";
       }
@@ -440,6 +441,7 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
             }
           }
         }
+        //if($this->getReportName() == 'contact_top_donors')
         if($this->getReportName() == 'top_donors')
       {
         unset($orderBys);

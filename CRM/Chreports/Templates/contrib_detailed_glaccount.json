@@ -1,0 +1,31 @@
+{ 
+    "name": "contrib_detailed_glaccount",
+    "title": "Contribution History By GL Account (Detailed)",
+    "type": "detailed",
+    "entity": "contribution",
+    "fields":{
+        "gl_account": {
+            "default" : true
+        },
+        "contribution_source": {},
+        "financial_type_id":{},
+        "payment_instrument_id":{},
+        "gl_code": {"selected" : true},
+        "account_type": {"selected" : true},
+        "sort_name": {"selected" : true},
+        "exposed_id": {"selected" : true},
+        "receive_date": {"selected" : true},
+        "total_amount": {"selected" : true}
+        
+    },
+    "use_default_filters" : true,
+    "filters":{
+        "gl_account":{},
+        "contribution_status_id": {
+            "in": [
+                "1"
+            ]
+        }
+    },
+    "groupByDisplay" : false
+}

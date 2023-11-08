@@ -1,0 +1,76 @@
+{ 
+    "name": "contrib_period_compare",
+    "title": "Repeat Contributions",
+    "type": "detailed",
+    "entity": "contact",
+    "fields":{
+        "id": {"default" : true},
+        "exposed_id":{},
+        "sort_name":{"default" : true},
+        "first_name": {},
+        "last_name": {},
+        "phone":{ "selected" : true},
+        "organization_name":{},
+       
+        "email":{},
+
+        "range_one_stat":{"default" : true},
+        "range_two_stat":{"default" : true},
+      
+
+
+        "street_address":{ "preSelected" : true},
+        "city":{ "preSelected" : true},
+        "state_province_id":{},
+        "postal_code":{ "preSelected" : true},
+        "country_id":{ "preSelected" : true},
+
+        "total_lifetime_contributions":{},
+        "amount_of_last_contribution":{},
+        "date_of_last_contribution":{},
+        "date_of_first_contribution":{},
+        "largest_contribution":{},
+        "count_of_contributions":{}
+    },
+    "use_default_filters" : false,
+    "filters":{
+        "id":{},
+        "exposed_id":{},
+        "sort_name":{},
+        "first_name":{},
+        "last_name":{},
+        "phone":{},
+        "organization_name":{},
+        "email":{},
+       
+
+
+        "address_street_address":{},
+        "address_city":{},
+        "address_state_province_id":{},
+        "address_postal_code":{},
+        "address_country_id":{},
+
+        "total_lifetime_contributions":{},
+        "amount_of_last_contribution":{},
+        "date_of_last_contribution":{},
+        "date_of_first_contribution":{},
+        "largest_contribution":{},
+        "count_of_contributions":{},
+        "range_one_stat":{},
+        "range_two_stat":{},
+        "repeat_contri_initial_date_range": {
+            "relative": "previous.year"
+        },
+        "repeat_contri_second_date_range": {
+            "relative": "this.year"
+        },
+        "contribution_status_id": {
+            "in": [
+                "1"
+            ]
+        }
+    },
+    "groupByDisplay" : false
+    
+}

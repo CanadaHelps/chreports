@@ -36,7 +36,7 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
 
       //Monthly / Yerly report select clause
       if($this->isMonthlyYearlyReport()){
-        if($this->getReportType() == 'monthly')
+        if($this->getReportPeriod() == 'monthly')
         {
           $select[] = "MONTH(".$this->getEntityTable().".`receive_date`) AS month";
           $this->_columnHeaders['month']['title'] = 'Month Name';
@@ -47,7 +47,7 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
 
       //fiscle year report
       if($this->isFiscalQuarterReport()){
-        if($this->getReportType() == 'fiscal')
+        if($this->getReportPeriod() == 'monthly')
         {
           $select[] = "MONTH(".$this->getEntityTable().".`receive_date`) AS monthIndex";
           $this->_columnHeaders['monthIndex']['title'] = '';
@@ -74,10 +74,6 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
       $this->_columnHeaders['currency']['title'] = 'Currency';
       $this->_columnHeaders['currency']['type'] = CRM_Utils_Type::T_STRING;
 
-      
-
-      
-
       // Combine everything
       $this->_selectClauses = $select;
       $this->_select = $select;
@@ -95,7 +91,7 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
     $groupBy = [];
      //Monthly / Yerly report group by clause
     if($this->isMonthlyYearlyReport()){
-      if($this->getReportType() == 'monthly')
+      if($this->getReportPeriod() == 'monthly')
       {
         $groupBy[] = "MONTH(".$this->getEntityTable().".`receive_date`)";
       }
@@ -108,20 +104,15 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
 
       if ($fieldName == 'total_amount')
         continue;
-      //new code
-      //$fieldInfo = $this->getFieldInfo($fieldName);
-      //$this->getEntityClauseFromField($fieldName)
+     
       $groupBy[] =  $this->getEntityClauseFromField($fieldName);
-      // end new code
-
-      //$columnInfo = $this->getFieldMapping($this->getEntity(), $fieldName);
-      //$groupBy[] = $columnInfo['table_name'] . "." .  $columnInfo['name'];
+      
       }
     } 
 
     if($this->isFiscalQuarterReport()){
       unset($groupBy);
-      if($this->getReportType() == 'fiscal')
+      if($this->getReportPeriod() == 'monthly')
       {
       $groupBy[] = "EXTRACT(YEAR_MONTH FROM ".$this->getEntityTable().".`receive_date`)";
       }else{
@@ -147,12 +138,6 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
           if($orderBy['column'] != '-')
           {
             $fieldName = ($orderBy['column'] == 'financial_type') ? $orderBy['column'] . '_id' : $orderBy['column'];
-            //new code
-            $fieldInfo = $this->getFieldInfo($fieldName);
-            $fieldValue = (isset($fieldInfo['field_name']))? $fieldInfo['field_name']: $fieldName;
-            //$groupBy[] =  $this->getEntityTable($this->getEntityTableFromField($fieldName)). "." . $fieldValue;
-            //end new code 
-            //$columnInfo = $this->getFieldMapping($this->getEntity(), $fieldName);
             $orderBys[] = $this->getEntityClauseFromField($fieldName)." ".$orderBy['order'];
             $this->_orderByFieldsFrom[$orderBy['column']] = true;
             // assign order by fields which has section display checked
@@ -165,7 +150,7 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
       //Monthly / Yerly report order by clause
       if($this->isMonthlyYearlyReport()){
         $orderBys[] = "YEAR(".$this->getEntityTable().".`receive_date`)";
-        if($this->getReportType() == 'monthly')
+        if($this->getReportPeriod() == 'monthly')
         {
           $orderBys[] = "MONTH(".$this->getEntityTable().".`receive_date`)";
         }
