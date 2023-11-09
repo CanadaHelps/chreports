@@ -35,8 +35,8 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
       $this->addCalculatedFieldstoSelect($select);
 
       //Monthly / Yerly report select clause
-      if($this->isMonthlyYearlyReport()){
-        if($this->getReportPeriod() == 'monthly')
+      if($this->isPeriodicSummary()){
+        if($this->hasMonthlyBreakdown())
         {
           $select[] = "MONTH(".$this->getEntityTable().".`receive_date`) AS month";
           $this->_columnHeaders['month']['title'] = 'Month Name';
@@ -46,8 +46,8 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
       }
 
       //fiscle year report
-      if($this->isFiscalQuarterReport()){
-        if($this->getReportPeriod() == 'monthly')
+      if($this->isPeriodicDetailed()){
+        if($this->hasMonthlyBreakdown())
         {
           $select[] = "MONTH(".$this->getEntityTable().".`receive_date`) AS monthIndex";
           $this->_columnHeaders['monthIndex']['title'] = '';
@@ -90,8 +90,8 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
 
     $groupBy = [];
      //Monthly / Yerly report group by clause
-    if($this->isMonthlyYearlyReport()){
-      if($this->getReportPeriod() == 'monthly')
+    if($this->isPeriodicSummary()){
+      if($this->hasMonthlyBreakdown())
       {
         $groupBy[] = "MONTH(".$this->getEntityTable().".`receive_date`)";
       }
@@ -110,9 +110,9 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
       }
     } 
 
-    if($this->isFiscalQuarterReport()){
+    if($this->isPeriodicDetailed()){
       unset($groupBy);
-      if($this->getReportPeriod() == 'monthly')
+      if($this->hasMonthlyBreakdown())
       {
       $groupBy[] = "EXTRACT(YEAR_MONTH FROM ".$this->getEntityTable().".`receive_date`)";
       }else{
@@ -148,9 +148,9 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
         }
       }
       //Monthly / Yerly report order by clause
-      if($this->isMonthlyYearlyReport()){
+      if($this->isPeriodicSummary()){
         $orderBys[] = "YEAR(".$this->getEntityTable().".`receive_date`)";
-        if($this->getReportPeriod() == 'monthly')
+        if($this->hasMonthlyBreakdown())
         {
           $orderBys[] = "MONTH(".$this->getEntityTable().".`receive_date`)";
         }

@@ -39,7 +39,7 @@ class CRM_Chreports_Form_Report_ExtendSummary extends CRM_Report_Form_Contribute
     $this->_reportInstance->setColumns($params['fields']);
     $this->_reportInstance->setFilters();
     //Remove limit, pagination parameter from query for monthly/yearly reports
-    if($this->_reportInstance->isMonthlyYearlyReport() || ($this->_reportInstance->getReportName() == 'Top contributors')){
+    if($this->_reportInstance->isPeriodicSummary() || ($this->_reportInstance->isTopDonorReport())){
       //$var->setVar('_limit','');
       $this->_reportInstance->setPagination(FALSE);
     }else{

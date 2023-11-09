@@ -538,7 +538,7 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
       [
         'report_id'=>'chreports/contrib_period_compare',
         'name'=>'CRM_Chreports_Form_Report_ExtendedDetail',
-        'label' => 'Recurring Report',
+        'label' => 'Comparison Report',
         'component' => 'CiviContribute',
         'weight' => 4
       ]
@@ -673,6 +673,16 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
         'name'=>'Opportunity Details',
         'report_id'=>'chreports/opportunity_detailed',
         'title' => 'Opportunity Details'
+      ],
+      'contrib_detailed_inhonour' =>  [
+        'name'=>'In Honour of',
+        'report_id'=>'chreports/opportunity_detailed',
+        'title' => 'In Honour of'
+      ],
+      'contrib_detailed_inmemory' =>  [
+        'name'=>'In Memory of',
+        'report_id'=>'chreports/opportunity_detailed',
+        'title' => 'In Memory of'
       ]
     ];
    
@@ -682,10 +692,30 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
       $newtitle = $reportParam['title'];
       $sql = "UPDATE civicrm_report_instance SET `name` = '".$newName."',`report_id` = '".$newTemplateID."', `title`= '".$newtitle."', `form_values` = NULL
       WHERE `name` = '".$existingName."'";
-      watchdog("debug", 'query second' .$sql);
       CRM_Core_DAO::executeQuery($sql);
       
     }
+
+   
+      $instanceCreation = [
+        'contrib_period_compare'
+        ];
+  
+      foreach($instanceCreation as $test)
+      {
+        $reportInstanceCount = CRM_Core_DAO::singleValueQuery("SELECT count(*) from civicrm_report_instance where `name` = '$test'");
+        $domainID = CRM_Core_Config::domainID();
+        
+        if($reportInstanceCount < 1){
+        switch($test){
+          case 'contrib_period_compare':
+                  $instanceCreate = "INSERT INTO civicrm_report_instance (`domain_id`, `title`, `report_id`, `name`, `description`,`form_values`, `permission`, `is_active`, `is_reserved`, `grouprole`)
+            VALUES ( $domainID,'Comparison Report', 'chreports/contrib_period_compare','contrib_period_compare','Comaprision Report for contributions',NULL,'access CiviReport',1,1,'authenticated user' )";
+              CRM_Core_DAO::executeQuery($instanceCreate);
+            break;
+          }
+        }
+      }
       
     return TRUE;
   }

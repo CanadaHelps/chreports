@@ -1,6 +1,7 @@
 { 
     "name": "contrib_detailed_fund",
     "title": "Contribution History by Fund (Detailed)",
+    "template": "chreports/contrib_detailed",
     "type": "detailed",
     "entity": "contribution",
     "fields":{

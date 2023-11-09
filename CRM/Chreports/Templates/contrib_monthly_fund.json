@@ -1,6 +1,7 @@
 { 
     "name": "contrib_monthly_fund",
     "title": "Contribution History By Fund (Monthly)",
+    "template": "chreports/contrib_period_summary",
     "type": "summary",
     "period": "monthly",
     "entity": "contribution",

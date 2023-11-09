@@ -181,8 +181,7 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
       $this->_columnHeaders['civicrm_contact_id']['title'] = 'contact_id';
       $this->_columnHeaders['civicrm_contact_id']['type'] = CRM_Utils_Type::T_INT;
 
-      //if($this->getReportName() == 'contact_top_donors')
-      if($this->getReportName() == 'top_donors')
+      if($this->isTopDonorReport())
       {
       $select[] = "COUNT(".$this->getEntityTable('contribution').".id) AS count";
       $this->_columnHeaders['count']['title'] = 'Donations';
@@ -217,7 +216,7 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
 
       }
 
-      if($this->getReportName() == 'contrib_lybunt' || $this->getReportName() == 'contrib_sybunt')
+      if($this->isLYBNTSYBNTReport())
       {
         $select[] = "MAX(".$this->getEntityTable('contribution').".receive_date) as lastContributionTime";
       }
@@ -342,11 +341,10 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
         switch ($fieldName) {
         case 'yid': // fund_13
          
-      if($this->getReportName() == 'contrib_sybunt')
+      if($this->getReportTemplate() == 'chreports/sybunt')
       {
           $having[] = $this->whereClauseLast4Year("lastContributionTime");
-          //$this->_limit = '';
-      }else if($this->getReportName() == 'contrib_lybunt'){
+      }else if($this->getReportTemplate() == 'chreports/lybunt'){
           $having[] = $this->whereClauseLastYear("lastContributionTime");
       }
           break;
@@ -374,59 +372,7 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
           //if order by option is selected on the report
           if($orderBy['column'] != '-')
           {
-            $fieldName = ($orderBy['column'] == 'financial_type') ? $orderBy['column'] . '_id' : $orderBy['column'];
-          //  if((parent::isGLAccountandPaymentMethodReconciliationReport()))
-          //  {
-          //   if($fieldName == 'title' || $fieldName == 'name' )
-          //   {
-          //      $entityName = 'batch';
-          //   }
-          //   if($fieldName == 'debit_name'  )
-          //   {
-          //      $entityName = 'financial_account';
-          //   }
-          //   if($fieldName == 'trxn_date' || $fieldName == 'card_type_id'  )
-          //   {
-          //      $entityName = 'financial_trxn';
-          //   }
-          //  }
-            // if($fieldName == 'sort_name' || $fieldName == 'first_name' || $fieldName == 'last_name' || $fieldName == 'organization_name'|| $fieldName == 'exposed_id' || $fieldName == 'external_identifier' || $fieldName == 'contact_type')
-            // {
-            //    $entityName = 'contact';
-            // }
-            // else if($fieldName == 'phone' || $fieldName == 'email')
-            // {
-            //    $entityName = $fieldName;
-            // }
-            // else if($fieldName == 'street_address' || $fieldName == 'city' || $fieldName == 'postal_code' || $fieldName == 'state_province_id' || $fieldName == 'country_id')
-            // {
-            //    $entityName = 'address';
-            // }
-            // else if($fieldName == 'source')
-            // {
-            //    $entityName = 'contribution';
-            // }
-            // else if($fieldName == 'trxn_date' || $fieldName == 'trxn_id' || $fieldName == 'card_type_id')
-            // {
-            //   $entityName = 'financial_trxn';
-            // }
-            // else{
-            //    $entityName = $this->getEntity();
-            // }
-            //$columnInfo = $this->getFieldMapping($entityName, $fieldName);
-          //  if((parent::isRecurringContributionReport()) && ($fieldName == 'total_amount' || $fieldName == 'last_month_amount' || $fieldName == 'completed_contributions' || $fieldName == 'start_date'))
-          //  {
-          //   $orderBys[] = $columnInfo['name']." ".$orderBy['order'];
-          //  }
-          //else if((parent::isGLAccountandPaymentMethodReconciliationReport()) && ($fieldName == 'debit_accounting_code' || $fieldName == 'debit_contact_id' || $fieldName == 'credit_accounting_code' || $fieldName == 'credit_contact_id'
-          //  || $fieldName == 'debit_name'|| $fieldName == 'credit_name'))
-          //  {
-          //   $orderBys[] = $columnInfo['dbAlias']." ".$orderBy['order'];
-          //  }
-          //   else if($fieldName == 'life_time_total' || $fieldName == 'last_year_total_amount')
-          //  {
-          //    $orderBys[] = $fieldName." ".$orderBy['order'];
-          //  }else{
+            $fieldName =  $orderBy['column'];
             $fieldInfo = $this->getFieldInfo($orderBy['column']);
             $isCalculatedField = isset($fieldInfo['calculated_field']) && $fieldInfo['calculated_field'] === true;
 
@@ -441,12 +387,12 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
             }
           }
         }
-        //if($this->getReportName() == 'contact_top_donors')
-        if($this->getReportName() == 'top_donors')
-      {
-        unset($orderBys);
-        $orderBys[] = "total_amount DESC";
-      }
+
+        if($this->isTopDonorReport())
+        {
+          unset($orderBys);
+          $orderBys[] = "total_amount DESC";
+        }
       }
       if (!empty($orderBys)) {
         $this->_orderBy = "ORDER BY " . implode(', ', $orderBys);
