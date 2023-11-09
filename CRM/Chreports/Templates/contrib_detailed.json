@@ -2,6 +2,7 @@
     "name": "contrib_detailed",
     "title": "Contributions (Detailed)",
     "type": "detailed",
+    "template": "chreports/contrib_detailed",
     "entity": "contribution",
     "fields":{
         "sort_name":{},

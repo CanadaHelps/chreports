@@ -1,7 +1,8 @@
 { 
     "name": "contrib_period_compare",
-    "title": "Repeat Contributions",
+    "title": "Comparison Report",
     "type": "detailed",
+    "template": "chreports/contrib_period_compare",
     "entity": "contact",
     "fields":{
         "id": {"default" : true},

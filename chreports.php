@@ -163,7 +163,7 @@ function chreports_civicrm_buildForm($formName, &$form) {
         $reportInstance->setPreSelectField($elementField);
       }
       //For monthly and yearly report only one column should be checked at a time
-      if($reportInstance->isMonthlyYearlyReport()){
+      if($reportInstance->isPeriodicSummary()){
         CRM_Core_Resources::singleton()->addScript(
           "CRM.$(function($) {
             $('.crm-report-criteria-field input:checkbox').on('change',function() {
@@ -712,7 +712,6 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
 function chreports_civicrm_preProcess($formName, &$form) {
   if($formName == "CRM_Chreports_Form_Report_ExtendSummary" || $formName == "CRM_Chreports_Form_Report_GLSummaryReport" || $formName == "CRM_Chreports_Form_Report_ExtendedDetail" || $formName == "CRM_Chreports_Form_Report_ExtendLYBUNT")
   {
-    //die('vvvvvvv');
     //hide empty custom fields based filter sections on filter tab
     $reportInstance = $form->getReportInstance();
     $filters = $form->getVar('_filters');

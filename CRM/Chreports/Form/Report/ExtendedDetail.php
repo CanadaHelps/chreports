@@ -18,26 +18,12 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
   }
 
   public function statistics(&$rows) {
-    //return;
-    //  if($this->_reportInstance->isRecurringContributionReport())
-    // return;
-    
+   
     $showDetailedStat = ($this->_reportInstance->isOpportunityReport() || $this->_reportInstance->isGLAccountandPaymentMethodReconciliationReport()
     || $this->_reportInstance->isRepeatContributionReport() || $this->_reportInstance->isRecurringContributionReport() || $this->_reportInstance->isLYBNTSYBNTReport()) ? false:true;
-    //if(!$this->_reportInstance->isRecurringContributionReport())
     $statistics = $this->_reportInstance->alterStatistics($rows,$showDetailedStat);
 
-   // if($this->_reportInstance->isGLAccountandPaymentMethodReconciliationReport())
-   // $statistics = $this->_reportInstance->alterStatistics($rows,false);
-
-    // if($this->_reportInstance->isRepeatContributionReport())
-    // $statistics = $this->_reportInstance->alterStatistics($rows,false);
-    //$statistics = $this->_reportInstance->alterRepeatContributionStatistics($rows,false);
-   // return;
-
-    // if($this->_reportInstance->isRecurringContributionReport())
-    // $statistics = $this->_reportInstance->alterStatistics($rows,$showDetailedStat);
-   // $statistics = $this->_reportInstance->alterRecurringStatistics($rows,$showDetailedStat);
+  
     if ($statistics) {
       $count = count($rows);
       // requires access to form
@@ -72,18 +58,9 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
     return $this->_reportInstance;
   }
   public function buildSQLQuery(&$var) {
-    // merge opportunity fields from array defined in BaseReport class
-    // if($this->_reportInstance->isOpportunityReport())
-    // $this->_reportInstance->setOpportunityFields($var->getVar('_columns'));
-
-    // if($this->_reportInstance->getEntity() == 'contact'){
-    //   $this->_reportInstance->setAddressField($var->getVar('_columns'));
-    // }
-   
     // setting out columns, filters, params,mapping from report object
     $this->_reportInstance->setFieldsMapping($var->getVar('_columns'));
     $params = $var->getVar('_params');
-    $this->_reportInstance->setFieldsMapping($var->getVar('_columns'));
     $this->_reportInstance->setFormParams($params);
     $this->_reportInstance->setColumns($params['fields']);
     $this->_reportInstance->setFilters();

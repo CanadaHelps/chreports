@@ -1327,5 +1327,17 @@
         "entity": "payment_processor",
         "join_field_name":"payment_processor_id",
         "join_entity":"financial_trxn"
+    },
+    "cancel_date":{
+        "title": "Cancelled / Refunded Date",
+        "field_name": "cancel_date",
+        "field_type": "Datetime",
+        "entity": "contribution"
+    },
+    "cancel_reason":{
+        "title": "Cancellation / Refund Reason",
+        "field_name": "cancel_reason",
+        "field_type": "string",
+        "entity": "contribution"
     }
 }

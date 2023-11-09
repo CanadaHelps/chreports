@@ -2,6 +2,7 @@
     "name": "contrib_summary_campaign",
     "title": "Contribution History By Camapaign (Summary)",
     "type": "summary",
+    "template": "chreports/contrib_summary",
     "entity": "contribution",
     "fields":{
         "contribution_source": {},

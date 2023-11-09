@@ -1,6 +1,7 @@
 { 
     "name": "contrib_detailed_glaccount",
     "title": "Contribution History By GL Account (Detailed)",
+    "template": "chreports/contrib_detailed",
     "type": "detailed",
     "entity": "contribution",
     "fields":{

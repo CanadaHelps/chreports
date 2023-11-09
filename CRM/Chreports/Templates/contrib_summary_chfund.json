@@ -2,6 +2,7 @@
     "name": "contrib_summary_chfund",
     "title": "Contribution History By CH Fund (Summary)",
     "type": "summary",
+    "template": "chreports/contrib_summary",
     "entity": "contribution",
     "fields":{
         "ch_fund": {
