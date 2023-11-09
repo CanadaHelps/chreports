@@ -291,31 +291,26 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
 
     //Retrieve Repeat Contributions Report
     public function isRepeatContributionReport(): bool {
-        $status = ($this->_settings['template'] == 'chreports/contrib_period_compare') ? true : false;
-        return $status;
+        return $this->_settings['template'] == 'chreports/contrib_period_compare';
     }
     //check if report is opportunity report
     public function isOpportunityReport(): bool {
-        $status = ($this->_settings['template'] == 'chreports/opportunity_detailed') ? true : false;
-        return $status;
+        return $this->_settings['template'] == 'chreports/opportunity_detailed';
     }
     //check if report is opportunity report
     public function isLYBNTSYBNTReport(): bool {
-        $status = (in_array($this->_settings['template'], ['chreports/lybunt' , 'chreports/sybunt'])) ? true : false;
-        return $status;
+        return in_array($this->_settings['template'], ['chreports/lybunt' , 'chreports/sybunt']);
     }
 
     //check if report is TopDonor report
     public function isTopDonorReport(): bool {
-        $status = ($this->_settings['template'] == 'chreports/top_donors') ? true : false;
-        return $status;
+        return $this->_settings['template'] == 'chreports/top_donors';
     }
  
     //Retrieve GL Accountand Payment Method Reconciliation Report
     public function isGLAccountandPaymentMethodReconciliationReport()
     {
-        $status = ($this->_settings['template'] == 'chreports/contrib_glaccount') ? true : false;
-        return $status;
+        return $this->_settings['template'] == 'chreports/contrib_glaccount';
     }
    
     //Retrieve Recurring Contribution Report
@@ -326,18 +321,15 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     }
 
     public function hasMonthlyBreakdown (): bool {
-        $status = $this->_settings['period'] == 'monthly' ? true : false;
-        return $status;
+        return $this->_settings['period'] == 'monthly';
     }
 
     public function hasYearlyBreakdown  (): bool {
-        $status = $this->_settings['period'] == 'yearly' ? true : false;
-        return $status;
+        return $this->_settings['period'] == 'yearly';
     }
 
     public function hasQuarterlyBreakdown  (): bool {
-        $status = $this->_settings['period'] == 'quarterly' ? true : false;
-        return $status;
+        return $this->_settings['period'] == 'quarterly';
     }
     
     //manage filters variable
