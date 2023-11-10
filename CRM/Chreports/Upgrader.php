@@ -676,12 +676,12 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
       ],
       'contrib_detailed_inhonour' =>  [
         'name'=>'In Honour of',
-        'report_id'=>'chreports/opportunity_detailed',
+        'report_id'=>'chreports/contrib_detailed',
         'title' => 'In Honour of'
       ],
       'contrib_detailed_inmemory' =>  [
         'name'=>'In Memory of',
-        'report_id'=>'chreports/opportunity_detailed',
+        'report_id'=>'chreports/contrib_detailed',
         'title' => 'In Memory of'
       ]
     ];
