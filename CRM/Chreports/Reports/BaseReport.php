@@ -546,6 +546,8 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
             
             $actualFieldName = ($fieldInfo['field_name']) ?? $fieldName;
             $filterType = $this->getFilterType($fieldName);
+            //manage title
+            $this->fixFieldTitle($fieldName,$fieldInfo["title"]);
             //$entityName = $fieldInfo['entity'];
             $var[$entityName]['fields'][$fieldName] = [
                 "title" => $fieldInfo["title"],
@@ -572,6 +574,16 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                 ];
             }
 
+        }
+    }
+    // fiscal and quarter report using same field with different title
+    private function fixFieldTitle(string $fieldName, &$title) {
+        switch ($fieldName) {
+            case 'receive_date_start':
+                $title = ($this->hasQuarterlyBreakdown())? ts('Quarter') :$title;
+                break;
+            default:
+                $title;
         }
     }
     

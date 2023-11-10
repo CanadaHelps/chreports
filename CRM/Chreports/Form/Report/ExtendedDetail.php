@@ -61,12 +61,32 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
     // setting out columns, filters, params,mapping from report object
     $this->_reportInstance->setFieldsMapping($var->getVar('_columns'));
     $params = $var->getVar('_params');
+    //CRM-2144 for precise "view results", filtering out preSelected fields 
+    if($var->getVar('_force') === 1){
+      //set column fields to params
+      $trueKeys =  array_keys($params['fields'],true);
+      $params['fields'] = array_fill_keys($trueKeys, true);
+      //set sort by fields to params
+      $params =  $this->_reportInstance->setDefaultOptionSortBy($params);
+    }
     $this->_reportInstance->setFormParams($params);
     $this->_reportInstance->setColumns($params['fields']);
     $this->_reportInstance->setFilters();
     $this->_reportInstance->setPagination($this->addPaging);
 
     $this->_reportInstance->setLimit($var->getVar('_limit'));
+   
+    // forcefully apply default filter values to params only for 'View Results' action
+    if($var->getVar('_force') === 1){
+        // Create params from the default JSON config file
+        $this->_reportInstance->setDefaultFilterValues();
+
+        // Set the new filters (if applicable)
+        $this->_reportInstance->setFilters();
+
+        // This is done for the generateFilterClause() method to work
+        $this->_params = $this->_reportInstance->_params;
+    }
     // Report Instance
     // _entity => Contribution, Contact, etc
     // _columns => array of columns with info for each field
@@ -96,9 +116,7 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
     
     // WHERE
     // requires access to form
-    //check 'View Results' action is there or not
-    $isForce = ($var->getVar('_force') === 1)? true : false;
-    $clauses = $this->buildWhereClause($isForce);
+    $clauses = $this->buildWhereClause();
     if (empty($clauses)) {
       $var->setVar('_where', "WHERE ( 1 ) ");
       $var->setVar('_having', "");
@@ -125,7 +143,7 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
     }
     return $havingclauses;
   }
-  private function buildWhereClause(bool $forceFilter): array {
+  private function buildWhereClause(): array {
     $clauses = [];
       
     if($this->_reportInstance->isRecurringContributionReport())
@@ -144,18 +162,6 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
     $clauses[] = $this->_reportInstance->getEntityTable('contact').'.is_deleted = 0';
     
     // Filters
-    // forcefully apply default filter values to params only for 'View Results' action
-    if($forceFilter){
-      // Create params from the default JSON config file
-      $this->_reportInstance->setDefaultFilterValues();
-
-      // // Set the new filters (if applicable)
-      $this->_reportInstance->setFilters();
-
-      // // This is done for the generateFilterClause() method to work
-      $this->_params = $this->_reportInstance->_params;
-    }
-
     $removeIndividualCluase = false;
     if(!empty($this->_reportInstance->getFilters())){
       if (array_key_exists('repeat_contri_initial_date_range',$this->_reportInstance->getFilters()) && array_key_exists('repeat_contri_second_date_range',$this->_reportInstance->getFilters())){

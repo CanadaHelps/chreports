@@ -224,7 +224,7 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
       }
 
       if ($varType == 'rows') {
-        
+
          // remove unwanted columns from display
          $reportInstance->alterColumnHeadersForDisplay($var,$object->_columnHeaders);
         //manage display of result
@@ -595,7 +595,6 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
     }
   }
   if ($object instanceof CRM_Report_Form_Contribute_Summary || $object instanceof CRM_Chreports_Form_Report_ExtendSummary || $object instanceof CRM_Chreports_Form_Report_ExtendMonthlyYearly) {
-    //die( 'tttttt');
     $tablename = E::getTableNameByName('Campaign_Information');
     if ($varType == 'columns') {
       if ($object instanceof CRM_Chreports_Form_Report_ExtendSummary) {
