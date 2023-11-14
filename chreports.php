@@ -726,11 +726,11 @@ function chreports_civicrm_preProcess($formName, &$form) {
       foreach($filterParams as $filterKey => $filterValue) {
         $defaultSelectedFilter[$filterKey] = $filterValue;
       }
-      // $defaults[$filterKey] = $filterValue;
+      //$defaults[$filterKey] = $filterValue;
       $form->setVar('_formValues', $defaultSelectedFilter);
     }
 
-    // $form->setVar('_defaults', $defaults);
+    $form->setVar('_defaults', $defaults);
 
     //CRM-2097: For Save/Copy bypass the post Process
     if($form->getVar('_submitValues')['task'] == 'report_instance.copy') {
