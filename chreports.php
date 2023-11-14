@@ -595,7 +595,6 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
     }
   }
   if ($object instanceof CRM_Report_Form_Contribute_Summary || $object instanceof CRM_Chreports_Form_Report_ExtendSummary || $object instanceof CRM_Chreports_Form_Report_ExtendMonthlyYearly) {
-    //die( 'tttttt');
     $tablename = E::getTableNameByName('Campaign_Information');
     if ($varType == 'columns') {
       if ($object instanceof CRM_Chreports_Form_Report_ExtendSummary) {
@@ -712,7 +711,6 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
 function chreports_civicrm_preProcess($formName, &$form) {
   if($formName == "CRM_Chreports_Form_Report_ExtendSummary" || $formName == "CRM_Chreports_Form_Report_GLSummaryReport" || $formName == "CRM_Chreports_Form_Report_ExtendedDetail" || $formName == "CRM_Chreports_Form_Report_ExtendLYBUNT")
   {
-    //die('vvvvvvv');
     //hide empty custom fields based filter sections on filter tab
     $reportInstance = $form->getReportInstance();
     $filters = $form->getVar('_filters');
@@ -728,11 +726,11 @@ function chreports_civicrm_preProcess($formName, &$form) {
       foreach($filterParams as $filterKey => $filterValue) {
         $defaultSelectedFilter[$filterKey] = $filterValue;
       }
-      //$defaults[$filterKey] = $filterValue;
+      // $defaults[$filterKey] = $filterValue;
       $form->setVar('_formValues', $defaultSelectedFilter);
     }
 
-    $form->setVar('_defaults', $defaults);
+    // $form->setVar('_defaults', $defaults);
 
     //CRM-2097: For Save/Copy bypass the post Process
     if($form->getVar('_submitValues')['task'] == 'report_instance.copy') {

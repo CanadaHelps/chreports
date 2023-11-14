@@ -690,6 +690,41 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
     return TRUE;
   }
 
+  public function upgrade_2400() {
+    $this->ctx->log->info('Migrate Reports to a new template');
+    $non_migrated_templates = [
+      'activity',
+      'grant/detail',
+      'activityextended'
+    ];
+    $reportCountCount = civicrm_api3('ReportInstance', 'getcount');
+    $reportInstances = civicrm_api3('ReportInstance', 'get', [
+      'sequential' => 1,
+      'options' => ['limit' => 0],
+    ]);
+    if($reportInstances) {
+      foreach($reportInstances['values'] as $report) {
+        $name = str_replace("(");
+        if(!empty($report['created_id']) && !empty($report['form_values'])) {
+          if(!in_array($report['report_id'], $non_migrated_templates)) {
+            // Extract form Values and clean up the data
+            $report['form_values'] = unserialize(preg_replace_callback ( '!s:(\d+):"(.*?)";!', function($match) {      
+              return ($match[1] == strlen($match[2])) ? $match[0] : 's:' . strlen($match[2]) . ':"' . $match[2] . '";';
+            }, $report['form_values']));
+            // Identify reportId and Base template
+            $baseTemplate = E::getBaseTemplate($report);
+            if($baseTemplate) {
+              $reportConfiguration = new CRM_Chreports_Reports_BaseReport($baseTemplate['entity'], $baseTemplate['id'], $baseTemplate['values'][$baseTemplate['id']]['name']);
+              $reportConfiguration->setParamsForMigration($report, $baseTemplate['values'][$baseTemplate['id']]['report_id'], $baseTemplate['values'][$baseTemplate['id']]['name']);
+              $reportConfiguration->buildJsonConfigSettings();
+              $reportConfiguration->writeMigrateConfigFile();
+            }
+          }
+        }
+      }
+    }
+  }
+
   /**
    * Example: Run an external SQL script.
    *

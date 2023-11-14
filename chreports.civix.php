@@ -116,15 +116,218 @@ class CRM_Chreports_ExtensionUtil {
   }
 
 
-public static function getOptionGroupNameByColumnName($columnName) {
-  return CRM_Core_DAO::singlevalueQuery("
-    SELECT g.name
-     FROM civicrm_option_group g
-      INNER JOIN civicrm_custom_field cf ON cf.option_group_id = g.id
-     WHERE cf.column_name = '$columnName'
-  ");
-}
+  public static function getOptionGroupNameByColumnName($columnName) {
+    return CRM_Core_DAO::singlevalueQuery("
+      SELECT g.name
+      FROM civicrm_option_group g
+        INNER JOIN civicrm_custom_field cf ON cf.option_group_id = g.id
+      WHERE cf.column_name = '$columnName'
+    ");
+  }
+  public static function getBaseTemplate ($reportInstance) {
+    $title = $reportInstance['title'];
+    $description = $reportInstance['description'];
+    $report_id = $reportInstance['report_id'];
+    $formValues = $reportInstance['form_values'];
 
+    // Check whether report ID is base or has got sub templates as well
+    $migratedTemplate = self::getMigratedTemplate($report_id);
+    if(isset($migratedTemplate['sub_templates'])) {
+      // Step 1: Get it by Title
+      $match = self::matchKeywordForTemplate($reportInstance['title']);
+      if(!$match['title']) {
+        // Step 2: Get it by description
+        $match = self::matchKeywordForTemplate($reportInstance['description']);
+        if(!$match) {    
+          // Step 3: Get it by formvalues
+          $match = self::matchbyFormValue($formValues, $migratedTemplate);
+        }
+      }
+      if($match) {
+        $base_report_name = $migratedTemplate['sub_templates'][$match]['name'];
+      } else {
+        // Step 4: Assign base/common template for the corresponding report_id
+        // catch all template
+        $base_report_name = $migratedTemplate['name'];
+      }
+      
+    } else {
+      $base_report_name = $migratedTemplate['name'];
+    }
+    if($base_report_name) {
+      $base_report = civicrm_api3('ReportInstance', 'get', [
+        'name' => $base_report_name,
+        'created_id' => ['IS NULL' => 1]
+      ]);
+      $base_report['entity'] = $migratedTemplates[$report_id]['entity'];
+      return $base_report;
+    }
+  }
+
+  private function getMigratedTemplate($reportId) {
+    switch (strtolower($reportId)) {
+      case 'biz.jmaconsulting.chreports/extendeddetail' :
+      case 'contribution/contributions' :
+        $template = [
+          'report_id' => 'chreports/contrib_detailed',
+          'entity' => 'contribution',
+          'name' => 'contrib_detailed',
+          'sub_templates' => [
+            'fund' => [
+              'name' => 'contrib_detailed_fund',
+            ],
+            'source' => [
+              'name' => 'contrib_detailed_source',
+            ],
+            'campaign' => [
+              'name' => 'contrib_detailed_campaign',
+            ],
+            'campaign_group' => [
+              'name' => 'contrib_detailed_campaign_group',
+            ],
+            'ch_fund' => [
+              'name' => 'contrib_detailed_chfund'
+            ],
+            'glaccount' => [
+              'name' => 'contrib_detailed_glaccount'
+            ],
+            'inhonour' => [
+              'name' => 'contrib_detailed_inhonour'
+            ],
+            'inmemory' => [
+              'name' => 'contrib_detailed_inmemory'
+            ],
+          ],
+        ];
+        break;
+      case 'chreports/extendsummary' : 
+        $template = [
+          'report_id' => 'chreports/contrib_summary',
+          'entity' => 'contribution',
+          'name' => 'contrib_summary',
+          'sub_templates' => [
+            'fund' => [
+              'name' => 'contrib_summary_fund',
+            ],
+            'source' => [
+              'name' => 'contrib_summary_source',
+            ],
+            'campaign' => [
+              'name' => 'contrib_summary_campaign',
+            ],
+            'campaign_group' => [
+              'name' => 'contrib_summary_campaign_group',
+            ],
+            'glaccount' => [
+              'name' => 'contrib_summary_glaccount'
+            ],
+            'ch_fund' => [
+              'name' => 'contrib_detailed_chfund'
+            ],
+          ],
+        ];
+        break;
+      case 'contribute/lybunt' :
+      case 'chreports/extendlybunt' :
+      case 'contribute/revisedlybunt' : 
+        $template = [
+          'name' => 'contrib_lybunt',
+          'report_id' => 'chreports/lybunt',
+          'entity' => 'contribution',
+        ];
+        break;
+      case 'contribute/sybunt' :
+        $template =  [
+        'name' => 'contrib_sybunt',
+        'report_id' => 'chreports/sybunt',
+        'entity' => 'contribution',
+      ];
+      case 'grant/detail' :
+        $template = [
+        'name' => 'opportunity_detailed',
+        'report_id' => 'chreports/opportunity_detailed',
+        'entity' => 'contribution',
+        ];
+      break;
+      case 'contribute/summary' : 
+        $template = [
+          'report_id' => 'chreports/contrib_period_detailed',
+          'entity' => 'contribution',
+          'name' => 'contrib_summary',
+          'sub_templates' => [
+            'monthly' => [
+              'name' => 'contrib_monthly_fiscal_year',
+            ],
+            'quaterly' => [
+              'name' => 'contrib_quarterly_past_year',
+            ],
+          ],
+        ];
+      break;
+    }
+    return $template;
+  }
+
+
+  public function matchKeywordForTemplate($inputString, $type = 'contribution') {
+    // Define the keywords to search for
+    $keywords = [
+      'contribution' => [
+        'campaign group', 
+        'fund', 
+        'campaign',
+        'source',
+        'in honor',
+        'in memory',
+        'CH Fund',
+        'GL Account'
+      ],
+      'pivot' => [
+        'monthly',
+        'quaterly',
+        'yearly'
+      ]
+    ];
+    
+    // Loop through each keyword depending on the type of report and check if it exists in the input string
+    foreach ($keywords[$type] as $keyword) {
+      if (strpos(strtolower($inputString), $keyword) !== false) {
+        return $keyword;
+      }
+    }
+    return false;
+  }
+
+  public function matchbyFormValue($formValues, $reportId, $type = 'contribution') {
+    if($type == 'contribution') {
+      //Loop through fields 
+      $fieldsPreferenceOrder = [
+        "financial_type_id",
+        "contribution_page_id",
+        "campaign",
+        "source",
+        "ch_fund" //Translate the custom value by coulmn name
+      ];
+      if($reportId['name'] == 'contrib_detailed' || $reportId['name'] == 'contrib_summary') {
+        foreach($formValues['fields'] as $kField => $vField) {
+          if(in_array($kField, $fieldsPreferenceOrder)) {
+            return self::wordReplace($kField);
+          }
+        }
+      }
+    }
+  }
+
+  private function wordReplace ($inputString) {
+    $wordReplace = [
+      'contribution_page_id' => 'campaign',
+      'financial_type_id' => 'fund',
+      'campaign' => 'campaign_group'
+    ];
+    if (array_key_exists($inputString, $wordReplace))
+      return $wordReplace[$inputString];
+    return $inputString;
+  }
 }
 
 use CRM_Chreports_ExtensionUtil as E;
@@ -293,7 +496,7 @@ function _chreports_civix_find_files($dir, $pattern) {
     if ($dh = opendir($subdir)) {
       while (FALSE !== ($entry = readdir($dh))) {
         $path = $subdir . DIRECTORY_SEPARATOR . $entry;
-        if ($entry{0} == '.') {
+        if ($entry[0] == '.') {
         }
         elseif (is_dir($path)) {
           $todos[] = $path;
