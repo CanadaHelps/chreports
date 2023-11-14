@@ -638,6 +638,17 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
      * @return void
      */
     public function alterColumnHeadersForDisplay(&$var, &$columnHeaders ){
+        //CRM-1878-Calculated and money type field should be right align , all other fields should be left align
+        foreach($this->_calculatedFields as $fieldName => $value) {
+            if(!in_array($columnHeaders[$fieldName]['type'],[CRM_Utils_Type::T_MONEY,CRM_Utils_Type::T_INT,CRM_Utils_TYPE::T_DATE + CRM_Utils_Type::T_TIME])) {
+                $columnHeaders[$fieldName] = ['title' => $columnHeaders[$fieldName]['title'],'type'=> CRM_Utils_Type::T_INT];
+            }
+        }
+        foreach ($columnHeaders as $fieldName => $value) {
+            if(!in_array($fieldName,array_keys($this->_calculatedFields)) && $value['type'] !== CRM_Utils_Type::T_MONEY) {
+                $columnHeaders[$fieldName] = ['title' => $value['title'],'type'=> CRM_Utils_Type::T_STRING];
+            }
+        }
         //Hide currency column from display result
         unset($columnHeaders['currency']);
         // Hide contact id and contribution id from display result

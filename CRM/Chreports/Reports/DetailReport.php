@@ -55,88 +55,6 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
         $this->_columnHeaders[$fieldName]['title'] = $this->_columnHeaders[$fieldName]['title'] ?? $columnInfo['title'];
         $this->_columnHeaders[$fieldName]['type'] = $columnInfo['type'];
 
-        
-        
-
-      
-
-          // if(parent::isRecurringContributionReport()){
-          //   if($fieldName == 'total_amount' )
-          //   {
-          //     $columnInfo['title'] = 'This Month Amount';
-          //     $columnInfo['select_clause_alias'] = "IFNULL((CASE WHEN 
-          //     YEAR(".$this->getEntityTable('contribution').".receive_date) = YEAR(NOW()) AND MONTH(".$this->getEntityTable('contribution').".receive_date) = MONTH(NOW()) THEN SUM(".$this->getEntityTable('contribution').".total_amount) 
-          //     END),0)";
-          //     $columnInfo['type'] = CRM_Utils_Type::T_MONEY;
-          //     //[select_clause_alias] => civicrm_phone.phone
-          //   }
-
-          //   if($fieldName == 'completed_contributions' )
-          //   {
-          //     $columnInfo['title'] = 'Completed Contributions';
-          //     $columnInfo['select_clause_alias'] = "(COUNT(CASE WHEN ".$this->getEntityTable('contribution').".`contribution_status_id` = 1 THEN 1 END))";
-          //     $columnInfo['type'] = CRM_Utils_Type::T_INT;
-          //   }
-
-
-          //   if($fieldName == 'last_month_amount' )
-          //   {
-          //     $columnInfo['title'] = 'Last Month Amount';
-          //     $columnInfo['select_clause_alias'] = "IFNULL((CASE WHEN 
-          //     YEAR(".$this->getEntityTable('contribution').".receive_date) = YEAR(MAX(".$this->getEntityTable('contribution').".receive_date)) AND MONTH(".$this->getEntityTable('contribution').".receive_date) = MONTH(MAX(".$this->getEntityTable('contribution').".receive_date)) THEN SUM(".$this->getEntityTable('contribution').".total_amount) 
-          //     END),0)";
-          //     $columnInfo['type'] = CRM_Utils_Type::T_MONEY;
-          //   }
-
-          //   if($fieldName == 'start_date' )
-          //   {
-          //     $columnInfo['title'] = 'Start Date/First Contribution';
-          //     $columnInfo['select_clause_alias'] = "(MIN(".$this->getEntityTable('contribution').".receive_date))";
-          //     $columnInfo['type'] = CRM_Utils_Type::T_DATE + CRM_Utils_Type::T_TIME;
-          //   }
-          // }
-      
-
-
-        //  $selectStatement = ($columnInfo['select_clause_alias']) ? $columnInfo['select_clause_alias'] : $columnInfo['table_name'] . "." .  $columnInfo['name'];
-        //  $select[] = $selectStatement . " AS $fieldName";
-        //for boolean data value display directly 'Yes' or 'No' rather than 1 or 0
-        // if($fieldName == 'application_submitted')
-        // {
-        //   $select[] = "case when ".$this->getEntityClauseFromField($fieldName)." then 'Yes' else 'No' end AS $fieldName";
-        //   $this->_columnHeaders[$fieldName]['title'] = $columnInfo['title'];
-        // }else if($fieldName == 'life_time_total')
-        // {
-        //   $select[] = "SUM(".$this->getEntityTable('contribution').".total_amount) AS $fieldName";
-        //   $this->_columnHeaders[$fieldName]['title'] = $columnInfo['title'];
-        // }
-        // else if($fieldName == 'last_four_year_total_amount')
-        // {
-        //   $select[] = "SUM(IF(" . $this->whereClauseLastNYears('civicrm_contribution.receive_date',4) . ", civicrm_contribution.total_amount, 0)) as $fieldName";
-        //   $this->_columnHeaders[$fieldName]['title'] = $this->getLastNYearColumnTitle(4);;
-        // }
-        // else if($fieldName == 'last_three_year_total_amount')
-        // {
-        //   $select[] = "SUM(IF(" . $this->whereClauseLastNYears('civicrm_contribution.receive_date',3) . ", civicrm_contribution.total_amount, 0)) as $fieldName";
-        //   $this->_columnHeaders[$fieldName]['title'] =$this->getLastNYearColumnTitle(3);;
-        // }
-        // else if($fieldName == 'last_two_year_total_amount')
-        // {
-        //   $select[] = "SUM(IF(" . $this->whereClauseLastNYears('civicrm_contribution.receive_date',2) . ", civicrm_contribution.total_amount, 0)) as $fieldName";
-        //   $this->_columnHeaders[$fieldName]['title'] = $this->getLastNYearColumnTitle(2);;
-        // }
-        // else if($fieldName == 'last_year_total_amount')
-        // {
-        //   $select[] = "SUM(IF(" . $this->whereClauseLastYear('civicrm_contribution.receive_date') . ", civicrm_contribution.total_amount, 0)) as $fieldName";
-        //   $this->_columnHeaders[$fieldName]['title'] = $this->getLastYearColumnTitle();;
-        // }else{
-           //common select clause
-          
-        //}
-        //Adding columns to _columnHeaders for display purpose
-       
-        
-        
       }
 
 
@@ -150,30 +68,34 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
       $this->_columnHeaders['civicrm_contribution_contribution_id']['type'] = CRM_Utils_Type::T_INT;
 
       }else{
-        $select[] = "COUNT(".$this->getEntityTable('contribution').".id) as count";
+        $contribCountStatement = "COUNT(".$this->getEntityTable('contribution').".id) as count";
+        $select[] = $contribCountStatement;
         $this->_columnHeaders['count']['title'] = 'contribution_id';
         $this->_columnHeaders['count']['type'] = CRM_Utils_Type::T_INT;
+        $this->_calculatedFields['count']=[ 'count' => $contribCountStatement];
         //get sg_flag_38 custom field table and value;
         list($customTablename,$columnName) = $this->getCustomTableNameColumnName('SG_Flag');
 
-       // die('test');
         $select[] = "IF(".$this->getEntityTable('contribution').".contribution_recur_id IS NOT NULL, 1, IF(".$customTablename.".".$columnName." IS NOT NULL, 1, 0)) as is_recurring";
         $this->_columnHeaders['is_recurring']['title'] = 'is_recurring';
         $this->_columnHeaders['is_recurring']['type'] = CRM_Utils_Type::T_INT;
+        $this->_calculatedFields['is_recurring'];
 
 
       }
       //Repeat contribution report 
       if((parent::isRepeatContributionReport()))
       {
-        $select[] = "CASE 
+        $repeatContribPercentstatement = "CASE 
         WHEN (COUNT(civicrm_contribution_secondset.id) = 0) THEN 'Skipped Donation'
         WHEN (COUNT(civicrm_contribution_primaryset.id) = 0) THEN 'New Donor'
         ELSE 
         CONCAT(ROUND(((SUM(civicrm_contribution_secondset.total_amount) -SUM(civicrm_contribution_primaryset.total_amount))/ SUM(civicrm_contribution_primaryset.total_amount))*100, 2),'%')
     END AS per_change";
-        $this->_columnHeaders['per_change']['title'] = 'Per Change';
+        $select[] = $repeatContribPercentstatement;
+        $this->_columnHeaders['per_change']['title'] = '% Change';
         $this->_columnHeaders['per_change']['type'] = CRM_Utils_Type::T_STRING;
+        $this->_calculatedFields['per_change']= [ 'per_change' => $repeatContribPercentstatement];
       }
       
       //contact Table ID details
@@ -183,17 +105,23 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
 
       if($this->isTopDonorReport())
       {
-      $select[] = "COUNT(".$this->getEntityTable('contribution').".id) AS count";
+      $topDonorContribCountStatement = "COUNT(".$this->getEntityTable('contribution').".id) AS count";
+      $select[] = $topDonorContribCountStatement;
       $this->_columnHeaders['count']['title'] = 'Donations';
       $this->_columnHeaders['count']['type'] = CRM_Utils_Type::T_INT;
+      $this->_calculatedFields['count'] = [ 'count' => $topDonorContribCountStatement];
 
-      $select[] = "SUM(".$this->getEntityTable('contribution').".`total_amount`) AS total_amount";
-      $this->_columnHeaders['total_amount']['title'] = 'Aggregate Amount';
+      $topDonorTotalAmountStatement = "SUM(".$this->getEntityTable('contribution').".`total_amount`) AS total_amount";
+      $select[] = $topDonorTotalAmountStatement;
+      $this->_columnHeaders['total_amount']['title'] = 'Amount';
       $this->_columnHeaders['total_amount']['type'] = CRM_Utils_Type::T_MONEY;
+      $this->_calculatedFields['total_amount']= [ 'total_amount' => $topDonorTotalAmountStatement];
 
-      $select[] = "ROUND(AVG(".$this->getEntityTable('contribution').".`total_amount`),2) AS avg_amount";
+      $topDonorAvgAmountStatement = "ROUND(AVG(".$this->getEntityTable('contribution').".`total_amount`),2) AS avg_amount";
+      $select[] = $topDonorAvgAmountStatement;
       $this->_columnHeaders['avg_amount']['title'] = 'Average';
       $this->_columnHeaders['avg_amount']['type'] = CRM_Utils_Type::T_MONEY;
+      $this->_calculatedFields['avg_amount']= [ 'avg_amount' => $topDonorAvgAmountStatement];
 
       $fieldInfo = $this->getFieldInfo('total_lifetime_contributions');
       $select[] = $this->getCommonSelectClause('total_lifetime_contributions') ." AS total_lifetime_contributions";
