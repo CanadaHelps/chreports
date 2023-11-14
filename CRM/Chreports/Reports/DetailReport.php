@@ -111,11 +111,11 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
       $this->_columnHeaders['count']['type'] = CRM_Utils_Type::T_INT;
       $this->_calculatedFields['count'] = [ 'count' => $topDonorContribCountStatement];
 
-      $topDonorTotalAmountStatement = "SUM(".$this->getEntityTable('contribution').".`total_amount`) AS total_amount";
-      $select[] = $topDonorTotalAmountStatement;
+      $amount = "SUM(".$this->getEntityTable('contribution').".`total_amount`) AS total_amount";
+      $select[] = $amount;
       $this->_columnHeaders['total_amount']['title'] = 'Aggregate Amount';
       $this->_columnHeaders['total_amount']['type'] = CRM_Utils_Type::T_MONEY;
-      $this->_calculatedFields['total_amount']= [ 'total_amount' => $topDonorTotalAmountStatement];
+      $this->_calculatedFields['total_amount']= [ 'total_amount' => $amount];
 
       $topDonorAvgAmountStatement = "ROUND(AVG(".$this->getEntityTable('contribution').".`total_amount`),2) AS avg_amount";
       $select[] = $topDonorAvgAmountStatement;
