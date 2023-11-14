@@ -61,14 +61,18 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
       }
       
       // Add default fields such as total, sum and currency
-      $select[] = "COUNT(".$this->getEntityTable().".id) AS count";
+      $contribCountStatement = "COUNT(".$this->getEntityTable().".id) AS count";
+      $select[] = $contribCountStatement;
       $this->_columnHeaders['count']['title'] = 'Number of Contributions';
       $this->_columnHeaders['count']['type'] = CRM_Utils_Type::T_INT;
+      $this->_calculatedFields['count']=[ 'count' => $contribCountStatement];
 
       // Total Amount
-      $select[] = "SUM(".$this->getEntityTable('contribution').".`total_amount`) AS total_amount";
+      $totalAmountStatement = "SUM(".$this->getEntityTable('contribution').".`total_amount`) AS total_amount";
+      $select[] = $totalAmountStatement;
       $this->_columnHeaders['total_amount']['title'] = 'Total Amount';
       $this->_columnHeaders['total_amount']['type'] = CRM_Utils_Type::T_MONEY;
+      $this->_calculatedFields['total_amount']=[ 'total_amount' => $totalAmountStatement];
       
       $select[] = "GROUP_CONCAT(DISTINCT ".$this->getEntityTable().".currency) AS currency";
       $this->_columnHeaders['currency']['title'] = 'Currency';
