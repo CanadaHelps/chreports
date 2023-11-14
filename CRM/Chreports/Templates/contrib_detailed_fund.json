@@ -20,6 +20,12 @@
             "default" : true
         }
     },
+    "order_bys":{
+        "financial_type_id": {
+            "order": "ASC",
+            "section": true
+        }
+    },
     "use_default_filters" : false,
     "filters":{
         "receive_date":{},
@@ -47,5 +53,5 @@
             ]
         }
     },
-    "groupByDisplay" : false
+    "groupByClause" : false
 }

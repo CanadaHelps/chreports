@@ -5,7 +5,6 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
 
     private $_name;
     private $_pagination = FALSE;
-    private $_entityTableMapping = [];
 
     private $_entity  = 'contribution';
     protected $_columns = [];
@@ -556,7 +555,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                 "custom_alias" =>  $entityName.'_'.$fieldName,
             ];
             //set order by fields //sort by
-            if(isset($this->_settings['orderByDisplay']) && $this->_settings['orderByDisplay'] === false){
+            if(isset($this->_settings['orderByClause']) && $this->_settings['orderByClause'] === false){
                 unset($var[$entityName]['order_bys'][$fieldName]);
             }else{
                 $var[$entityName]['order_bys'][$fieldName] = [
@@ -565,7 +564,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
             }
 
             //set group by
-            if(isset($this->_settings['groupByDisplay']) && $this->_settings['groupByDisplay'] === false){
+            if(isset($this->_settings['groupByClause']) && $this->_settings['groupByClause'] === false){
                 unset($var[$entityName]['group_bys'][$fieldName]);
             }else{
                 $var[$entityName]['group_bys'][$fieldName] = [
@@ -1304,13 +1303,12 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     //set default option value to Sort by section
     // TODO: explain + rename?
     public function setDefaultOptionSortBy(array $defaults) {
-        // TODO: optimize
-        if(!empty($this->getDefaultColumns()))
+        if(!empty($this->_settings['order_bys']))
         {
             unset($defaults['order_bys']);
-            foreach($this->getDefaultColumns() as $value)
+            foreach($this->_settings['order_bys'] as $fieldName => $orderConfig)
             {
-                $defaults['order_bys'][] = ['column'=>$value,'order'=>'ASC'];
+                $defaults['order_bys'][] = ['column'=>$fieldName,'order'=>$orderConfig['order'],'section'=>$orderConfig['section'] ? true : false];
             }
         }
         return $defaults;

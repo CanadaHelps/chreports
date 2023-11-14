@@ -47,6 +47,11 @@
         "cancel_date":{},
         "cancel_reason":{}
     },
+    "order_bys":{
+        "sort_name": {
+            "order": "ASC"
+        }
+    },
     "use_default_filters" : false,
     "filters":{
         "sort_name":{},
@@ -110,5 +115,5 @@
         "is_recurring":{},
         "contribution_message":{}
     },
-    "groupByDisplay" : false
+    "groupByClause" : false
 }

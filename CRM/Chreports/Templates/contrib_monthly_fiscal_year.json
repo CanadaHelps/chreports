@@ -8,8 +8,13 @@
     "fields":{
         "receive_date_start": {"default" : true}
     },
+    "order_bys":{
+        "receive_date_start": {
+            "order": "ASC"
+        }
+    },
     "use_default_filters" : true,
-    "groupByDisplay" : false,
+    "groupByClause" : false,
     "filters":{
         "contribution_status_id": {
             "in": [

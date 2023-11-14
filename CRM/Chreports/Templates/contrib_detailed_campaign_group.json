@@ -20,6 +20,12 @@
             "default" : true
         }
     },
+    "order_bys":{
+        "campaign_id": {
+            "order": "DESC",
+            "section": true
+        }
+    },
     "use_default_filters" : false,
     "filters":{
         "receive_date":{},
@@ -47,5 +53,5 @@
         "campaign_type":{},
         "ch_fund":{}
     },
-    "groupByDisplay" : false
+    "groupByClause" : false
 }

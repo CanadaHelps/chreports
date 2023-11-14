@@ -36,6 +36,12 @@
         "trxn_date":{},
         "card_type_id":{}
     },
+    "order_bys":{
+        "credit_name": {
+            "order": "ASC",
+            "section": true
+        }
+    },
     "use_default_filters" : false,
     "filters":{
         "sort_name":{},
@@ -66,5 +72,5 @@
         },
         "card_type_id":{}
     },
-    "groupByDisplay" : false
+    "groupByClause" : false
 }

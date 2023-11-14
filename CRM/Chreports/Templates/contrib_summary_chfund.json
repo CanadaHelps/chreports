@@ -13,6 +13,11 @@
         "financial_type_id": {},
         "contribution_page_id": {}
     },
+    "order_bys":{
+        "ch_fund": {
+            "order": "ASC"
+        }
+    },
     "use_default_filters" : true,
     "filters":{
         "ch_fund":{},

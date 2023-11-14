@@ -32,6 +32,14 @@
         "total_lifetime_contributions": {"default" : true},
         "amount_of_last_contribution": {"default" : true}
     },
+    "order_bys":{
+        "sort_name": {
+            "order": "ASC"
+        },
+        "total_lifetime_contributions": {
+            "order": "DESC"
+        }
+    },
     "use_default_filters" : false,
     "filters":{
         "receive_date":{},
@@ -50,5 +58,5 @@
         "gid":{},
         "on_hold":{}
     },
-    "groupByDisplay" : false
+    "groupByClause" : false
 }
