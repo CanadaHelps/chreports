@@ -2,6 +2,7 @@
     "name": "contrib_glaccount_payment_reconciliation",
     "title": "GL Account & Payment Method Reconciliation Report (Full)",
     "type": "detailed",
+    "template": "chreports/contrib_glaccount",
     "entity": "contribution",
     "fields":{
         "contact_name":{},

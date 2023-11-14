@@ -1,14 +1,15 @@
 { 
     "name": "contrib_summary_source",
     "title": "Contribution History By Source (Summary)",
+    "template": "chreports/contrib_summary",
     "type": "summary",
     "entity": "contribution",
     "fields":{
-        "financial_type_id": {
+        "financial_type_id": {},
+        "campaign_id": {},
+        "contribution_source": {
             "default" : true
         },
-        "campaign_id": {},
-        "contribution_source": {},
         "contribution_page_id": {}
     },
     "use_default_filters" : true,

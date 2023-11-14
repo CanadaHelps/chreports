@@ -1,6 +1,7 @@
 { 
     "name": "contrib_summary_payment_method",
     "title": "Contribution History By Payment Method (Summary)",
+    "template": "chreports/contrib_summary",
     "type": "summary",
     "entity": "contribution",
     "fields":{

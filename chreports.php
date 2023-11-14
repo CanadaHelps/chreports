@@ -163,7 +163,7 @@ function chreports_civicrm_buildForm($formName, &$form) {
         $reportInstance->setPreSelectField($elementField);
       }
       //For monthly and yearly report only one column should be checked at a time
-      if($reportInstance->isMonthlyYearlyReport()){
+      if($reportInstance->isPeriodicSummary()){
         CRM_Core_Resources::singleton()->addScript(
           "CRM.$(function($) {
             $('.crm-report-criteria-field input:checkbox').on('change',function() {
@@ -224,7 +224,7 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
       }
 
       if ($varType == 'rows') {
-        
+
          // remove unwanted columns from display
          $reportInstance->alterColumnHeadersForDisplay($var,$object->_columnHeaders);
         //manage display of result

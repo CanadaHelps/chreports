@@ -35,8 +35,8 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
       $this->addCalculatedFieldstoSelect($select);
 
       //Monthly / Yerly report select clause
-      if($this->isMonthlyYearlyReport()){
-        if($this->getReportPeriod() == 'monthly')
+      if($this->isPeriodicSummary()){
+        if($this->hasMonthlyBreakdown())
         {
           $select[] = "MONTH(".$this->getEntityTable().".`receive_date`) AS month";
           $this->_columnHeaders['month']['title'] = 'Month Name';
@@ -46,8 +46,8 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
       }
 
       //fiscle year report
-      if($this->isFiscalQuarterReport()){
-        if($this->getReportPeriod() == 'monthly')
+      if($this->isPeriodicDetailed()){
+        if($this->hasMonthlyBreakdown())
         {
           $select[] = "MONTH(".$this->getEntityTable().".`receive_date`) AS monthIndex";
           $this->_columnHeaders['monthIndex']['title'] = '';
@@ -61,14 +61,18 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
       }
       
       // Add default fields such as total, sum and currency
-      $select[] = "COUNT(".$this->getEntityTable().".id) AS count";
+      $contribCountStatement = "COUNT(".$this->getEntityTable().".id) AS count";
+      $select[] = $contribCountStatement;
       $this->_columnHeaders['count']['title'] = 'Number of Contributions';
       $this->_columnHeaders['count']['type'] = CRM_Utils_Type::T_INT;
+      $this->_calculatedFields['count']=[ 'count' => $contribCountStatement];
 
       // Total Amount
-      $select[] = "SUM(".$this->getEntityTable('contribution').".`total_amount`) AS total_amount";
+      $totalAmountStatement = "SUM(".$this->getEntityTable('contribution').".`total_amount`) AS total_amount";
+      $select[] = $totalAmountStatement;
       $this->_columnHeaders['total_amount']['title'] = 'Total Amount';
       $this->_columnHeaders['total_amount']['type'] = CRM_Utils_Type::T_MONEY;
+      $this->_calculatedFields['total_amount']=[ 'total_amount' => $totalAmountStatement];
       
       $select[] = "GROUP_CONCAT(DISTINCT ".$this->getEntityTable().".currency) AS currency";
       $this->_columnHeaders['currency']['title'] = 'Currency';
@@ -90,8 +94,8 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
 
     $groupBy = [];
      //Monthly / Yerly report group by clause
-    if($this->isMonthlyYearlyReport()){
-      if($this->getReportPeriod() == 'monthly')
+    if($this->isPeriodicSummary()){
+      if($this->hasMonthlyBreakdown())
       {
         $groupBy[] = "MONTH(".$this->getEntityTable().".`receive_date`)";
       }
@@ -110,9 +114,9 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
       }
     } 
 
-    if($this->isFiscalQuarterReport()){
+    if($this->isPeriodicDetailed()){
       unset($groupBy);
-      if($this->getReportPeriod() == 'monthly')
+      if($this->hasMonthlyBreakdown())
       {
       $groupBy[] = "EXTRACT(YEAR_MONTH FROM ".$this->getEntityTable().".`receive_date`)";
       }else{
@@ -148,9 +152,9 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
         }
       }
       //Monthly / Yerly report order by clause
-      if($this->isMonthlyYearlyReport()){
+      if($this->isPeriodicSummary()){
         $orderBys[] = "YEAR(".$this->getEntityTable().".`receive_date`)";
-        if($this->getReportPeriod() == 'monthly')
+        if($this->hasMonthlyBreakdown())
         {
           $orderBys[] = "MONTH(".$this->getEntityTable().".`receive_date`)";
         }

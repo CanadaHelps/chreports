@@ -2,6 +2,7 @@
     "name": "contrib_monthly_fiscal_year",
     "title": "Fiscal Year to Date (Monthly)",
     "type": "summary",
+    "template": "chreports/contrib_period_detailed",
     "period":"monthly",
     "entity": "contribution",
     "fields":{

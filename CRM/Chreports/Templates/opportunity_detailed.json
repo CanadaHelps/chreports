@@ -1,6 +1,7 @@
 { 
     "name": "opportunity_detailed",
     "title": "Opportunity Details",
+    "template": "chreports/opportunity_detailed",
     "type": "detailed",
     "entity": "grant",
     "fields":{
