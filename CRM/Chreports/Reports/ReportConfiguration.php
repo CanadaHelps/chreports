@@ -349,7 +349,7 @@ class CRM_Chreports_Reports_ReportConfiguration {
             if(isset($fieldValue['default'])) {
                 $config['fields'][$fieldKey] = $fieldValue;
             } elseif ($fields[$fieldKey]) {
-                $config['fields'][$fieldKey] = ['preSelected' => true];
+                $config['fields'][$fieldKey] = ['selected' => true];
             } else {
                 $config['fields'][$fieldKey] = [];
             }
@@ -372,6 +372,7 @@ class CRM_Chreports_Reports_ReportConfiguration {
         }
         if($this->_action == 'copy') {
             $config['is_copy'] = (int) 1;
+            unset($config['is_migrated']);
         }
         if($this->_action == 'migrate') {
             $config['is_migrated'] = (int) 1;
@@ -397,7 +398,7 @@ class CRM_Chreports_Reports_ReportConfiguration {
         $params = $this->getFormParams();
 
         // Save Report Instance to DB without formvalues
-        $params['owner_id'] = NULL;
+        $params['owner_id'] = 'NULL';
         if (!empty($params['add_to_my_reports'])) {
             $params['owner_id'] = CRM_Core_Session::getLoggedInContactID();
         }
@@ -405,6 +406,9 @@ class CRM_Chreports_Reports_ReportConfiguration {
         unset($params['form_values']);
         unset($params['report_header']);
         unset($params['report_footer']);
+
+        //Set report template name to params
+        $params['name'] = $config['name'];
 
         //Set Report ID
         $params['report_id'] = CRM_Report_Utils_Report::getValueFromUrl($this->_id);
@@ -422,7 +426,6 @@ class CRM_Chreports_Reports_ReportConfiguration {
         }
 
         // Encode the $config array as JSON
-        $config['name'] = $instance->name;
         $jsonConfig = json_encode($config, JSON_PRETTY_PRINT);
 
         // Write the JSON data to the file
