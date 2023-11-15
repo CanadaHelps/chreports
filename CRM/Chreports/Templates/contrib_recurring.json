@@ -26,6 +26,11 @@
         "province":{ "selected" : true},
         "country":{ "selected" : true}
     },
+    "order_bys":{
+        "id": {
+            "order": "ASC"
+        }
+    },
     "use_default_filters" : false,
     "filters":{
         "sort_name":{},
@@ -41,5 +46,5 @@
             }
         }
     },
-    "groupByDisplay" : false
+    "groupByClause" : false
 }

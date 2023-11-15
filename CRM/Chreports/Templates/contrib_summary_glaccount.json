@@ -11,6 +11,11 @@
         "account_type": {},
         "gl_code": {}
     },
+    "order_bys":{
+        "gl_account": {
+            "order": "ASC"
+        }
+    },
     "use_default_filters" : true,
     "filters":{
         "gl_account":{},

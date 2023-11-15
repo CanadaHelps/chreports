@@ -13,9 +13,14 @@
         },
         "contribution_page_id": {}
     },
+    "order_bys":{
+        "financial_type_id": {
+            "order": "ASC"
+        }
+    },
     "use_default_filters" : true,
-    "groupByDisplay" : false,
-    "orderByDisplay" : false,
+    "groupByClause" : false,
+    "orderByClause" : false,
     "filters":{
         "contribution_status_id": {
             "in": [

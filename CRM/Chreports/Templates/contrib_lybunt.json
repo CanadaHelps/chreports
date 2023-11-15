@@ -50,6 +50,14 @@
         "card_type_id": {},
         "campaign_id":{"selected" : true}
     },
+    "order_bys":{
+        "last_year_total_amount": {
+            "order": "DESC"
+        },
+        "sort_name": {
+            "order": "ASC"
+        }
+    },
     "use_default_filters" : false,
     "filters":{
         "sort_name":{},
@@ -83,5 +91,5 @@
         "tagid":{},
         "gid":{}
     },
-    "groupByDisplay" : false
+    "groupByClause" : false
 }

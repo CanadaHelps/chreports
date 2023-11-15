@@ -53,6 +53,14 @@
         "last_year_total_amount": {"default" : true},
         "card_type_id": {}
     },
+    "order_bys":{
+        "last_year_total_amount": {
+            "order": "DESC"
+        },
+        "sort_name": {
+            "order": "ASC"
+        }
+    },
     "use_default_filters" : false,
     "filters":{
         "sort_name": {},
@@ -74,5 +82,5 @@
         },
         "card_type_id": {}
     },
-    "groupByDisplay" : false
+    "groupByClause" : false
 }

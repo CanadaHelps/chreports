@@ -19,6 +19,11 @@
         "total_amount": {"selected" : true}
         
     },
+    "order_bys":{
+        "gl_account": {
+            "order": "ASC"
+        }
+    },
     "use_default_filters" : true,
     "filters":{
         "gl_account":{},
@@ -28,5 +33,5 @@
             ]
         }
     },
-    "groupByDisplay" : false
+    "groupByClause" : false
 }

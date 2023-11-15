@@ -5,12 +5,17 @@
     "template": "chreports/contrib_summary",
     "entity": "contribution",
     "fields":{
-        "contribution_source": {
+        "contribution_source": {},
+        "campaign_id": {},
+        "financial_type_id": {
             "default" : true
         },
-        "campaign_id": {},
-        "financial_type_id": {},
         "contribution_page_id": {}
+    },
+    "order_bys":{
+        "financial_type_id": {
+            "order": "ASC"
+        }
     },
     "use_default_filters" : true,
     "filters":{

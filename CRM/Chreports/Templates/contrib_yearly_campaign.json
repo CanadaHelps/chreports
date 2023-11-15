@@ -13,9 +13,14 @@
             "selected" : true
         }
     },
+    "order_bys":{
+        "contribution_page_id": {
+            "order": "ASC"
+        }
+    },
     "use_default_filters" : true,
-    "groupByDisplay" : false,
-    "orderByDisplay" : false,
+    "groupByClause" : false,
+    "orderByClause" : false,
     "filters":{
         "contribution_status_id": {
             "in": [

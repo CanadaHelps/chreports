@@ -12,6 +12,11 @@
         "financial_type_id": {},
         "contribution_page_id": {}
     },
+    "order_bys":{
+        "campaign_id": {
+            "order": "ASC"
+        }
+    },
     "use_default_filters" : true,
     "filters":{
         "contribution_status_id": {

@@ -113,7 +113,7 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
     $var->setVar('_select', $this->_reportInstance->getSelect());
     $var->setVar('_selectClauses', $this->_reportInstance->getSelectClauses());
     $var->setVar('_columnHeaders', $this->_reportInstance->getColumnHeaders());
-    
+   
     // WHERE
     // requires access to form
     $clauses = $this->buildWhereClause();

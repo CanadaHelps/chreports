@@ -9,6 +9,11 @@
             "default" : true
         }
     },
+    "order_bys":{
+        "payment_instrument_id": {
+            "order": "ASC"
+        }
+    },
     "use_default_filters" : true,
     "filters":{
         "contribution_status_id": {

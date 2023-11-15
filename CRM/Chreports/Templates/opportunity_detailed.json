@@ -24,6 +24,11 @@
         "Opportunity_Owner": {"selected" : true}
         
     },
+    "order_bys":{
+        "Opportunity_Name": {
+            "order": "ASC"
+        }
+    },
     "use_default_filters" : false,
     "filters":{
         "grant_type":{},
@@ -43,5 +48,5 @@
             ]
         }
     },
-    "groupByDisplay" : false
+    "groupByClause" : false
 }

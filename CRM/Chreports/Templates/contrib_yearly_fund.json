@@ -8,14 +8,19 @@
     "fields":{
         "contribution_source": {},
         "campaign_id": {},
-        "financial_type": { 
+        "financial_type_id": { 
             "selected" : true
         },
         "contribution_page_id": {}
     },
+    "order_bys":{
+        "financial_type_id": {
+            "order": "ASC"
+        }
+    },
     "use_default_filters" : true,
-    "groupByDisplay" : false,
-    "orderByDisplay" : false,
+    "groupByClause" : false,
+    "orderByClause" : false,
     "filters":{
         "contribution_status_id": {
             "in": [

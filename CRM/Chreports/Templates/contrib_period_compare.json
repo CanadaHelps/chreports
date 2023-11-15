@@ -33,6 +33,11 @@
         "largest_contribution":{},
         "count_of_contributions":{}
     },
+    "order_bys":{
+        "id": {
+            "order": "ASC"
+        }
+    },
     "use_default_filters" : false,
     "filters":{
         "id":{},
@@ -72,6 +77,6 @@
             ]
         }
     },
-    "groupByDisplay" : false
+    "groupByClause" : false
     
 }
