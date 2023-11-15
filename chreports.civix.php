@@ -159,6 +159,13 @@ class CRM_Chreports_ExtensionUtil {
         'name' => $base_report_name,
         'created_id' => ['IS NULL' => 1]
       ]);
+      if($base_report_name && empty($base_report['values'])) {
+        $base_report['id'] = $reportInstance['id'];
+        $base_report['is_template'] = (int) 1;
+        $base_report['values'][$reportInstance['id']]['name'] = $base_report_name;
+        $base_report['values'][$reportInstance['id']]['report_id'] = $migratedTemplate['report_id'];
+
+      }
       $base_report['entity'] = $migratedTemplate['entity'];
       return $base_report;
     }
@@ -266,6 +273,12 @@ class CRM_Chreports_ExtensionUtil {
       break;
     }
     return $template;
+  }
+
+  public function getOnlyBaseTemplates() {
+    return [
+      'contrib_detailed'
+    ];
   }
 
 

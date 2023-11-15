@@ -11,11 +11,16 @@ class CRM_Chreports_Reports_ReportConfiguration {
     // Default Action is to View Report
     protected $_action = "view";
 
-    public function __construct(int $id) {
+    public function __construct(int $id, string $name) {
         $this->_id = $id;
         $this->_action = $action;    
         $this->loadMappings();
-        $this->loadSettings();
+        // For base templates where JSON file is present but no report_instance in the DB
+        if(in_array($name, E::getOnlyBaseTemplates())) {
+            $this->_settings = $this->_fetchConfigSettings(['name' => $name]);
+        } else {
+            $this->loadSettings();
+        }
     }
     /**
      * 
@@ -531,7 +536,7 @@ class CRM_Chreports_Reports_ReportConfiguration {
      */
     public static function getFilePath(array $reportDetails, $action = 'save'): array {
         $report_id = self::escapeFileName($reportDetails['name']);
-        if($action == 'copy' || $action == 'copy' || $reportDetails['created_id']) {
+        if($action == 'copy' || $action == 'migrate' || $reportDetails['created_id']) {
             $filePath['base'] = CRM_Core_Config::singleton()->uploadDir.'reports/saved/';
             $filePath['source'] = $filePath['base']. $reportDetails['created_id']. '_' . $report_id . '_' . $reportDetails['id']. '.json';
         } else {
