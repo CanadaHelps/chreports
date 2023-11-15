@@ -11,13 +11,17 @@ class CRM_Chreports_Reports_ReportConfiguration {
     // Default Action is to View Report
     protected $_action = "view";
 
-    public function __construct(int $id) {
+    public function __construct(int $id, string $name) {
         $this->_id = $id;
         $this->_action = $action;    
         $this->loadMappings();
-        $this->loadSettings();
+        // For base templates where JSON file is present but no report_instance in the DB
+        if(in_array($name, E::getOnlyBaseTemplates())) {
+            $this->_settings = $this->_fetchConfigSettings(['name' => $name]);
+        } else {
+            $this->loadSettings();
+        }
     }
-
     /**
      * 
      * Returns the report configuration
@@ -89,7 +93,6 @@ class CRM_Chreports_Reports_ReportConfiguration {
             'return' => ["name", "title", "created_id", "report_id"],
             'id' => $id,
             ]);
-    
         return $result['values'][0];
 
         // todo: use API4 after upgrade
@@ -316,7 +319,6 @@ class CRM_Chreports_Reports_ReportConfiguration {
      */
     public function buildJsonConfigSettings(): void {
         $config = [];
-
         //Set Default Params
         $params = $this->getFormParams();
         $fields = $this->getColumns();
@@ -324,9 +326,23 @@ class CRM_Chreports_Reports_ReportConfiguration {
 
         //Load Base template settings to get default Values
         $baseTemplateSettings = $this->_settings;
-        $config['name'] = $params['title'];
-        $config['title'] = $params['name'] ?? $params['title'];
-        $config['preset_filter_values'] = $filters;
+        $config['name'] = $params['name'];
+        $config['title'] = $params['title'];
+        
+        //Set sorting if applicable
+        if(isset($params['order_bys'])) {
+            foreach($params['order_bys'] as $kOrder => $vOrder) {
+                if($vOrder['column'] == '-') {
+                    continue;
+                }
+                $config['order_bys'][$vOrder['column']] = $vOrder;
+                if(isset($vOrder['section'])) {
+                    //Rename Section -> Header instead
+                    $config['order_bys'][$vOrder['column']]['header'] = $vOrder['section'];
+                    unset($config['order_bys'][$vOrder['column']]['section']);
+                }
+            }
+        }
 
         // Copy Columns with preSelected and Default Values
         foreach ($baseTemplateSettings['fields'] as $fieldKey => $fieldValue) {
@@ -339,6 +355,15 @@ class CRM_Chreports_Reports_ReportConfiguration {
             }
         }
 
+        // Copy Filters
+        foreach ($baseTemplateSettings['filters'] as $filterKey => $filterValue) {
+            if(isset($filters[$filterKey])) {
+                $config['filters'][$filterKey] = $filters[$filterKey];
+            } else {
+                $config['filters'][$filterKey] = $filterValue;
+            }
+        }
+
         // Copy rest of the leftover settings if applicable
         foreach($baseTemplateSettings as $k => $v) {
             if (!isset($config[$k])) {
@@ -348,6 +373,9 @@ class CRM_Chreports_Reports_ReportConfiguration {
         if($this->_action == 'copy') {
             $config['is_copy'] = (int) 1;
         }
+        if($this->_action == 'migrate') {
+            $config['is_migrated'] = (int) 1;
+        }
         $this->_settings = $config;
     }
 
@@ -355,29 +383,26 @@ class CRM_Chreports_Reports_ReportConfiguration {
      *
      * Write the newly or edited JSON for the custom report
      * Save the entry to DB & Redirect to the newly created report
-     * @param array $config contains the pre-compiled config array that has to be saved as it is
      * @param string $redirect Default set to true, redirect to the newly created report
      * @return void
      */
     public function writeJsonConfigFile($redirect = 'true'): void {
-
+        
         $config = $this->_settings;
+
         if(empty($config)) {
             CRM_Core_Session::setStatus(ts("Cannot Create Report. No Settings Found."), ts('Report Save Error'), 'error');
             return;
         }
         $params = $this->getFormParams();
 
-        // Do Not update the name if already present
-        $params['name'] = $params['name'] ?? $params['title'];
-
         // Save Report Instance to DB without formvalues
-        $params['owner_id'] = 'null';
+        $params['owner_id'] = NULL;
         if (!empty($params['add_to_my_reports'])) {
             $params['owner_id'] = CRM_Core_Session::getLoggedInContactID();
         }
         // Make Form Values, header and footer empty, not needed for custom reports
-        unset($params['formValues']);
+        unset($params['form_values']);
         unset($params['report_header']);
         unset($params['report_footer']);
 
@@ -402,10 +427,11 @@ class CRM_Chreports_Reports_ReportConfiguration {
 
         // Write the JSON data to the file
         if (file_put_contents($filePath['source'], $jsonConfig) !== false) {
-            // Set status, check for _createNew param to identify new report
-            $statusMsg = ts('Your report has been successfully copied as "%1". You are currently viewing the new copy.', [1 => $instance->title]);
-            CRM_Core_Session::setStatus($statusMsg, '', 'success');
-
+            if($this->_action !== 'migrate') {
+                // Set status, check for _createNew param to identify new report
+                $statusMsg = ts('Your report has been successfully copied as "%1". You are currently viewing the new copy.', [1 => $instance->title]);
+                CRM_Core_Session::setStatus($statusMsg, '', 'success');
+            }
             // Redirect to the new report
             if($redirect) {
                 $urlParams = ['reset' => 1, 'force' => 1];
@@ -416,6 +442,77 @@ class CRM_Chreports_Reports_ReportConfiguration {
             CRM_Core_Session::setStatus(ts("Cannot Create ".$instance->title." Report. Check Write Permission to Uploads directory."), ts('Report Save Error'), 'error');
             return;
         }
+    }
+
+    /**
+     *
+     * Create a json file for the migrated report
+     * Update the entry to DB 
+     * @return void
+     */
+    public function writeMigrateConfigFile(): void {
+
+        $config = $this->_settings;
+        if(empty($config)) {
+            return;
+        }
+
+        $params = $this->getFormParams();
+
+        // Make Form Values, header and footer NULL, not needed for custom reports
+        // CIVI Hack: Setting them NULL as a string
+        $params['form_values'] = 'NULL';
+        $params['header'] = 'NULL';
+        $params['footer'] = 'NULL';
+
+        // Update the report
+        $instance = CRM_Report_BAO_ReportInstance::create($params);
+
+        // Get the base and source file name
+        $filePath = self::getFilePath((array) $instance, $this->_action);
+
+        // Ensure the directory exists, create it if necessary
+        if (!is_dir($filePath['base'])) {
+            $pathDir = CRM_Core_Config::singleton()->uploadDir.'reports/saved/';
+            mkdir($pathDir, 0775, true);
+        }
+
+        // Encode the $config array as JSON
+        $config['name'] = $instance->name;
+        $jsonConfig = json_encode($config, JSON_PRETTY_PRINT);
+
+        // Write the JSON data to the file
+        if (file_put_contents($filePath['source'], $jsonConfig) !== false) {
+            // Log success message
+            watchdog('report_migration', 'Successfully migrated report'. $instance->id, NULL, WATCHDOG_INFO);
+            
+        } else {
+            // Log Error writing the file
+            watchdog('report_migration', 'Error Writing the file', NULL, WATCHDOG_ERROR);
+        }
+        return;
+    }
+
+
+    /**
+     *
+     * Set Fields, Filters and Sorting from exisitng report's form_values
+     * @param array $config contains the pre-compiled config array that has to be saved as it is
+     * @param string $reportId contains base template report ID
+     * @return void
+     */
+    public function setParamsForMigration($reportInstance, $reportId, $reportName): void {
+        // Add more keys to the params
+        $reportInstance['form_values']['id'] = (int) $reportInstance['id'];
+        $reportInstance['form_values']['title'] = $reportInstance['title'];
+        $reportInstance['form_values']['name'] = $reportName;
+        $reportInstance['form_values']['report_id'] = $reportId;
+        $reportInstance['form_values']['description'] = $reportInstance['description'];
+        $reportInstance['form_values']['created_id'] = $reportInstance['created_id'];
+        $reportInstance['form_values']['owner_id'] = $reportInstance['owner_id'];
+        $this->setAction('migrate');
+        $this->setFormParams($reportInstance['form_values']);
+        $this->setColumns($reportInstance['form_values']['fields']);
     }
 
     /**
@@ -438,19 +535,13 @@ class CRM_Chreports_Reports_ReportConfiguration {
      * @return array
      */
     public static function getFilePath(array $reportDetails, $action = 'save'): array {
-        $report_id = self::escapeFileName($reportDetails['report_id']);
-        if($action == 'copy' || $reportDetails['created_id']) {
+        $report_id = self::escapeFileName($reportDetails['name']);
+        if($action == 'copy' || $action == 'migrate' || $reportDetails['created_id']) {
             $filePath['base'] = CRM_Core_Config::singleton()->uploadDir.'reports/saved/';
             $filePath['source'] = $filePath['base']. $reportDetails['created_id']. '_' . $report_id . '_' . $reportDetails['id']. '.json';
         } else {
             $filePath['base'] = dirname(__DIR__, 1)  . "/Templates/";
             $filePath['source'] = $filePath['base']. $report_id.'.json';
-
-            // hack for now
-            // Else remove it from here after completion of CRM-2111
-            if (!is_file($filePath['source'])) {
-                $filePath['source'] = $filePath['base']. self::escapeFileName($reportDetails['name']).'.json';
-            }
         }
         return $filePath;
     }

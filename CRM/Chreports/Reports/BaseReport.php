@@ -64,7 +64,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     ];
 
     public function __construct( string $entity, int $id, string $name ) {
-        parent::__construct($id);
+        parent::__construct($id, $name);
         $this->_name = $name;
         $this->_entity = strtolower($entity);
     }
