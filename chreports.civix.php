@@ -159,7 +159,7 @@ class CRM_Chreports_ExtensionUtil {
         'name' => $base_report_name,
         'created_id' => ['IS NULL' => 1]
       ]);
-      $base_report['entity'] = $migratedTemplates[$report_id]['entity'];
+      $base_report['entity'] = $migratedTemplate['entity'];
       return $base_report;
     }
   }
