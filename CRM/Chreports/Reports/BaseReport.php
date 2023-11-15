@@ -376,6 +376,10 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
             if ( count($matches) > 0 ) {
                 $fieldName = $matches[1];
                 if ($matches[2] == "op") {
+                    //to consider fields with filter value 'nll' and 'nnll' option value
+                    if (in_array($value, ['nll', 'nnll'])) {
+                        $filterNames[] = $fieldName;
+                    }
                     // IN (value1, value 2)
                     if ( is_array($params[$fieldName.'_value']) && count($params[$fieldName.'_value']) > 0) {
                         $filterNames[] = $fieldName;
