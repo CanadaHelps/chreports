@@ -1,4 +1,4 @@
-{ 
+{
     "name": "contrib_period_compare",
     "title": "Comparison Report",
     "type": "detailed",
@@ -12,31 +12,20 @@
         "last_name": {},
         "phone":{ "selected" : true},
         "organization_name":{},
-       
         "email":{},
-
         "range_one_stat":{"default" : true},
         "range_two_stat":{"default" : true},
-      
-
-
-        "street_address":{ "preSelected" : true},
-        "city":{ "preSelected" : true},
-        "state_province_id":{},
-        "postal_code":{ "preSelected" : true},
-        "country_id":{ "preSelected" : true},
-
+        "street_address":{ "selected" : true},
+        "city":{ "selected" : true},
+        "province":{},
+        "postal_code":{ "selected" : true},
+        "country":{ "selected" : true},
         "total_lifetime_contributions":{},
         "amount_of_last_contribution":{},
         "date_of_last_contribution":{},
         "date_of_first_contribution":{},
         "largest_contribution":{},
         "count_of_contributions":{}
-    },
-    "order_bys":{
-        "id": {
-            "order": "ASC"
-        }
     },
     "use_default_filters" : false,
     "filters":{
@@ -48,15 +37,11 @@
         "phone":{},
         "organization_name":{},
         "email":{},
-       
-
-
-        "address_street_address":{},
-        "address_city":{},
-        "address_state_province_id":{},
-        "address_postal_code":{},
-        "address_country_id":{},
-
+        "street_address":{},
+        "city":{},
+        "province":{},
+        "postal_code":{},
+        "country":{},
         "total_lifetime_contributions":{},
         "amount_of_last_contribution":{},
         "date_of_last_contribution":{},
@@ -77,6 +62,5 @@
             ]
         }
     },
-    "groupByClause" : false
-    
+    "groupByDisplay" : false
 }

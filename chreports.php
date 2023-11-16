@@ -214,6 +214,12 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
       if ($varType == 'columns') {
         //manage columns, group bys, sorts, filters based on json config
         $reportInstance->setFormOptions($var);
+
+        //make the default field selected for sort by option
+        $defaults = $object->getVar('_defaults') ? $object->getVar('_defaults') : array();
+        $defaults = $reportInstance->setDefaultOptionSortBy($defaults);
+        $object->setVar('_defaults', $defaults);
+       
         return;
       }
 
@@ -716,9 +722,6 @@ function chreports_civicrm_preProcess($formName, &$form) {
     $filters = $form->getVar('_filters');
     $filters = $reportInstance->unsetEmptyFilterEntity($filters);
     $form->setVar('_filters', $filters);
-    //make the default field selected for sort by option
-    $defaults = $form->getVar('_defaults');
-    $defaults = $reportInstance->setDefaultOptionSortBy($defaults);
 
     // if there are any Preselect Filters in Json, prepopulare on form load
     if($reportInstance->getPreSetFilterValues()) {
@@ -729,8 +732,6 @@ function chreports_civicrm_preProcess($formName, &$form) {
       //$defaults[$filterKey] = $filterValue;
       $form->setVar('_formValues', $defaultSelectedFilter);
     }
-
-    $form->setVar('_defaults', $defaults);
 
     //CRM-2097: For Save/Copy bypass the post Process
     if($form->getVar('_submitValues')['task'] == 'report_instance.copy') {

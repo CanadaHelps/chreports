@@ -73,7 +73,6 @@
         "is_deceased":{},
         "card_type_id":{},
         "contribution_note":{},
-        "street_name":{},
         "street_address":{},
         "city":{},
         "postal_code":{},
