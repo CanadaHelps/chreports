@@ -63,7 +63,6 @@
         "receive_date":{},
         "receipt_date":{},
         "total_amount":{},
-        "trxn_id":{},
         "thankyou_date":{},
         "fee_amount":{},
         "net_amount":{},
@@ -88,9 +87,6 @@
         "is_recurring":{},
         "contribution_note":{},
         "receipted_amount":{},
-        "trxn_date":{},
-        "financial_trxn_status_id":{},
-        "financial_trxn_currency":{},
         "fees_covered":{},
         "disbursment_date":{},
         "excluded_from_tax_receipting":{},
@@ -108,8 +104,7 @@
         "count_of_contributions":{},
         "custom_question":{},
         "custom_answer":{},
-        "ch_fund":{},
-        "entity_financial_trxn_amount":{}
+        "ch_fund":{}
     },
     "use_default_filters" : false,
     "filters":{
@@ -163,11 +158,9 @@
         "thankyou_date":{},
         "contribution_currency":{},
         "is_recurring":{},
-        "trxn_date":{},       
         "fee_amount":{},
         "net_amount":{},
         "check_number":{},
-        "trxn_id":{},
         "payment_processor_id":{},
         "contribution_recur_id":{},
         "frequency_interval":{},
@@ -184,8 +177,6 @@
         "recur_failure_count":{},
         "recur_next_sched_contribution_date":{},
         "recur_contribution_status_id":{},
-        "financial_trxn_status_id":{},
-        "financial_trxn_currency":{},
         "contribution_note":{},
         "receipted_amount":{},
         "fees_covered":{},
@@ -206,8 +197,7 @@
         "custom_question":{},
         "custom_answer":{},
         "ch_fund":{},
-        "tagid":{},
-        "entity_financial_trxn_amount":{}
+        "tagid":{}
     },
     "groupByDisplay" : false
 }
