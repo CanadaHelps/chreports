@@ -25,7 +25,7 @@
     "order_bys":{
         "contribution_page_id": {
             "order": "DESC",
-            "section": true
+            "header": true
         }
     },
     "use_default_filters" : false,

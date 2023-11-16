@@ -1323,7 +1323,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
             unset($defaults['order_bys']);
             foreach($this->_settings['order_bys'] as $fieldName => $orderConfig)
             {
-                $defaults['order_bys'][] = ['column'=>$fieldName,'order'=>$orderConfig['order'],'section'=>$orderConfig['section'] ? true : false];
+                $defaults['order_bys'][] = ['column'=>$fieldName,'order'=>$orderConfig['order'],'section'=>$orderConfig['header'] ? true : false];
             }
         }
         return $defaults;

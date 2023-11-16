@@ -39,7 +39,7 @@
     "order_bys":{
         "credit_name": {
             "order": "ASC",
-            "section": true
+            "header": true
         }
     },
     "use_default_filters" : false,

@@ -18,7 +18,7 @@
         "contribution_id":{}, 
         "payment_instrument_id":{},
         "check_number":{},
-        "trxn_id":{},
+        "contribution_trxn_id":{},
         "receive_date":{"selected" : true},
         "receipt_date":{},
         "total_amount":{"default" : true},
