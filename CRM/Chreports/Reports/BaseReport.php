@@ -648,6 +648,30 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
             }
         }
         foreach ($columnHeaders as $fieldName => $value) {
+            //for Comparison report update column title based on date range selection
+            if($this->isRepeatContributionReport()) {
+                switch ($fieldName) {
+                    case 'range_one_stat':
+                    case 'range_two_stat':
+                        if($fieldName === 'range_one_stat') {
+                            $filterFieldName = 'repeat_contri_initial_date_range';
+                        }
+                        if($fieldName === 'range_two_stat') {
+                            $filterFieldName = 'repeat_contri_second_date_range';
+                        }
+                        $columnHeaders[$fieldName] = ['title' => '-','type'=> $value['type']];
+                        if (in_array($filterFieldName,$this->getFieldNamesForFilters())){
+                            list($fromDate, $toDate) = CRM_Utils_Date::getFromTo(CRM_Utils_Array::value($filterFieldName."_relative", $this->_params), 
+                            CRM_Utils_Array::value($filterFieldName."_from", $this->_params),
+                            CRM_Utils_Array::value($filterFieldName."_to", $this->_params));
+
+                            $fromDate = CRM_Utils_Date::customFormat($fromDate, NULL, array('d'));
+                            $toDate = CRM_Utils_Date::customFormat($toDate, NULL, array('d'));
+                            $columnHeaders[$fieldName] = ['title' => $fromDate.'-'.$toDate,'type'=> $value['type']];
+                        }
+                        break;
+                }
+            }
             if(!in_array($fieldName,array_keys($this->_calculatedFields)) && $value['type'] !== CRM_Utils_Type::T_MONEY) {
                 $columnHeaders[$fieldName] = ['title' => $value['title'],'type'=> CRM_Utils_Type::T_STRING];
             }
@@ -720,30 +744,21 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         foreach ($this->_orderByFields as $fieldName => $value) {
             
             $columnInfo = $this->getFieldMapping( $this->getEntityTableFromField($fieldName), $fieldName);
-            if(($this->isRecurringContributionReport()) && ($fieldName == 'total_amount' || $fieldName == 'last_month_amount' || $fieldName == 'completed_contributions' || $fieldName == 'start_date'))
-           {
-            $sortByAlias = ($columnInfo['custom_alias']) ? $columnInfo['custom_alias'] : $fieldName;
-           }else{
             $sortByAlias = ($columnInfo['custom_alias']) ? $columnInfo['custom_alias'] : $columnInfo['table_name'].'_'.$fieldName;
-           }
             
             // adding sort field to column headers
             $columnHeader[$sortByAlias] = [
                 'title' => $columnInfo['title']
             ];
-            if(($this->isRecurringContributionReport()) && ($fieldName == 'total_amount' || $fieldName == 'last_month_amount' || $fieldName == 'completed_contributions' || $fieldName == 'start_date'))
-           {
-            $selectStatement = ($columnInfo['select_clause_alias'] && $columnInfo['custom_alias']) ? $columnInfo['select_clause_alias'] : $columnInfo['name'];
-           }else if($this->isPeriodicDetailed()){
+
+            if($this->isPeriodicDetailed()) {
                 $selectStatement = "CONCAT(MONTHNAME($value),' ', YEAR($value))";
-            } else{
-            $selectStatement = $value;
-           }
-           if(($this->isRecurringContributionReport()) && ($fieldName == 'total_amount' || $fieldName == 'last_month_amount' || $fieldName == 'completed_contributions' || $fieldName == 'start_date'))
-           {
-           }else{
+            } else {
+                $selectStatement = $value;
+            }
+            
             $select[] = $selectStatement ." as ". $sortByAlias;
-           }
+           
            
         }
         $this->_select = array_merge( $this->_select, $select);
@@ -801,20 +816,24 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         }
         $unassignedDataFields = [];
         $reportType = $this->getReportType();
-        if(array_column($this->_params['order_bys'], 'section')) {
-        foreach($this->_params['order_bys'] as $orderbyColumnKey=>$orderbyColumnValue)
-        {
+        foreach($this->_params['order_bys'] as $orderbyColumnKey=>$orderbyColumnValue) {
+            //For detail and summary report if Section Header / Group By is checked, for those fields null data will use "Unassigned" as value
             if($orderbyColumnValue['section'])
             $unassignedDataFields[] = $orderbyColumnValue['column'];
+
+            //For default sorting fields
+            if(!empty($this->getDefaultColumns()) 
+            && in_array($orderbyColumnValue['column'],$this->getDefaultColumns())
+            && !in_array($orderbyColumnValue['column'],$unassignedDataFields)) {
+                $unassignedDataFields[] = $orderbyColumnValue['column'];
+            }
         }
-        if($reportType == 'summary')
-        $unassignedDataFields = array_filter(array_unique( array_merge($unassignedDataFields, array_keys($this->_columns))));
-        } else {
-            if($reportType == 'summary')
+        if($reportType == 'summary') {
             $unassignedDataFields = array_filter(array_unique( array_merge($unassignedDataFields, array_keys($this->_columns))));
         }
+         //CRM-2063 - Use "Unassigned" as value in summary/Detailed  reports for NULL values
         foreach ($rows as $rowNum => $row) {
-            //CRM-2063 - Use "Unassigned" as value in summary/Detailed  reports for NULL values
+           
             foreach($this->_columns as $key=>$value)
             {
                 if (array_key_exists($key, $row) && in_array($key,$unassignedDataFields))
@@ -1591,7 +1610,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                         $aliasTableName = 'civicrm_contribution_secondset';
                         $filterFieldName = 'repeat_contri_second_date_range';
                     }
-                    $from[] = "LEFT JOIN ".$this->getEntityTable('contribution')." as ".$aliasTableName." ON ".$this->getEntityTable('contribution').".id = civicrm_contribution_primaryset.id";
+                    $from[] = "LEFT JOIN ".$this->getEntityTable('contribution')." as ".$aliasTableName." ON ".$this->getEntityTable('contribution').".id = ".$aliasTableName.".id";
                     if (in_array($filterFieldName,$this->getFieldNamesForFilters())){
                         if($this->_params[$filterFieldName.'_relative'])
                         $relative = $this->_params[$filterFieldName.'_relative'];
@@ -1664,7 +1683,8 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                 }
 
                 // adding financial_account joins
-                if($fieldInfo['join_entity'] == "financial_account_debit" || $fieldInfo['join_entity'] == "financial_account_credit")
+                if($actualTable == "financial_account_debit" || $actualTable == "financial_account_credit"
+                || ($fieldInfo['join_entity'] == "financial_account_debit" || $fieldInfo['join_entity'] == "financial_account_credit"))
                 {
                     if ( !in_array("financial_account_debit",$this->_fromEntity) && !in_array("financial_account_credit",$this->_fromEntity) ) {
         
@@ -1710,6 +1730,12 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                     if ($fieldInfo['custom'] !== true && isset($fieldInfo['join_entity']) && isset($fieldInfo['join_field_name'])) {
                         $from[] = $this->getSQLJoinForOptionValue($groupName,$fieldInfo['join_field_name'],$this->getEntityTable($fieldInfo['join_entity']),$fieldName);
                     } else {
+                        //To Add LEFT Join of contact and contribution Entity
+                        if(!in_array($entityName,$this->_fromEntity)) {
+                            if($fieldInfo['entity'] == 'contribution' &&   in_array($this->getEntityTableFromField('contact'),$this->_fromEntity)) {
+                                $from[] = $this->getSQLJoinForField('id', $entityName, $this->getEntityTable('contact'),'contact_id');
+                            }
+                        }
                         $entityField = $this->getEntityField($fieldName);
                         $from[] = $this->getSQLJoinForOptionValue($groupName,$entityField,$entityName,$fieldName);
                     }
@@ -1735,7 +1761,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                     if(!in_array($recheckEntityName,$this->_fromEntity))
                     {
 
-                    
+    
                     $joinFieldName = ( preg_match('/_id$/', $fieldInfo['join_field_name']) ) ? 'id' : $this->getEntityField($fieldName);    
                     $from[] = "LEFT JOIN $entityName as $actualTable ON $actualTable." . $joinFieldName . " = " . $this->getEntityTable($fieldInfo['join_entity']) . "." . $fieldInfo['join_field_name'];
                     

@@ -809,10 +809,9 @@
         "field_type": "string"
     },
     "gl_account": {
-        "title": "Account Name",
+        "title": "GL Account Name",
         "entity": "financial_account",
-        "field_name": "id",
-        "select_name": "name"
+        "field_name": "name"
     },
     "invoice_id": {
         "title": "Invoice Reference",

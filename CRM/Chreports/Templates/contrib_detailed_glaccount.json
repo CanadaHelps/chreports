@@ -24,14 +24,24 @@
             "order": "ASC"
         }
     },
-    "use_default_filters" : true,
+    "use_default_filters" : false,
     "filters":{
+        "contact_type" : {},
+        "contact_sub_type" :{},
+        "contribution_id":{},
+        "receive_date":{},
+        "receipt_date":{},
         "gl_account":{},
         "contribution_status_id": {
             "in": [
                 "1"
             ]
-        }
+        },
+        "financial_type_id":{},
+        "payment_instrument_id":{},
+        "card_type_id":{},
+        "receipted_amount":{},
+        "disbursment_date":{}
     },
     "groupByClause" : false
 }

@@ -185,13 +185,8 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
           case 'ch_fund': // fund_13
             $clauses[] = $this->generateFilterClause($fieldInfo, $fieldInfo['name']);
             break;
-          case 'repeat_contri_initial_date_range': // fund_13
-            if(!$removeIndividualCluase)
-            $clauses[] = $this->generateFilterClause($fieldInfo, $fieldName);  
-            break;
-          case 'repeat_contri_second_date_range': // fund_13
-            if(!$removeIndividualCluase)
-            $clauses[] = $this->generateFilterClause($fieldInfo, $fieldName);   
+          case 'repeat_contri_initial_date_range':
+          case 'repeat_contri_second_date_range':
             break;
           default:
             if ( !in_array($fieldInfo['dbAlias'], $this->_reportInstance->getHavingStatements()) )
