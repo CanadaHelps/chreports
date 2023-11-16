@@ -66,8 +66,6 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
       //set column fields to params
       $trueKeys =  array_keys($params['fields'],true);
       $params['fields'] = array_fill_keys($trueKeys, true);
-      //set sort by fields to params
-      $params =  $this->_reportInstance->setDefaultOptionSortBy($params);
     }
     $this->_reportInstance->setFormParams($params);
     $this->_reportInstance->setColumns($params['fields']);

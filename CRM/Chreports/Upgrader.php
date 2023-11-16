@@ -683,6 +683,16 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
         'name'=>'In Memory of',
         'report_id'=>'chreports/contrib_detailed',
         'title' => 'In Memory of'
+      ],
+      'contrib_detailed_receipts' =>  [
+        'name'=>'Receipts',
+        'report_id'=>'chreports/contrib_detailed',
+        'title' => 'Receipts'
+      ],
+      'contact_top_donors_dashlet' =>  [
+        'name'=>'Top Donors (Dashlet)',
+        'report_id'=>'chreports/top_donors',
+        'title' => 'Top Donors (Dashlet)'
       ]
     ];
    

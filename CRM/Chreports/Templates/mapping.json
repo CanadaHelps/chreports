@@ -596,35 +596,45 @@
         "custom": true,
         "group_name": "Summary_Fields",
         "field_type": "money",
-        "custom_fieldName": "Amount_of_last_contribution"
+        "custom_fieldName": "Amount_of_last_contribution",
+        "join_field_name":"id",
+        "join_entity":"contact"
     },
     "date_of_last_contribution": {
         "title": "Date of Last Contributions",
         "custom": true,
         "group_name": "Summary_Fields",
         "field_type": "Datetime",
-        "custom_fieldName": "Date_of_Last_Contribution"
+        "custom_fieldName": "Date_of_Last_Contribution",
+        "join_field_name":"id",
+        "join_entity":"contact"
     },
     "date_of_first_contribution": {
         "title": "Date of First Contributions",
         "custom": true,
         "group_name": "Summary_Fields",
         "field_type": "Datetime",
-        "custom_fieldName": "Date_of_First_Contribution"
+        "custom_fieldName": "Date_of_First_Contribution",
+        "join_field_name":"id",
+        "join_entity":"contact"
     },
     "largest_contribution": {
         "title": "Largest Contribution",
         "custom": true,
         "group_name": "Summary_Fields",
         "field_type": "money",
-        "custom_fieldName": "Largest_Contribution"
+        "custom_fieldName": "Largest_Contribution",
+        "join_field_name":"id",
+        "join_entity":"contact"
     },
     "count_of_contributions": {
         "title": "Count of Contributions",
         "custom": true,
         "group_name": "Summary_Fields",
         "field_type": "int",
-        "custom_fieldName": "Count_of_Contributions"
+        "custom_fieldName": "Count_of_Contributions",
+        "join_field_name":"id",
+        "join_entity":"contact"
     },
     "range_one_stat": {
         "title": "Range One Stat",
@@ -799,7 +809,7 @@
         "field_type": "string"
     },
     "gl_account": {
-        "title": "Financial Acccount",
+        "title": "Account Name",
         "entity": "financial_account",
         "field_name": "id",
         "select_name": "name"
