@@ -1220,7 +1220,8 @@
         "custom_fieldName": "Exclude_From_Receipting",
         "join_field_name":"id",
         "join_entity":"contribution",
-        "field_type":"boolean"
+        "field_type":"boolean",
+        "options": true
     },
     "contribution_receipted": {
         "title": "Contribution Receipted",
@@ -1229,7 +1230,8 @@
         "custom_fieldName": "Exclude_From_Receipting",
         "join_field_name":"id",
         "join_entity":"contribution",
-        "field_type":"boolean"
+        "field_type":"boolean",
+        "options": true
     },
     "receipt_number": {
         "title": "Receipt Number",
