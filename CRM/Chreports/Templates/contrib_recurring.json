@@ -5,8 +5,7 @@
     "template": "chreports/contrib_detailed",
     "entity": "contact",
     "fields":{
-        "id": {"default" : true},
-        "exposed_id":{},
+        "exposed_id":{"default" : true},
         "sort_name":{"default" : true},
         "first_name": {},
         "last_name": {},
@@ -27,7 +26,7 @@
         "country":{ "selected" : true}
     },
     "order_bys":{
-        "id": {
+        "exposed_id": {
             "order": "ASC"
         }
     },

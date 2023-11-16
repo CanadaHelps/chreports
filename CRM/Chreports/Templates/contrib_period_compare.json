@@ -5,8 +5,7 @@
     "template": "chreports/contrib_period_compare",
     "entity": "contact",
     "fields":{
-        "id": {"default" : true},
-        "exposed_id":{},
+        "exposed_id":{"default" : true},
         "sort_name":{"default" : true},
         "first_name": {},
         "last_name": {},
@@ -26,6 +25,11 @@
         "date_of_first_contribution":{},
         "largest_contribution":{},
         "count_of_contributions":{}
+    },
+    "order_bys":{
+        "exposed_id": {
+            "order": "ASC"
+        }
     },
     "use_default_filters" : false,
     "filters":{
@@ -62,5 +66,5 @@
             ]
         }
     },
-    "groupByDisplay" : false
+    "groupByClause" : false
 }
