@@ -124,6 +124,13 @@ class CRM_Chreports_ExtensionUtil {
       WHERE cf.column_name = '$columnName'
     ");
   }
+
+  /**
+   *
+   * Get the name and details of the base report template
+   * @param array $reportInstance Contains all the report details
+   * @return array $base_report 
+  */
   public static function getBaseTemplate ($reportInstance) {
     $title = $reportInstance['title'];
     $description = $reportInstance['description'];
@@ -139,7 +146,7 @@ class CRM_Chreports_ExtensionUtil {
         // Step 2: Get it by description
         $match = self::matchKeywordForTemplate($reportInstance['description']);
         if(!$match) {    
-          // Step 3: Get it by formvalues
+          // Step 3: Get it by formvalue
           $match = self::matchbyFormValue($formValues, $migratedTemplate);
         }
       }
@@ -150,7 +157,6 @@ class CRM_Chreports_ExtensionUtil {
         // catch all template
         $base_report_name = $migratedTemplate['name'];
       }
-      
     } else {
       $base_report_name = $migratedTemplate['name'];
     }
@@ -159,18 +165,26 @@ class CRM_Chreports_ExtensionUtil {
         'name' => $base_report_name,
         'created_id' => ['IS NULL' => 1]
       ]);
+      // If there's no report Instance that means it's a base template with just JSON and no report_instance
       if($base_report_name && empty($base_report['values'])) {
         $base_report['id'] = $reportInstance['id'];
         $base_report['is_template'] = (int) 1;
         $base_report['values'][$reportInstance['id']]['name'] = $base_report_name;
         $base_report['values'][$reportInstance['id']]['report_id'] = $migratedTemplate['report_id'];
-
+        if(isset($migratedTemplate['sub_templates'][$match]['report_id'])) {
+          $base_report['values'][$reportInstance['id']]['report_id'] = $migratedTemplate['sub_templates'][$match]['report_id'];
+        }
       }
       $base_report['entity'] = $migratedTemplate['entity'];
       return $base_report;
     }
   }
 
+  /**
+   * Get new template name and details on the basis of legacy report template name
+   * @param string $reportId The template of the report
+   * @return array $template The migrated template of the new system 
+  */
   private function getMigratedTemplate($reportId) {
     switch (strtolower($reportId)) {
       case 'biz.jmaconsulting.chreports/extendeddetail' :
@@ -195,13 +209,13 @@ class CRM_Chreports_ExtensionUtil {
             'ch_fund' => [
               'name' => 'contrib_detailed_chfund'
             ],
-            'glaccount' => [
+            'gl_account' => [
               'name' => 'contrib_detailed_glaccount'
             ],
-            'inhonour' => [
+            'in_honour' => [
               'name' => 'contrib_detailed_inhonour'
             ],
-            'inmemory' => [
+            'in_memory' => [
               'name' => 'contrib_detailed_inmemory'
             ],
           ],
@@ -245,27 +259,37 @@ class CRM_Chreports_ExtensionUtil {
         break;
       case 'contribute/sybunt' :
         $template =  [
-        'name' => 'contrib_sybunt',
-        'report_id' => 'chreports/sybunt',
-        'entity' => 'contribution',
-      ];
+          'name' => 'contrib_sybunt',
+          'report_id' => 'chreports/sybunt',
+          'entity' => 'contribution',
+        ];
+        break;
       case 'grant/detail' :
         $template = [
-        'name' => 'opportunity_detailed',
-        'report_id' => 'chreports/opportunity_detailed',
-        'entity' => 'contribution',
+          'name' => 'opportunity_detailed',
+          'report_id' => 'chreports/opportunity_detailed',
+          'entity' => 'contribution',
         ];
-      break;
+        break;
+      case 'contribute/repeat' :
+        $template = [
+          'name' => 'contrib_period_compare',
+          'report_id' => 'chreports/contrib_period_compare',
+          'entity' => 'contribution',
+        ];
+        break;
       case 'contribute/summary' : 
         $template = [
-          'report_id' => 'chreports/contrib_period_detailed',
+          'report_id' => 'chreports/contrib_summary',
           'entity' => 'contribution',
           'name' => 'contrib_summary',
           'sub_templates' => [
-            'monthly' => [
+            'month' => [
+              'report_id' => 'chreports/contrib_period_detailed',
               'name' => 'contrib_monthly_fiscal_year',
             ],
-            'quaterly' => [
+            'quarter' => [
+              'report_id' => 'chreports/contrib_period_detailed',
               'name' => 'contrib_quarterly_past_year',
             ],
           ],
@@ -275,13 +299,28 @@ class CRM_Chreports_ExtensionUtil {
     return $template;
   }
 
+  /**
+   *
+   * Set Fields, Filters and Sorting from exisitng report's form_values
+   * @param array $reportInstance Contains all the report details
+   * @return array $base_report 
+  */
   public function getOnlyBaseTemplates() {
     return [
-      'contrib_detailed'
+      'contrib_detailed',
+      'contrib_summary',
+      'contrib_monthly_fiscal_year',
+      'contrib_quarterly_past_year',
     ];
   }
 
-
+  /**
+   *
+   * Identify the template by looking up keywords in the report title and description
+   * @param string $inputString the input string
+   * @param string $type Entity name, defaults to contribution
+   * @return string $keyword the matching term
+  */
   public function matchKeywordForTemplate($inputString, $type = 'contribution') {
     // Define the keywords to search for
     $keywords = [
@@ -297,7 +336,7 @@ class CRM_Chreports_ExtensionUtil {
       ],
       'pivot' => [
         'monthly',
-        'quaterly',
+        'quarterly',
         'yearly'
       ]
     ];
@@ -305,15 +344,23 @@ class CRM_Chreports_ExtensionUtil {
     // Loop through each keyword depending on the type of report and check if it exists in the input string
     foreach ($keywords[$type] as $keyword) {
       if (strpos(strtolower($inputString), $keyword) !== false) {
-        return $keyword;
+        return str_replace(' ', '_', $keyword);
       }
     }
     return false;
   }
 
+  /**
+   *
+   * Parse the formvalue
+   * @param array $formValues the formValues coming from the db
+   * @param array $reportId values of the template
+   * @param string $type the entity name
+  */
+
   public function matchbyFormValue($formValues, $reportId, $type = 'contribution') {
     if($type == 'contribution') {
-      //Loop through fields 
+      //Loop through fields
       $fieldsPreferenceOrder = [
         "financial_type_id",
         "contribution_page_id",
@@ -328,8 +375,23 @@ class CRM_Chreports_ExtensionUtil {
           }
         }
       }
+      if($reportId['name'] == 'contrib_summary') {
+        if(isset($formValues['group_bys'])) {
+          if($formValues['group_bys']['receive_date']) {
+            // MONTH, QUARTER, FISCALYEAR, YEAR
+            return strtolower($formValues['group_bys_freq']['receive_date']);
+          }
+        }
+      }
     }
   }
+
+  /**
+   *
+   * Replace the terms with the terminologies we use
+   * @param string $inputString the input string
+   * @return string $wordReplace the replaced term 
+  */
 
   private function wordReplace ($inputString) {
     $wordReplace = [
