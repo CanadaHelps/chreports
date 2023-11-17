@@ -92,7 +92,7 @@ class CRM_Chreports_Reports_ReportConfiguration {
             'sequential' => 1,
             'return' => ["name", "title", "created_id", "report_id"],
             'id' => $id,
-            ]);
+        ]);
         return $result['values'][0];
 
         // todo: use API4 after upgrade
@@ -467,6 +467,10 @@ class CRM_Chreports_Reports_ReportConfiguration {
         $params['form_values'] = 'NULL';
         $params['header'] = 'NULL';
         $params['footer'] = 'NULL';
+
+        if(empty($params['title'])) {
+            $params['title'] = $config['title'];
+        }
 
         // Update the report
         $instance = CRM_Report_BAO_ReportInstance::create($params);
