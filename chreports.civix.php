@@ -324,7 +324,7 @@ class CRM_Chreports_ExtensionUtil {
       break;
       case 'contribution/pivot' : 
         $template = [
-          'report_id' => 'chreports/contrib_period_summary',
+          'report_id' => 'chreports/contrib_summary_yearly',
           'entity' => 'contribution',
           'name' => 'contrib_yearly',
           'sub_templates' => [
@@ -345,11 +345,11 @@ class CRM_Chreports_ExtensionUtil {
               'name' => 'contrib_yearly_fund',
             ],
             'monthly' => [
-              'report_id' => 'chreports/contrib_monthly',
+              'report_id' => 'chreports/contrib_summary_monthly',
               'name' => 'contrib_monthly',
             ],
             'yearly' => [
-              'report_id' => 'chreports/contrib_yearly',
+              'report_id' => 'chreports/contrib_summary_yearly',
               'name' => 'contrib_yearly',
             ],
           ],
@@ -430,7 +430,6 @@ class CRM_Chreports_ExtensionUtil {
       'contact/contactbasic',
       'contact/log',
       'relationshipextended',
-      'com.iatspayments.com/recur',
       'com.iatspayments.com/recur',
       'biz.jmaconsulting.chreports/retentionrate',
       'contribute/householdSummary',
@@ -529,7 +528,7 @@ class CRM_Chreports_ExtensionUtil {
           }
         }
       }
-      if($reportId['report_id'] == 'chreports/contrib_period_summary') {
+      if($reportId['report_id'] == 'chreports/contrib_summary_yearly') {
         if(isset($formValues['aggregate_row_headers'])) {
           $kField = str_replace("contribution_", "", $formValues['aggregate_row_headers']);
           if(in_array($kField, array_keys($fieldsPreferenceOrder))) {
