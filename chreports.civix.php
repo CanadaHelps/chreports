@@ -211,7 +211,7 @@ class CRM_Chreports_ExtensionUtil {
               'name' => 'contrib_detailed_campaign_group',
             ],
             'ch_fund' => [
-              'name' => 'contrib_detailed_chfund'
+              'name' => 'contrib_detailed'
             ],
             'gl_account' => [
               'name' => 'contrib_detailed_glaccount'
@@ -263,7 +263,7 @@ class CRM_Chreports_ExtensionUtil {
             ],
             'ch_fund' => [
               'report_id' => 'chreports/contrib_summary',
-              'name' => 'contrib_detailed_chfund'
+              'name' => 'contrib_summary_chfund'
             ],
             'month' => [
               'report_id' => 'chreports/contrib_period_detailed',
@@ -426,6 +426,7 @@ class CRM_Chreports_ExtensionUtil {
       'contact/relationship',
       'contact/summary',
       'contact/currentEmployer',
+      'contribute/organizationSummary',
       'contact/contactbasic',
       'contact/log',
       'relationshipextended',
@@ -513,18 +514,18 @@ class CRM_Chreports_ExtensionUtil {
         "campaign" => "campaign_group",
         "source" => "source",
       ];
-      if($reportId['name'] == 'contrib_detailed' || $reportId['name'] == 'contrib_summary') {
-        foreach($fieldsPreferenceOrder as $kField => $vField) {
-          if(in_array($kField, array_keys($formValues['fields']))) {
-            return $vField;
-          }
-        }
-      }
       if($reportId['name'] == 'contrib_summary') {
         if(isset($formValues['group_bys'])) {
           if($formValues['group_bys']['receive_date']) {
             // MONTH, QUARTER, FISCALYEAR, YEAR
             return strtolower($formValues['group_bys_freq']['receive_date']);
+          }
+        }
+      }
+      if($reportId['name'] == 'contrib_detailed' || $reportId['name'] == 'contrib_summary') {
+        foreach($fieldsPreferenceOrder as $kField => $vField) {
+          if(in_array($kField, array_keys($formValues['fields']))) {
+            return $vField;
           }
         }
       }
