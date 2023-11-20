@@ -323,7 +323,6 @@ class CRM_Chreports_Reports_ReportConfiguration {
         $params = $this->getFormParams();
         $fields = $this->getColumns();
         $filters = $this->getCustomFilterValues();
-
         //Load Base template settings to get default Values
         $baseTemplateSettings = $this->_settings;
         $config['name'] = $params['name'];
@@ -344,6 +343,15 @@ class CRM_Chreports_Reports_ReportConfiguration {
             }
         }
 
+        //For migrated instances, copy the leftover order_bys from template file
+        if($this->_action == 'migrate' && !empty($baseTemplateSettings['order_bys'])) {
+            foreach($baseTemplateSettings['order_bys'] as $baseKey => $baseVlaue) {
+                if(!isset($config['order_bys'][$baseKey])) {
+                    $config['order_bys'][$baseKey] = $baseVlaue;
+                }
+            }
+        }
+
         // Copy Columns with preSelected and Default Values
         foreach ($baseTemplateSettings['fields'] as $fieldKey => $fieldValue) {
             if(isset($fieldValue['default'])) {
@@ -352,6 +360,9 @@ class CRM_Chreports_Reports_ReportConfiguration {
                 $config['fields'][$fieldKey] = ['selected' => true];
             } else {
                 $config['fields'][$fieldKey] = [];
+                if($this->_action == 'migrate') {
+                    $config['fields'][$fieldKey] = $fieldValue;
+                }
             }
         }
 
@@ -519,7 +530,9 @@ class CRM_Chreports_Reports_ReportConfiguration {
         $reportInstance['form_values']['owner_id'] = $reportInstance['owner_id'];
         $this->setAction('migrate');
         $this->setFormParams($reportInstance['form_values']);
-        $this->setColumns($reportInstance['form_values']['fields']);
+        if($reportInstance['form_values']['fields']) {
+            $this->setColumns($reportInstance['form_values']['fields']);
+        }
     }
 
     /**
