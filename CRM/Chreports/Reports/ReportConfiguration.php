@@ -90,9 +90,9 @@ class CRM_Chreports_Reports_ReportConfiguration {
     static function getReportInstanceDetails( $id ): array {
         $result = civicrm_api3('ReportInstance', 'get', [
             'sequential' => 1,
-            'return' => ["name", "title", "created_id", "report_id"],
+            'return' => ["name", "title", "created_id", "report_id", "description", "form_values"],
             'id' => $id,
-        ]);
+            ]);
         return $result['values'][0];
 
         // todo: use API4 after upgrade
@@ -323,6 +323,7 @@ class CRM_Chreports_Reports_ReportConfiguration {
         $params = $this->getFormParams();
         $fields = $this->getColumns();
         $filters = $this->getCustomFilterValues();
+
         //Load Base template settings to get default Values
         $baseTemplateSettings = $this->_settings;
         $config['name'] = $params['name'];
@@ -343,15 +344,6 @@ class CRM_Chreports_Reports_ReportConfiguration {
             }
         }
 
-        //For migrated instances, copy the leftover order_bys from template file
-        if($this->_action == 'migrate' && !empty($baseTemplateSettings['order_bys'])) {
-            foreach($baseTemplateSettings['order_bys'] as $baseKey => $baseVlaue) {
-                if(!isset($config['order_bys'][$baseKey])) {
-                    $config['order_bys'][$baseKey] = $baseVlaue;
-                }
-            }
-        }
-
         // Copy Columns with preSelected and Default Values
         foreach ($baseTemplateSettings['fields'] as $fieldKey => $fieldValue) {
             if(isset($fieldValue['default'])) {
@@ -360,9 +352,6 @@ class CRM_Chreports_Reports_ReportConfiguration {
                 $config['fields'][$fieldKey] = ['selected' => true];
             } else {
                 $config['fields'][$fieldKey] = [];
-                if($this->_action == 'migrate') {
-                    $config['fields'][$fieldKey] = $fieldValue;
-                }
             }
         }
 
@@ -479,10 +468,6 @@ class CRM_Chreports_Reports_ReportConfiguration {
         $params['header'] = 'NULL';
         $params['footer'] = 'NULL';
 
-        if(empty($params['title'])) {
-            $params['title'] = $config['title'];
-        }
-
         // Update the report
         $instance = CRM_Report_BAO_ReportInstance::create($params);
 
@@ -555,10 +540,26 @@ class CRM_Chreports_Reports_ReportConfiguration {
      * @return array
      */
     public static function getFilePath(array $reportDetails, $action = 'save'): array {
-        $report_id = self::escapeFileName($reportDetails['name']);
+        if($reportDetails['name'])
+            $report_id = self::escapeFileName($reportDetails['name']);
         if($action == 'copy' || $action == 'migrate' || $reportDetails['created_id']) {
             $filePath['base'] = CRM_Core_Config::singleton()->uploadDir.'reports/saved/';
             $filePath['source'] = $filePath['base']. $reportDetails['created_id']. '_' . $report_id . '_' . $reportDetails['id']. '.json';
+            // For migration, possibilty is there that core template report instance is missing
+            // as an exception, pull the base Report (redundant call here)
+            if(!$report_id) {
+                if($reportDetails['form_values']) {
+                    $reportDetails['form_values'] = unserialize(preg_replace_callback ( '!s:(\d+):"(.*?)";!', function($match) {      
+                        return ($match[1] == strlen($match[2])) ? $match[0] : 's:' . strlen($match[2]) . ':"' . $match[2] . '";';
+                    }, $reportDetails['form_values']));
+                }
+                $baseReportTemplate = E::getBaseTemplate($reportDetails);
+                if($baseReportTemplate) {
+                    $report_id = $baseReportTemplate['values'][$reportDetails['id']]['name'];
+                }
+                $filePath['base'] = dirname(__DIR__, 1)  . "/Templates/";
+                $filePath['source'] = $filePath['base']. $report_id.'.json';
+            }
         } else {
             $filePath['base'] = dirname(__DIR__, 1)  . "/Templates/";
             $filePath['source'] = $filePath['base']. $report_id.'.json';
