@@ -732,11 +732,7 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
 
   public function upgrade_2400() {
     $this->ctx->log->info('Migrate Reports to a new template');
-    $non_migrated_templates = [
-      'activity',
-      'grant/detail',
-      'activityextended'
-    ];
+    $non_migrated_templates = E::getNonMigratedReportTemplates();
     $reportCountCount = civicrm_api3('ReportInstance', 'getcount');
     $reportInstances = civicrm_api3('ReportInstance', 'get', [
       'sequential' => 1,
@@ -763,6 +759,7 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
         }
       }
     }
+    return TRUE;
   }
 
   /**

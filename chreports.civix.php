@@ -82,17 +82,19 @@ class CRM_Chreports_ExtensionUtil {
    *
    * @return string
    */
-  public static function getColumnNameByName($name) {
-     $values = civicrm_api3('CustomField', 'get', [
-       'name' => $name,
-       'sequential' => 1,
-       'return' => ['column_name'],
-     ])['values'];
-     if (!empty($values[0])) {
-       return CRM_Utils_Array::value('column_name', $values[0]);
-     }
-
-     return NULL;
+  public static function getColumnNameByName($name, $getCustom = NULL) {
+    $values = civicrm_api3('CustomField', 'get', [
+      'name' => $name,
+      'sequential' => 1,
+      'return' => ['column_name'],
+    ])['values'];
+    if (!empty($values[0])) {
+      if($getCustom) {
+        return 'custom_'.$values[0]['id'];
+      }
+      return CRM_Utils_Array::value('column_name', $values[0]);
+    }
+    return NULL;
   }
 
   /**
@@ -142,10 +144,10 @@ class CRM_Chreports_ExtensionUtil {
     if(isset($migratedTemplate['sub_templates'])) {
       // Step 1: Get it by Title
       $match = self::matchKeywordForTemplate($reportInstance['title']);
-      if(!$match['title']) {
+      if(!$match['title'] || empty($migratedTemplate['sub_templates'][$match])) {
         // Step 2: Get it by description
         $match = self::matchKeywordForTemplate($reportInstance['description']);
-        if(!$match) {    
+        if(!$match || empty($migratedTemplate['sub_templates'][$match])) {
           // Step 3: Get it by formvalue
           $match = self::matchbyFormValue($formValues, $migratedTemplate);
         }
@@ -154,7 +156,7 @@ class CRM_Chreports_ExtensionUtil {
         $base_report_name = $migratedTemplate['sub_templates'][$match]['name'];
       } else {
         // Step 4: Assign base/common template for the corresponding report_id
-        // catch all template
+        // catch-all templates
         $base_report_name = $migratedTemplate['name'];
       }
     } else {
@@ -189,6 +191,8 @@ class CRM_Chreports_ExtensionUtil {
     switch (strtolower($reportId)) {
       case 'biz.jmaconsulting.chreports/extendeddetail' :
       case 'contribution/contributions' :
+      case 'contribution/detailextended' :
+      case 'contribute/detail' :
         $template = [
           'report_id' => 'chreports/contrib_detailed',
           'entity' => 'contribution',
@@ -218,36 +222,68 @@ class CRM_Chreports_ExtensionUtil {
             'in_memory' => [
               'name' => 'contrib_detailed_inmemory'
             ],
+            'receipt' => [
+              'name' => 'contrib_detailed_receipts',
+              'report_id' => 'chreports/contrib_detailed',
+            ],
+            'receipts' => [
+              'name' => 'contrib_detailed_receipts',
+              'report_id' => 'chreports/contrib_detailed',
+            ],
           ],
         ];
-        break;
-      case 'chreports/extendsummary' : 
+      break;
+      case 'chreports/extendsummary' :
+      case 'biz.jmaconsulting.chreports/extendsummary' :
+      case 'contribute/summary' : 
         $template = [
           'report_id' => 'chreports/contrib_summary',
           'entity' => 'contribution',
           'name' => 'contrib_summary',
           'sub_templates' => [
             'fund' => [
+              'report_id' => 'chreports/contrib_summary',
               'name' => 'contrib_summary_fund',
             ],
             'source' => [
+              'report_id' => 'chreports/contrib_summary',
               'name' => 'contrib_summary_source',
             ],
             'campaign' => [
+              'report_id' => 'chreports/contrib_summary',
               'name' => 'contrib_summary_campaign',
             ],
             'campaign_group' => [
+              'report_id' => 'chreports/contrib_summary',
               'name' => 'contrib_summary_campaign_group',
             ],
             'glaccount' => [
+              'report_id' => 'chreports/contrib_summary',
               'name' => 'contrib_summary_glaccount'
             ],
             'ch_fund' => [
+              'report_id' => 'chreports/contrib_summary',
               'name' => 'contrib_detailed_chfund'
+            ],
+            'month' => [
+              'report_id' => 'chreports/contrib_period_detailed',
+              'name' => 'contrib_monthly_fiscal_year',
+            ],
+            'quarter' => [
+              'report_id' => 'chreports/contrib_period_detailed',
+              'name' => 'contrib_quarterly_past_year',
+            ],
+            'year' => [
+              'report_id' => 'chreports/contrib_period_detailed',
+              'name' => 'contrib_monthly_fiscal_year',
+            ],
+            'payment_method' => [
+              'report_id' => 'chreports/contrib_summary',
+              'name' => 'contrib_summary_payment_method',
             ],
           ],
         ];
-        break;
+      break;
       case 'contribute/lybunt' :
       case 'chreports/extendlybunt' :
       case 'contribute/revisedlybunt' : 
@@ -256,41 +292,105 @@ class CRM_Chreports_ExtensionUtil {
           'report_id' => 'chreports/lybunt',
           'entity' => 'contribution',
         ];
-        break;
+      break;
       case 'contribute/sybunt' :
         $template =  [
           'name' => 'contrib_sybunt',
           'report_id' => 'chreports/sybunt',
           'entity' => 'contribution',
         ];
-        break;
+      break;
+      case 'biz.jmaconsulting.chreports/recursummary' :
+        $template =  [
+          'name' => 'contrib_recurring',
+          'report_id' => 'chreports/contrib_detailed',
+          'entity' => 'contribution',
+        ];
+      break;
       case 'grant/detail' :
+      case 'grant/detailextended':
         $template = [
           'name' => 'opportunity_detailed',
           'report_id' => 'chreports/opportunity_detailed',
           'entity' => 'contribution',
         ];
-        break;
+      break;
       case 'contribute/repeat' :
         $template = [
           'name' => 'contrib_period_compare',
           'report_id' => 'chreports/contrib_period_compare',
           'entity' => 'contribution',
         ];
-        break;
-      case 'contribute/summary' : 
+      break;
+      case 'contribution/pivot' : 
         $template = [
-          'report_id' => 'chreports/contrib_summary',
+          'report_id' => 'chreports/contrib_period_summary',
           'entity' => 'contribution',
-          'name' => 'contrib_summary',
+          'name' => 'contrib_yearly',
           'sub_templates' => [
-            'month' => [
-              'report_id' => 'chreports/contrib_period_detailed',
-              'name' => 'contrib_monthly_fiscal_year',
+            'campaign_monthly' => [
+              'report_id' => 'chreports/contrib_summary_monthly',
+              'name' => 'contrib_monthly_campaign',
             ],
-            'quarter' => [
+            'campaign_yearly' => [
+              'report_id' => 'chreports/contrib_summary_yearly',
+              'name' => 'contrib_yearly_campaign',
+            ],
+            'fund_monthly' => [
+              'report_id' => 'chreports/contrib_summary_monthly',
+              'name' => 'contrib_monthly_fund',
+            ],
+            'fund_yearly' => [
+              'report_id' => 'chreports/contrib_summary_yearly',
+              'name' => 'contrib_yearly_fund',
+            ],
+            'monthly' => [
+              'report_id' => 'chreports/contrib_monthly',
+              'name' => 'contrib_monthly',
+            ],
+            'yearly' => [
+              'report_id' => 'chreports/contrib_yearly',
+              'name' => 'contrib_yearly',
+            ],
+          ],
+        ];
+      break;
+      case 'contribute/topdonor' : 
+        $template = [
+          'name' => 'contact_top_donors',
+          'report_id' => 'chreports/top_donors',
+          'entity' => 'contribution',
+        ];
+      break;
+      case 'contribute/bookkeeping' :
+      case 'contribution/bookkeeping_extended' :
+        $template = [
+          'name' => 'contrib_glaccount_payment_reconciliation',
+          'report_id' => 'chreports/contrib_glaccount',
+          'entity' => 'contribution',
+        ];
+      break;
+      case 'cdntaxreceipts/receiptsissued':
+        $template = [
+          'name' => 'contrib_detailed_receipts',
+          'report_id' => 'chreports/contrib_detailed',
+          'entity' => 'contribution',
+        ];
+      break;
+      case 'biz.jmaconsulting.chreports/glsummaryreport' :
+      case 'chreports/glaccountdetail' :
+        $template = [
+          'name' => 'contrib_detailed_glaccount',
+          'report_id' => 'chreports/contrib_period_detailed',
+          'entity' => 'contribution',
+          'sub_templates' => [
+            'gl_account_detailed' => [
               'report_id' => 'chreports/contrib_period_detailed',
-              'name' => 'contrib_quarterly_past_year',
+              'name' => 'contrib_detailed_glaccount',
+            ],
+            'gl_account_summary' => [
+              'report_id' => 'biz.jmaconsulting.chreports/glsummaryreport',
+              'name' => 'contrib_summary_glaccount',
             ],
           ],
         ];
@@ -301,16 +401,45 @@ class CRM_Chreports_ExtensionUtil {
 
   /**
    *
-   * Set Fields, Filters and Sorting from exisitng report's form_values
-   * @param array $reportInstance Contains all the report details
-   * @return array $base_report 
+   * Return only base template where JSON config file is present but no corresponding report_instance_id
+   * @return array
   */
   public function getOnlyBaseTemplates() {
     return [
       'contrib_detailed',
       'contrib_summary',
-      'contrib_monthly_fiscal_year',
-      'contrib_quarterly_past_year',
+      'contrib_monthly',
+      'contrib_yearly',
+    ];
+  }
+
+  /**
+   *
+   * Return list of non-migrated templates
+   * @return array
+  */
+  public function getNonMigratedReportTemplates() {
+    return [
+      'activity',
+      'receipt',
+      'activityextended',
+      'contact/relationship',
+      'contact/summary',
+      'contact/currentEmployer',
+      'contact/contactbasic',
+      'contact/log',
+      'relationshipextended',
+      'com.iatspayments.com/recur',
+      'com.iatspayments.com/recur',
+      'biz.jmaconsulting.chreports/retentionrate',
+      'contribute/householdSummary',
+      'contribution/overview',
+      'grant/statistics',
+      'Mailing/opened',
+      'Mailing/summary',
+      'mailing/detail',
+      'Mailing/bounce',
+      'Mailing/clicks',
     ];
   }
 
@@ -326,13 +455,24 @@ class CRM_Chreports_ExtensionUtil {
     $keywords = [
       'contribution' => [
         'campaign group', 
-        'fund', 
-        'campaign',
-        'source',
+        'Campaign Yearly',
+        'Campaign Monthly',
+        'Payment Method',
+        'Fund Yearly',
+        'Fund Monthly',
         'in honor',
         'in memory',
         'CH Fund',
-        'GL Account'
+        'GL Account Detailed',
+        'GL Account Summary',
+        'GL Account',
+        'Receipt',
+        'Receipts',
+        'fund',
+        'campaign',
+        'source',
+        'Yearly',
+        'Monthly',
       ],
       'pivot' => [
         'monthly',
@@ -343,8 +483,12 @@ class CRM_Chreports_ExtensionUtil {
     
     // Loop through each keyword depending on the type of report and check if it exists in the input string
     foreach ($keywords[$type] as $keyword) {
-      if (strpos(strtolower($inputString), $keyword) !== false) {
-        return str_replace(' ', '_', $keyword);
+      $inputString = str_replace("(","", $inputString);
+      $inputString = str_replace(")","", $inputString);
+      $pattern = '/\b' . preg_quote(strtolower($keyword), '/') . '\b/';
+      // Check if the pattern is found in the input string
+      if (preg_match($pattern, strtolower($inputString))) {
+        return str_replace(' ', '_', strtolower($keyword));
       }
     }
     return false;
@@ -362,16 +506,17 @@ class CRM_Chreports_ExtensionUtil {
     if($type == 'contribution') {
       //Loop through fields
       $fieldsPreferenceOrder = [
-        "financial_type_id",
-        "contribution_page_id",
-        "campaign",
-        "source",
-        "ch_fund" //Translate the custom value by coulmn name
+        "financial_type_id" => "fund",
+        "contribution_page_id" => "campaign",
+        self::getColumnNameByName('Fund', TRUE) => "ch_fund", // ch_fund
+        self::getColumnNameByName('Receipt_Number', TRUE) => "receipt",
+        "campaign" => "campaign_group",
+        "source" => "source",
       ];
       if($reportId['name'] == 'contrib_detailed' || $reportId['name'] == 'contrib_summary') {
-        foreach($formValues['fields'] as $kField => $vField) {
-          if(in_array($kField, $fieldsPreferenceOrder)) {
-            return self::wordReplace($kField);
+        foreach($fieldsPreferenceOrder as $kField => $vField) {
+          if(in_array($kField, array_keys($formValues['fields']))) {
+            return $vField;
           }
         }
       }
@@ -380,6 +525,15 @@ class CRM_Chreports_ExtensionUtil {
           if($formValues['group_bys']['receive_date']) {
             // MONTH, QUARTER, FISCALYEAR, YEAR
             return strtolower($formValues['group_bys_freq']['receive_date']);
+          }
+        }
+      }
+      if($reportId['report_id'] == 'chreports/contrib_period_summary') {
+        if(isset($formValues['aggregate_row_headers'])) {
+          $kField = str_replace("contribution_", "", $formValues['aggregate_row_headers']);
+          if(in_array($kField, array_keys($fieldsPreferenceOrder))) {
+            $kField = self::wordReplace($kField);
+            return $kField.'_yearly';
           }
         }
       }
