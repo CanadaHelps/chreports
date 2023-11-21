@@ -44,7 +44,7 @@
         "contribution_receipted":{},
         "receipt_number":{"default" : true},
         "contribution_note":{},
-        "is_recurring":{"selected" : true},
+        "is_recurring":{},
         "in_memory_of":{},
         "in_honour_of":{},
         "name_of_honoree":{}
@@ -55,9 +55,6 @@
         "contact_id":{},
         "contact_type":{},
         "contact_sub_type":{},
-        "is_deleted":{ "eq": [
-            "0"
-        ]},
         "preferred_language":{},
         "do_not_email":{},
         "do_not_phone":{},
@@ -111,9 +108,6 @@
         "contribution_message":{}
     },
     "order_bys":{
-        "total_amount": {
-            "order": "DESC"
-        },
         "receipt_number": {
             "order": "DESC"
         }

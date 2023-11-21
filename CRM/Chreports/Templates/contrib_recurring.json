@@ -33,17 +33,10 @@
     "use_default_filters" : false,
     "filters":{
         "sort_name":{},
-        "receive_date":{},
+        "receive_date":{"relative":"nnll"},
         "tagid":{},
         "gid":{},
-        "campaign_id":{},
-        "filters":{
-            "contribution_status_id": {
-                "in": [
-                    "1"
-                ]
-            }
-        }
+        "campaign_id":{}
     },
     "groupByClause" : false
 }

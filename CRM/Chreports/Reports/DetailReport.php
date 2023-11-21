@@ -57,7 +57,7 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
 
       }
       //Repeat contribution report 
-      if((parent::isRepeatContributionReport()))
+      if((parent::isComparisonReport()))
       {
         $repeatContribPercentstatement = "CASE 
         WHEN (COUNT(civicrm_contribution_secondset.id) = 0) THEN 'Skipped Donation'
@@ -69,6 +69,10 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
         $this->_columnHeaders['per_change']['title'] = '% Change';
         $this->_columnHeaders['per_change']['type'] = CRM_Utils_Type::T_STRING;
         $this->_calculatedFields['per_change']= [ 'per_change' => $repeatContribPercentstatement];
+        //For adding default 'percentage change' calculated field in filters, so need to add under having clause
+        if( preg_match('/(MIN|SUM|AVG|COUNT|MAX|MIN)/', $repeatContribPercentstatement )) {
+          $this->_having[] = 'per_change';
+        }
       }
       
       //contact Table ID details

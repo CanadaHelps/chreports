@@ -650,6 +650,11 @@
         "calculated_field": true,
         "field_type": "int"
     },
+    "per_change": {
+        "title": "Percentage Change",
+        "calculated_field": true,
+        "field_type": "int"
+    },
     "repeat_contri_initial_date_range": {
         "title": "Initial Date Range",
         "field_name": "receive_date",
