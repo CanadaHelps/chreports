@@ -193,6 +193,10 @@ class CRM_Chreports_ExtensionUtil {
       case 'contribution/contributions' :
       case 'contribution/detailextended' :
       case 'contribute/detail' :
+      case 'chreports/extendeddetail':
+      case 'contribute/history':
+      case 'contribute/householdSummary':
+      case 'contribute/organizationSummary':
         $template = [
           'report_id' => 'chreports/contrib_detailed',
           'entity' => 'contribution',
@@ -236,6 +240,7 @@ class CRM_Chreports_ExtensionUtil {
       case 'chreports/extendsummary' :
       case 'biz.jmaconsulting.chreports/extendsummary' :
       case 'contribute/summary' : 
+      case 'contribution/overview':
         $template = [
           'report_id' => 'chreports/contrib_summary',
           'entity' => 'contribution',
@@ -285,25 +290,30 @@ class CRM_Chreports_ExtensionUtil {
         ];
       break;
       case 'contribute/lybunt' :
-      case 'chreports/extendlybunt' :
-      case 'contribute/revisedlybunt' : 
+      case 'contribute/revisedlybunt' :
+      case 'chreports/revisedlybunt':
         $template = [
           'name' => 'contrib_lybunt',
-          'report_id' => 'chreports/lybunt',
+          'report_id' => 'chreports/contrib_lybunt',
           'entity' => 'contribution',
         ];
       break;
+      case 'chreports/extendlybunt' :
       case 'contribute/sybunt' :
         $template =  [
           'name' => 'contrib_sybunt',
-          'report_id' => 'chreports/sybunt',
+          'report_id' => 'chreports/contrib_sybunt',
           'entity' => 'contribution',
         ];
       break;
       case 'biz.jmaconsulting.chreports/recursummary' :
+      case 'chreports/recursummary':
+      case 'contribute/recur':
+      case 'contribute/recursummary':
+      case 'contribution/recurring_contributions':
         $template =  [
           'name' => 'contrib_recurring',
-          'report_id' => 'chreports/contrib_detailed',
+          'report_id' => 'chreports/contrib_recurring',
           'entity' => 'contribution',
         ];
       break;
@@ -358,7 +368,7 @@ class CRM_Chreports_ExtensionUtil {
       case 'contribute/topdonor' : 
         $template = [
           'name' => 'contact_top_donors',
-          'report_id' => 'chreports/top_donors',
+          'report_id' => 'chreports/contact_top_donors',
           'entity' => 'contribution',
         ];
       break;
@@ -370,15 +380,9 @@ class CRM_Chreports_ExtensionUtil {
           'entity' => 'contribution',
         ];
       break;
-      case 'cdntaxreceipts/receiptsissued':
-        $template = [
-          'name' => 'contrib_detailed_receipts',
-          'report_id' => 'chreports/contrib_detailed',
-          'entity' => 'contribution',
-        ];
-      break;
       case 'biz.jmaconsulting.chreports/glsummaryreport' :
       case 'chreports/glaccountdetail' :
+      case 'chreports/glsummaryreport':
         $template = [
           'name' => 'contrib_detailed_glaccount',
           'report_id' => 'chreports/contrib_period_detailed',
@@ -426,20 +430,61 @@ class CRM_Chreports_ExtensionUtil {
       'contact/relationship',
       'contact/summary',
       'contact/currentEmployer',
-      'contribute/organizationSummary',
       'contact/contactbasic',
       'contact/log',
       'relationshipextended',
       'com.iatspayments.com/recur',
       'biz.jmaconsulting.chreports/retentionrate',
-      'contribute/householdSummary',
       'contribution/overview',
+      'contribution/recur-pivot',
       'grant/statistics',
       'Mailing/opened',
       'Mailing/summary',
       'mailing/detail',
       'Mailing/bounce',
       'Mailing/clicks',
+      'cdntaxreceipts/receiptsissued',
+      'cdntaxreceipts/receiptsnotissued',
+    ];
+  }
+
+  /**
+   * @return array list of all templates that has to be migrated
+  */
+  public static function getMigratedTemplateList () {
+    return [
+      'biz.jmaconsulting.chreports/extendeddetail',
+      'chreports/extendeddetail',
+      'contribution/contributions',
+      'contribution/detailextended',
+      'contribute/history',
+      'contribute/detail',
+      'chreports/extendsummary',
+      'biz.jmaconsulting.chreports/extendsummary',
+      'contribute/summary',
+      'contribution/overview',
+      'contribute/householdSummary',
+      'contribute/organizationSummary',
+      'contribute/lybunt',
+      'chreports/extendlybunt',
+      'contribute/revisedlybunt',
+      'chreports/revisedlybunt',
+      'contribute/sybunt',
+      'biz.jmaconsulting.chreports/recursummary',
+      'contribute/recursummary',
+      'chreports/recursummary',
+      'contribute/recur',
+      'contribution/recurring_contributions',
+      'grant/detail',
+      'grant/detailextended',
+      'contribute/repeat',
+      'contribution/pivot',
+      'contribute/topdonor',
+      'contribute/bookkeeping',
+      'contribution/bookkeeping_extended',
+      'biz.jmaconsulting.chreports/glsummaryreport',
+      'chreports/glsummaryreport',
+      'chreports/glaccountdetail',
     ];
   }
 

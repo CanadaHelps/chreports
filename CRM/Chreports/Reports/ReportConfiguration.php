@@ -548,7 +548,7 @@ class CRM_Chreports_Reports_ReportConfiguration {
             $filePath['source'] = $filePath['base']. $reportDetails['created_id']. '_' . $report_id . '_' . $reportDetails['id']. '.json';
             // For migration, possibilty is there that core template report instance is missing
             // as an exception, pull the base Report (redundant call here)
-            if(!$report_id) {
+            if(!$report_id || in_array(strtolower($reportDetails['report_id']), E::getMigratedTemplateList())) {
                 if($reportDetails['form_values']) {
                     $reportDetails['form_values'] = unserialize(preg_replace_callback ( '!s:(\d+):"(.*?)";!', function($match) {      
                         return ($match[1] == strlen($match[2])) ? $match[0] : 's:' . strlen($match[2]) . ':"' . $match[2] . '";';
