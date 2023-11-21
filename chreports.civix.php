@@ -195,6 +195,8 @@ class CRM_Chreports_ExtensionUtil {
       case 'contribute/detail' :
       case 'chreports/extendeddetail':
       case 'contribute/history':
+      case 'contribute/householdSummary':
+      case 'contribute/organizationSummary':
         $template = [
           'report_id' => 'chreports/contrib_detailed',
           'entity' => 'contribution',
@@ -238,8 +240,6 @@ class CRM_Chreports_ExtensionUtil {
       case 'chreports/extendsummary' :
       case 'biz.jmaconsulting.chreports/extendsummary' :
       case 'contribute/summary' : 
-      case 'contribute/householdSummary':
-      case 'contribute/organizationSummary':
       case 'contribution/overview':
         $template = [
           'report_id' => 'chreports/contrib_summary',
@@ -290,7 +290,6 @@ class CRM_Chreports_ExtensionUtil {
         ];
       break;
       case 'contribute/lybunt' :
-      case 'chreports/extendlybunt' :
       case 'contribute/revisedlybunt' :
       case 'chreports/revisedlybunt':
         $template = [
@@ -299,6 +298,7 @@ class CRM_Chreports_ExtensionUtil {
           'entity' => 'contribution',
         ];
       break;
+      case 'chreports/extendlybunt' :
       case 'contribute/sybunt' :
         $template =  [
           'name' => 'contrib_sybunt',
@@ -380,13 +380,6 @@ class CRM_Chreports_ExtensionUtil {
           'entity' => 'contribution',
         ];
       break;
-      case 'cdntaxreceipts/receiptsissued':
-        $template = [
-          'name' => 'contrib_detailed_receipts',
-          'report_id' => 'chreports/contrib_detailed',
-          'entity' => 'contribution',
-        ];
-      break;
       case 'biz.jmaconsulting.chreports/glsummaryreport' :
       case 'chreports/glaccountdetail' :
       case 'chreports/glsummaryreport':
@@ -437,20 +430,21 @@ class CRM_Chreports_ExtensionUtil {
       'contact/relationship',
       'contact/summary',
       'contact/currentEmployer',
-      'contribute/organizationSummary',
       'contact/contactbasic',
       'contact/log',
       'relationshipextended',
       'com.iatspayments.com/recur',
       'biz.jmaconsulting.chreports/retentionrate',
-      'contribute/householdSummary',
       'contribution/overview',
+      'contribution/recur-pivot',
       'grant/statistics',
       'Mailing/opened',
       'Mailing/summary',
       'mailing/detail',
       'Mailing/bounce',
       'Mailing/clicks',
+      'cdntaxreceipts/receiptsissued',
+      'cdntaxreceipts/receiptsnotissued',
     ];
   }
 
@@ -488,7 +482,6 @@ class CRM_Chreports_ExtensionUtil {
       'contribute/topdonor',
       'contribute/bookkeeping',
       'contribution/bookkeeping_extended',
-      'cdntaxreceipts/receiptsissued',
       'biz.jmaconsulting.chreports/glsummaryreport',
       'chreports/glsummaryreport',
       'chreports/glaccountdetail',
