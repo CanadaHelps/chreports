@@ -1801,7 +1801,8 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         return $selectStatement;
         
     }
-
+    //This function will fetch report name and ID for report instance
+    // Will fetch only report name for template
     static function getReportDetail( $reportPath ): array {
         $reportId = end(explode('/', $reportPath));
             if (strpos($reportPath,'instance') !== false) {
