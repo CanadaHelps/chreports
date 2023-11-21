@@ -51,8 +51,6 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
     if ($this->_reportInstance == NULL) {
       $reportPath = $this->_attributes['action'];
       list($reportId, $reportName) = CRM_Chreports_Reports_BaseReport::getReportDetail($reportPath);
-      // $reportId = end(explode('/', $reportPath));
-      // $reportName = CRM_Chreports_Reports_BaseReport::getReportInstanceDetails($reportId)['name'];
       $this->_reportInstance = new CRM_Chreports_Reports_DetailReport('contribution', $reportId, $reportName);
     }
     
