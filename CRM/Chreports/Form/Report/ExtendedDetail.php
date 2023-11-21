@@ -20,7 +20,7 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
   public function statistics(&$rows) {
    
     $showDetailedStat = ($this->_reportInstance->isOpportunityReport() || $this->_reportInstance->isGLAccountandPaymentMethodReconciliationReport()
-    || $this->_reportInstance->isRepeatContributionReport() || $this->_reportInstance->isRecurringContributionReport() || $this->_reportInstance->isLYBNTSYBNTReport()) ? false:true;
+    || $this->_reportInstance->isComparisonReport() || $this->_reportInstance->isRecurringContributionReport() || $this->_reportInstance->isLYBNTSYBNTReport()) ? false:true;
     $statistics = $this->_reportInstance->alterStatistics($rows,$showDetailedStat);
 
   

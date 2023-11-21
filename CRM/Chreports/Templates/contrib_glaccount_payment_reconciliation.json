@@ -15,25 +15,25 @@
         "credit_contact_id":{},
         "debit_name":{},
         "credit_name":{"default" : true},
-        "financial_type_id":{},
+        "financial_type_id":{"selected" : true},
         "batch_title":{},
-        "batch_name":{},
-        "receive_date":{},
-        "invoice_id":{},
+        "batch_name":{"selected" : true},
+        "receive_date":{"selected" : true},
+        "invoice_id":{"selected" : true},
         "invoice_number":{},
-        "contribution_status_id":{},
+        "contribution_status_id":{"selected" : true},
         "contribution_source":{},
-        "check_number":{},
-        "payment_instrument_id":{},
+        "check_number":{"selected" : true},
+        "payment_instrument_id":{"selected" : true},
         "contribution_id":{},
        
-        "trxn_id":{},
+
         
-        "amount":{},       
+        "amount":{"selected" : true},       
         "id": {"default" : true},
         "contact_source":{},
 
-        "trxn_date":{},
+
         "card_type_id":{}
     },
     "order_bys":{
@@ -63,8 +63,7 @@
         "receipt_date":{},
         "contribution_source":{},
         "payment_instrument_id":{},
-        "currency":{},
-        "trxn_date":{},
+        "contribution_currency":{},
         "contribution_status_id": {
             "in": [
                 "1"

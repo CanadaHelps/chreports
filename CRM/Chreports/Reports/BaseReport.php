@@ -289,7 +289,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     }
 
     //Retrieve Repeat Contributions Report
-    public function isRepeatContributionReport(): bool {
+    public function isComparisonReport(): bool {
         return $this->_settings['template'] == 'chreports/contrib_period_compare';
     }
     //check if report is opportunity report
@@ -639,7 +639,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
      * @param array  $var Array used to show columns.
      * @return void
      */
-    public function alterColumnHeadersForDisplay(&$var, &$columnHeaders ){
+    public function alterColumnHeadersForDisplay(&$var, &$columnHeaders ){   
         //CRM-1878-Calculated and money type field should be right align , all other fields should be left align
         foreach($this->_calculatedFields as $fieldName => $value) {
             if(!in_array($columnHeaders[$fieldName]['type'],[CRM_Utils_Type::T_MONEY,CRM_Utils_Type::T_INT,CRM_Utils_TYPE::T_DATE + CRM_Utils_Type::T_TIME])) {
@@ -648,15 +648,13 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         }
         foreach ($columnHeaders as $fieldName => $value) {
             //for Comparison report update column title based on date range selection
-            if($this->isRepeatContributionReport()) {
+            if($this->isComparisonReport()) {
                 switch ($fieldName) {
                     case 'range_one_stat':
                     case 'range_two_stat':
-                        if($fieldName === 'range_one_stat') {
-                            $filterFieldName = 'repeat_contri_initial_date_range';
-                        }
+                        $filterFieldName = 'repeat_contri_initial_date_range';
                         if($fieldName === 'range_two_stat') {
-                            $filterFieldName = 'repeat_contri_second_date_range';
+                            $filterFieldName = str_replace("initial", "second",  $filterFieldName);
                         }
                         $columnHeaders[$fieldName] = ['title' => '-','type'=> $value['type']];
                         if (in_array($filterFieldName,$this->getFieldNamesForFilters())){
@@ -671,7 +669,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                         break;
                 }
             }
-            if(!in_array($fieldName,array_keys($this->_calculatedFields)) && $value['type'] !== CRM_Utils_Type::T_MONEY) {
+            if(!in_array($fieldName,array_keys($this->_calculatedFields)) && !in_array($value['type'],[CRM_Utils_Type::T_MONEY,CRM_Utils_Type::T_INT,CRM_Utils_TYPE::T_DATE + CRM_Utils_Type::T_TIME])) {
                 $columnHeaders[$fieldName] = ['title' => $value['title'],'type'=> CRM_Utils_Type::T_STRING];
             }
         }
@@ -946,9 +944,9 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         }
 
         //Name report by report define select statement
-        if($this->isRepeatContributionReport() || $this->isRecurringContributionReport())
+        if($this->isComparisonReport() || $this->isRecurringContributionReport())
         {
-            if($this->isRepeatContributionReport()) {
+            if($this->isComparisonReport()) {
                 $showRepeatContributionStats = true;
                 $range_one_statistics = $range_two_statistics = $range_one_avg =$range_two_avg = $range_one_total_contribution_count = $range_two_total_contribution_count =  [];
             }
