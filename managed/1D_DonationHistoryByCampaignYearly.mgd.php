@@ -7,7 +7,7 @@ return array(
     'entity' => 'ReportInstance',
     'params' => array(
       'version' => 3,
-      'report_id' => 'chreports/contrib_period_summary',
+      'report_id' => 'chreports/contrib_summary_yearly',
       'title' => ts('Contribution History by Contribution Page (Yearly)'),
       'name' => 'contrib_yearly_campaign',
       "description" => "Total amounts raised by Campaign year over year",

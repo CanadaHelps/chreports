@@ -7,9 +7,9 @@ return array(
     'entity' => 'ReportInstance',
     'params' => array(
       'version' => 3,
-      'report_id' => 'chreports/top_donors',
+      'report_id' => 'chreports/contact_top_donors',
       'name' => 'contact_top_donors',
-      'title' => ts('Top Donors'),
+      'title' => ts('Top Contributors'),
       "description" => "Top contributors",
       'permission' => 'administer Reports',
       'is_active' => 1,

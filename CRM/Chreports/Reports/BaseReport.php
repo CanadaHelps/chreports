@@ -63,7 +63,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         "ch_fund" //op //custom
     ];
 
-    public function __construct( string $entity, int $id, string $name ) {
+    public function __construct( string $entity, $id = NULL, string $name ) {
         parent::__construct($id, $name);
         $this->_name = $name;
         $this->_entity = strtolower($entity);
@@ -280,7 +280,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     // }
 
     public function isPeriodicSummary (): bool {
-        if($this->_settings['template'] == 'chreports/contrib_period_summary')
+        if(in_array($this->_settings['template'], ['chreports/contrib_summary_monthly' , 'chreports/contrib_summary_yearly']))
         {
             $this->_limit = '';
             return true; 
@@ -298,12 +298,12 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     }
     //check if report is opportunity report
     public function isLYBNTSYBNTReport(): bool {
-        return in_array($this->_settings['template'], ['chreports/lybunt' , 'chreports/sybunt']);
+        return in_array($this->_settings['template'], ['chreports/contrib_lybunt' , 'chreports/contrib_sybunt']);
     }
 
     //check if report is TopDonor report
     public function isTopDonorReport(): bool {
-        return $this->_settings['template'] == 'chreports/top_donors';
+        return $this->_settings['template'] == 'chreports/contact_top_donors';
     }
  
     //Retrieve GL Accountand Payment Method Reconciliation Report
@@ -315,8 +315,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     //Retrieve Recurring Contribution Report
     public function isRecurringContributionReport()
     {
-        $status = ($this->_settings['entity'] == 'contact' && $this->_settings['template'] == 'chreports/contrib_detailed') ? true : false;
-        return $status;
+        return $this->_settings['template'] == 'chreports/contrib_recurring';
     }
 
     public function hasMonthlyBreakdown (): bool {
@@ -786,7 +785,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                 $finalDisplay = [];
                 foreach($resultingRow as $key => $rowValue)
                 {
-                    $subTotal = ['receive_date_start' => 'Total'];
+                    $subTotal = ['receive_date_start' => 'Yearly Subtotal'];
                     foreach($rowValue as $k=>$result)
                     {
                         $subTotal['total_amount'] += $result['total_amount'];
@@ -985,7 +984,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
             . " " . $this->_from 
             . " " . $this->_where 
             . " " . $this->_groupBy;
-
+            
         $dao = CRM_Core_DAO::executeQuery($query);
         $currencies = $currAmount = $currCount = $totalAmount = [];
         $totalCount = 0;
@@ -1248,6 +1247,9 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                 ];
             }
         }
+        if($this->isTopDonorReport())
+        $statistics = [];
+
         return $statistics;
     }
 
@@ -1289,7 +1291,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                 break;
             case 'receive_date_start':
                 if($this->isPeriodicDetailed()){
-                    if(!in_array($row['receive_date_start'],['Total','Grand Total'])){
+                    if(!in_array($row['receive_date_start'],['Yearly Subtotal','Grand Total'])){
                     $latestContribReport = $this->getReportInstanceDetailsByName('Latest Contributions (Dashlet)');
                     $dateReformat=date("F Y",strtotime($row['receive_date_start']));
                     if($this->hasMonthlyBreakdown ())
@@ -1730,12 +1732,6 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                     if ($fieldInfo['custom'] !== true && isset($fieldInfo['join_entity']) && isset($fieldInfo['join_field_name'])) {
                         $from[] = $this->getSQLJoinForOptionValue($groupName,$fieldInfo['join_field_name'],$this->getEntityTable($fieldInfo['join_entity']),$fieldName);
                     } else {
-                        //To Add LEFT Join of contact and contribution Entity
-                        if(!in_array($entityName,$this->_fromEntity)) {
-                            if($fieldInfo['entity'] == 'contribution' &&   in_array($this->getEntityTableFromField('contact'),$this->_fromEntity)) {
-                                $from[] = $this->getSQLJoinForField('id', $entityName, $this->getEntityTable('contact'),'contact_id');
-                            }
-                        }
                         $entityField = $this->getEntityField($fieldName);
                         $from[] = $this->getSQLJoinForOptionValue($groupName,$entityField,$entityName,$fieldName);
                     }
@@ -1805,7 +1801,29 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         return $selectStatement;
         
     }
-
+    //This function will fetch report name and ID for report instance
+    // Will fetch only report name for template
+    static function getReportDetail( $reportPath ): array {
+        $reportId = end(explode('/', $reportPath));
+            if (strpos($reportPath,'instance') !== false) {
+                $reportInfo = CRM_Chreports_Reports_BaseReport::getReportInstanceDetails($reportId);
+                $reportName = $reportInfo['name'] ?? $reportInfo['title'];
+            } else {
+                switch($reportId){
+                    case 'contrib_glaccount':
+                        $reportName = 'contrib_glaccount_payment_reconciliation';
+                        break;
+                    case 'contrib_period_detailed':
+                        $reportName = 'contrib_quarterly_past_year';
+                        break;
+                    default:
+                        $reportName = $reportId;
+                        break;
+                }
+                $reportId = NULL;
+            }
+        return [$reportId , $reportName];
+    }
 }
 
 ?>

@@ -7,7 +7,7 @@ return array(
     'entity' => 'ReportInstance',
     'params' => array(
       'version' => 3,
-      'report_id' => 'chreports/lybunt',
+      'report_id' => 'chreports/contrib_lybunt',
       'title' => ts('LYBNT'),
       'name' => 'contrib_lybunt',
       "description" => "Contributors who gave 'Last Year, But Not This'",

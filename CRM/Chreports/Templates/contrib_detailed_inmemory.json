@@ -18,6 +18,7 @@
         "contribution_id":{}, 
         "payment_instrument_id":{},
         "check_number":{},
+        "campaign_type":{},
         "contribution_trxn_id":{},
         "receive_date":{"selected" : true},
         "receipt_date":{},

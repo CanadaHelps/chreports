@@ -4,7 +4,7 @@ use CRM_Canadahelps_ExtensionUtils as EU;
 class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseReport {
 
 
-    public function __construct( string $entity, int $id, string $name ) {
+    public function __construct( string $entity, $id = NULL, string $name ) {
         parent::__construct( $entity, $id, $name);
     }
 
@@ -47,16 +47,10 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
 
       //fiscle year report
       if($this->isPeriodicDetailed()){
-        if($this->hasMonthlyBreakdown())
+        if($this->hasQuarterlyBreakdown())
         {
-          $select[] = "MONTH(".$this->getEntityTable().".`receive_date`) AS monthIndex";
-          $this->_columnHeaders['monthIndex']['title'] = '';
-
-          $select[] = "MONTHNAME(".$this->getEntityTable().".`receive_date`) AS monthname";
-          $this->_columnHeaders['monthname']['title'] = '';
-        }else{
           $select[] = "QUARTER(".$this->getEntityTable().".`receive_date`) AS quartername";
-          $this->_columnHeaders['quartername']['title'] = '';
+          $this->_columnHeaders['quartername']['title'] = 'Fiscal no.';
         }
       }
       

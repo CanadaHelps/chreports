@@ -7,7 +7,7 @@ return array(
     'entity' => 'ReportInstance',
     'params' => array(
       'version' => 3,
-      'report_id' => 'chreports/contrib_period_summary',
+      'report_id' => 'chreports/contrib_summary_monthly',
       'title' => ts('Contribution History by Fund (Monthly)'),
       'name' => 'contrib_monthly_fund',
       "description" => "Total amounts raised by Fund month over month",

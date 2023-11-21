@@ -11,7 +11,8 @@ class CRM_Chreports_Reports_ReportConfiguration {
     // Default Action is to View Report
     protected $_action = "view";
 
-    public function __construct(int $id, string $name) {
+    public function __construct($id = NULL, string $name) {
+        if($id)
         $this->_id = $id;
         $this->_action = $action;    
         $this->loadMappings();

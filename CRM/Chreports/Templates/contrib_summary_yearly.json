@@ -4,7 +4,7 @@
     "type": "summary",
     "period": "yearly",
     "entity": "contribution",
-    "template": "chreports/contrib_period_summary",
+    "template": "chreports/contrib_summary_yearly",
     "fields":{
         "contribution_source": {},
         "campaign_id": {},

@@ -24,7 +24,7 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
     $statistics = $this->_reportInstance->alterStatistics($rows,$showDetailedStat);
 
   
-    if ($statistics) {
+    if ($statistics || $this->_reportInstance->isTopDonorReport()) {
       $count = count($rows);
       // requires access to form
       //set Row(s) Listed and Total rows statistics
@@ -50,8 +50,7 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
     // Instantiate Report Instance if doesn't exists yet
     if ($this->_reportInstance == NULL) {
       $reportPath = $this->_attributes['action'];
-      $reportId = end(explode('/', $reportPath));
-      $reportName = CRM_Chreports_Reports_BaseReport::getReportInstanceDetails($reportId)['name'];
+      list($reportId, $reportName) = CRM_Chreports_Reports_BaseReport::getReportDetail($reportPath);
       $this->_reportInstance = new CRM_Chreports_Reports_DetailReport('contribution', $reportId, $reportName);
     }
     
@@ -62,7 +61,7 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
     $this->_reportInstance->setFieldsMapping($var->getVar('_columns'));
     $params = $var->getVar('_params');
     //CRM-2144 for precise "view results", filtering out preSelected fields 
-    if($var->getVar('_force') === 1){
+    if($var->getVar('_force') == 1){
       //set column fields to params
       $trueKeys =  array_keys($params['fields'],true);
       $params['fields'] = array_fill_keys($trueKeys, true);
@@ -75,7 +74,7 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
     $this->_reportInstance->setLimit($var->getVar('_limit'));
    
     // forcefully apply default filter values to params only for 'View Results' action
-    if($var->getVar('_force') === 1){
+    if($var->getVar('_force') == 1){
         // Create params from the default JSON config file
         $this->_reportInstance->setDefaultFilterValues();
 
