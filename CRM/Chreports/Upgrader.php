@@ -475,12 +475,12 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
       [
         'report_id'=>'chreports/contrib_detailed',
         'name'=>'CRM_Chreports_Form_Report_ExtendedDetail',
-        'label' => 'Extended Contribution Detail',
+        'label' => 'Contribution (Detailed)',
         'component' => 'CiviContribute',
         'weight' => 103
       ],
       [
-        'report_id'=>'chreports/sybunt',
+        'report_id'=>'chreports/contrib_sybunt',
         'name'=>'CRM_Chreports_Form_Report_ExtendedDetail',
         'label' => 'SYBUNT',
         'component' => 'CiviContribute',
@@ -489,12 +489,12 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
       [
         'report_id'=>'chreports/contrib_summary',
         'name'=>'CRM_Chreports_Form_Report_ExtendSummary',
-        'label' => 'Extended Contribution Summary',
+        'label' => 'Contribution (Summary)',
         'component' => 'CiviContribute',
         'weight' => 102
       ],
       [
-        'report_id'=>'chreports/lybunt',
+        'report_id'=>'chreports/contrib_lybunt',
         'name'=>'CRM_Chreports_Form_Report_ExtendedDetail',
         'label' => 'LYBUNT',
         'component' => 'CiviContribute',
@@ -503,26 +503,33 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
       [
         'report_id'=>'chreports/contrib_glaccount',
         'name'=>'CRM_Chreports_Form_Report_ExtendedDetail',
-        'label' => 'GL Account & Payment Method Reconciliation',
+        'label' => 'GL Account Report',
         'component' => 'CiviContribute',
         'weight' => 32
       ],
       [
+        'report_id'=>'chreports/contrib_summary_monthly',
+        'name'=>'CRM_Chreports_Form_Report_ExtendSummary',
+        'label' => 'Summary (Monthly)',
+        'component' => 'CiviContribute',
+        'weight' => 4
+      ],
+      [
+        'report_id'=>'chreports/contrib_summary_yearly',
+        'name'=>'CRM_Chreports_Form_Report_ExtendSummary',
+        'label' => 'Summary (Yearly)',
+        'component' => 'CiviContribute',
+        'weight' => 4
+      ],
+      [
         'report_id'=>'chreports/contrib_period_detailed',
         'name'=>'CRM_Chreports_Form_Report_ExtendSummary',
-        'label' => 'Contribution Summary Report',
+        'label' => 'Fiscal / Quarterly Report',
         'component' => 'CiviContribute',
         'weight' => 4
       ],
       [
-        'report_id'=>'chreports/contrib_period_summary',
-        'name'=>'CRM_Chreports_Form_Report_ExtendSummary',
-        'label' => 'Extended Report - Contribution Pivot Chart',
-        'component' => 'CiviContribute',
-        'weight' => 4
-      ],
-      [
-        'report_id'=>'chreports/top_donors',
+        'report_id'=>'chreports/contact_top_donors',
         'name'=>'CRM_Chreports_Form_Report_ExtendedDetail',
         'label' => 'Top Donors Report',
         'component' => 'CiviContribute',
@@ -541,6 +548,13 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
         'label' => 'Comparison Report',
         'component' => 'CiviContribute',
         'weight' => 4
+      ],
+      [
+        'report_id'=>'chreports/contrib_recurring',
+        'name'=>'CRM_Chreports_Form_Report_ExtendedDetail',
+        'label' => 'Recurring Contributions',
+        'component' => 'CiviContribute',
+        'weight' => 41
       ]
     ];
     foreach($templateParams as $templateId => $templateParam) {
@@ -576,7 +590,7 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
       ],
       'contrib_sybunt' => [
         'name'=>'SYBNT',
-        'report_id'=>'chreports/sybunt',
+        'report_id'=>'chreports/contrib_sybunt',
         'title' => 'SYBNT'
       ],
       'contrib_summary_campaign' =>  [
@@ -616,12 +630,12 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
       ],
       'contrib_recurring' => [
         'name'=>'Recurring Contributions (Summary)',
-        'report_id'=>'chreports/contrib_detailed',
+        'report_id'=>'chreports/contrib_recurring',
         'title' => 'Recurring Contributions'
       ],
       'contrib_lybunt' => [
         'name'=>'LYBNT',
-        'report_id'=>'chreports/lybunt',
+        'report_id'=>'chreports/contrib_lybunt',
         'title' => 'LYBNT'
       ],
       'contrib_glaccount_payment_reconciliation' =>  [
@@ -642,31 +656,31 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
       'contrib_quarterly_past_year' => [
         'name'=>'Last Year inc. Today',
         'report_id'=>'chreports/contrib_period_detailed',
-        'title' => 'Last 12 months (Quarterly)'
+        'title' => 'Last 12 Months (Quarterly)'
       ],
       'contact_top_donors' => [
         'name'=>'Top contributors',
-        'report_id'=>'chreports/top_donors',
-        'title' => 'Top contributors'
+        'report_id'=>'chreports/contact_top_donors',
+        'title' => 'Top Contributors'
       ],
       'contrib_monthly_campaign' => [
         'name'=>'Contribution History by Campaign (Monthly)',
-        'report_id'=>'chreports/contrib_period_summary',
+        'report_id'=>'chreports/contrib_summary_monthly',
         'title' => 'Contribution History by Campaign (Monthly)'
       ],
       'contrib_yearly_campaign' =>  [
         'name'=>'Contribution History by Campaign (Yearly)',
-        'report_id'=>'chreports/contrib_period_summary',
+        'report_id'=>'chreports/contrib_summary_yearly',
         'title' => 'Contribution History by Campaign (Yearly)'
       ],
       'contrib_monthly_fund' => [
         'name'=>'Contribution History by Fund (Monthly)',
-        'report_id'=>'chreports/contrib_period_summary',
+        'report_id'=>'chreports/contrib_summary_monthly',
         'title' => 'Contribution History by Fund (Monthly)'
       ],
       'contrib_yearly_fund' => [
         'name'=>'Contribution History by Fund (Yearly)',
-        'report_id'=>'chreports/contrib_period_summary',
+        'report_id'=>'chreports/contrib_summary_yearly',
         'title' => 'Contribution History by Fund (Yearly)'
       ],
       'opportunity_detailed' =>  [
@@ -691,7 +705,7 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
       ],
       'contact_top_donors_dashlet' =>  [
         'name'=>'Top Donors (Dashlet)',
-        'report_id'=>'chreports/top_donors',
+        'report_id'=>'chreports/contact_top_donors',
         'title' => 'Top Donors (Dashlet)'
       ]
     ];
@@ -760,6 +774,67 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
       }
     }
     return TRUE;
+  }
+
+
+  public function upgrade_2401() {
+    $this->ctx->log->info('remove unused / old report templates');
+    $unwantedtemplates = [
+      'contribute/summary',
+      'contribute/detail',
+      'contribute/repeat',
+      'contribute/topDonor',
+      'contribute/sybunt',
+      'contribute/lybunt',
+      'contribute/bookkeeping',
+      'contribute/organizationSummary',
+      'contribute/householdSummary',
+      'contribute/history',
+      'contribution/overview',
+      'contribution/contributions',
+      'contribution/pivot',
+      'contribution/detailextended',
+      'contribution/bookkeeping_extended',
+      'contribute/recursummary',
+      'contribute/recur',
+      'contribution/recur-pivot',
+      'contribution/recurring_contributions',
+      'cdntaxreceipts/receiptsissued',
+      'cdntaxreceipts/receiptsnotissued',
+
+      'contact/contactbasic',
+      'contact/contactextended',
+      'activityextended',
+      'activity/pivot',
+      'activityeditable',
+      'activity',
+      'relationshipextended',
+      'activityextended',
+
+      'grant/detail',
+      'grant/statistics',
+      'grant/detailextended',
+
+
+      'member/summary',
+      'member/detail',
+      'member/lapse',
+      'member/contributionDetail',
+      'member/membershippivot',
+      'price/lineitemmembership',
+
+      'survey/detail',
+      'campaign/progress',
+
+    ];
+    $checkReportID = "SELECT id FROM civicrm_option_group WHERE `name`='report_template'";
+    $reportID = CRM_Core_DAO::singleValueQuery($checkReportID);
+      foreach($unwantedtemplates as $report_id) {
+        $sql = "UPDATE civicrm_option_value SET `is_active` = 0
+      WHERE `value` = '".$report_id."' AND `option_group_id`=$reportID";
+      CRM_Core_DAO::executeQuery($sql);
+      }
+      return TRUE;
   }
 
   /**

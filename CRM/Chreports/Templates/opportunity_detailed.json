@@ -5,7 +5,7 @@
     "type": "detailed",
     "entity": "grant",
     "fields":{
-        "display_name": {"selected" : true},
+        "contact_name": {"selected" : true},
         "contact_type": {},
         "contact_sub_type": {},
         "exposed_id": {},
@@ -31,22 +31,17 @@
     },
     "use_default_filters" : false,
     "filters":{
-        "grant_type":{},
+        "grant_type_id":{},
         "grant_status_id":{},
         "amount_granted":{},
-        "grant_amount_total":{},
+        "grant_total_amount":{},
         "application_received_date":{},
         "grant_due_date":{},
         "decision_date":{},
         "application_submitted":{},
         "probability":{},
         "Opportunity_Name":{},
-        "Opportunity_Owner":{},
-        "contribution_status_id": {
-            "in": [
-                "1"
-            ]
-        }
+        "Opportunity_Owner":{}
     },
     "groupByClause" : false
 }

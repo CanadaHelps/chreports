@@ -7,7 +7,7 @@ return array(
     'entity' => 'ReportInstance',
     'params' => array(
       'version' => 3,
-      "report_id" => "chreports/sybunt",
+      "report_id" => "chreports/contrib_sybunt",
       'name' => 'contrib_sybunt',
       'title' => ts('SYBNT'),
       "description" => "Contributors who gave 'Some Year, But Not This'",

@@ -14,6 +14,7 @@
         "financial_type_id":{},
         "contribution_page_id":{"selected" : true},
         "campaign_id":{},
+        "campaign_type":{},
         "contribution_source":{},  
         "contribution_id":{}, 
         "payment_instrument_id":{},

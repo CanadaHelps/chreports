@@ -2,7 +2,7 @@
     "name": "contrib_recurring",
     "title": "Recurring Contributions",
     "type": "detailed",
-    "template": "chreports/contrib_detailed",
+    "template": "chreports/contrib_recurring",
     "entity": "contact",
     "fields":{
         "exposed_id":{"default" : true},

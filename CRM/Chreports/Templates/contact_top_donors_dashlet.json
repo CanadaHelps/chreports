@@ -1,7 +1,7 @@
 { 
     "name": "contact_top_donors_dashlet",
     "title": "Top Donors (Dashlet)",
-    "template": "chreports/top_donors",
+    "template": "chreports/contact_top_donors",
     "type": "detailed",
     "entity": "contact",
     "fields":{
@@ -34,9 +34,13 @@
     },
     "use_default_filters" : false,
     "filters":{
-        "receive_date":{},
+        "receive_date":{
+            "relative":"nnll"
+        },
         "receipt_date":{},
-        "total_range":{},
+        "total_range":{
+            "eq": 10
+        },
         "financial_type_id":{},
         "contribution_status_id": {
             "in": [

@@ -2,7 +2,7 @@
     "name": "contrib_yearly_campaign",
     "title": "Contribution History By Camapaign (Yearly)",
     "type": "summary",
-    "template": "chreports/contrib_period_summary",
+    "template": "chreports/contrib_summary_yearly",
     "period": "yearly",
     "entity": "contribution",
     "fields":{

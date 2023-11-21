@@ -1,7 +1,7 @@
 { 
     "name": "contact_top_donors",
     "title": "Top contributors",
-    "template": "chreports/top_donors",
+    "template": "chreports/contact_top_donors",
     "type": "detailed",
     "entity": "contact",
     "fields":{
@@ -25,6 +25,9 @@
         "country": {},
         "province": {},
         "card_type_id": {},
+        "location_type_id":{},
+        "address_id":{},
+        "is_primary_address":{},
         "total_lifetime_contributions": {"default" : true},
         "amount_of_last_contribution": {"default" : true}
     },
@@ -38,9 +41,13 @@
     },
     "use_default_filters" : false,
     "filters":{
-        "receive_date":{},
+        "receive_date":{
+            "relative": "this.month"
+        },
         "receipt_date":{},
-        "total_range":{},
+        "total_range":{
+            "eq": 15
+        },
         "financial_type_id":{},
         "contribution_status_id": {
             "in": [
@@ -52,7 +59,8 @@
         "tagid":{},
         "disbursement_date":{},
         "gid":{},
-        "on_hold":{}
+        "on_hold":{},
+        "ch_fund":{}
     },
     "groupByClause" : false
 }

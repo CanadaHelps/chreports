@@ -847,7 +847,8 @@
         "select_option": ["value","label"],
         "custom_fieldName": "Campaign_Type",
         "join_field_name":"contribution_page_id",
-        "join_entity":"contribution"
+        "join_entity":"contribution",
+        "select_name": "option_value"
     },
     "campaign_id": {
         "title": "Campaign Group",

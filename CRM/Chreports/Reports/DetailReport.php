@@ -4,7 +4,7 @@ use CRM_Canadahelps_ExtensionUtils as EU;
 class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseReport {
 
 
-    public function __construct( string $entity, int $id, string $name ) {
+    public function __construct( string $entity, $id = NULL, string $name ) {
         parent::__construct( $entity, $id, $name);
     }
 
@@ -18,29 +18,6 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
        
         $fieldInfo = $this->getFieldInfo($fieldName);
         $columnInfo = $this->getFieldMapping($this->getEntityTableFromField($fieldName), $fieldName);
-      
-        if((parent::isGLAccountandPaymentMethodReconciliationReport()))
-        {
-          //need to confirm with her
-            // if($fieldName == 'amount' ) {
-            //   $columnInfo['title'] = 'Amount';
-            //   $columnInfo['select_clause_alias'] = $this->getEntityTable('entity_financial_trxn')."_report.amount";
-            //   $columnInfo['type'] = CRM_Utils_Type::T_MONEY;
-            // }
-            
-            // if($fieldName == 'title' || $fieldName == 'name') {
-            //   $columnInfo['table_name'] = 'civicrm_batch';
-            //   $columnInfo['select_clause_alias'] = $this->getEntityTable('batch').".".$fieldName;
-            //   $columnInfo['name'] = $fieldName;
-            // }
-
-            // if($fieldName == 'trxn_date' || $fieldName == 'card_type_id')
-            // {
-            //   $columnInfo['table_name'] = 'civicrm_financial_trxn';
-            //   $columnInfo['select_clause_alias'] = $this->getEntityTable('financial_trxn')."_report.".$fieldName;
-            //   $columnInfo['name'] = $fieldName;
-            // }
-        }
 
         if($fieldName == 'application_submitted'){
           $select[] = "case when ".$this->getEntityClauseFromField($fieldName)." then 'Yes' else 'No' end AS $fieldName";
@@ -56,11 +33,7 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
         $this->_columnHeaders[$fieldName]['type'] = $columnInfo['type'];
 
       }
-
-
-     
-
-
+      
       if(!parent::isRecurringContributionReport()){
         //Contribution Table ID details
       $select[] = "(".$this->getEntityTable().".id) as civicrm_contribution_contribution_id";
@@ -122,21 +95,6 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
       $this->_columnHeaders['avg_amount']['title'] = 'Average';
       $this->_columnHeaders['avg_amount']['type'] = CRM_Utils_Type::T_MONEY;
       $this->_calculatedFields['avg_amount']= [ 'avg_amount' => $topDonorAvgAmountStatement];
-
-      $fieldInfo = $this->getFieldInfo('total_lifetime_contributions');
-      $select[] = $this->getCommonSelectClause('total_lifetime_contributions') ." AS total_lifetime_contributions";
-      $this->_columnHeaders['total_lifetime_contributions']['title'] = $fieldInfo['title'];
-      $this->_columnHeaders['total_lifetime_contributions']['type'] = $this->getFilterType('total_lifetime_contributions')['type'];
-
-      $fieldInfo = $this->getFieldInfo('amount_of_last_contribution');
-      $select[] = $this->getCommonSelectClause('amount_of_last_contribution') ." AS amount_of_last_contribution";
-      $this->_columnHeaders['amount_of_last_contribution']['title'] = $fieldInfo['title'];
-      $this->_columnHeaders['amount_of_last_contribution']['type'] = $this->getFilterType('amount_of_last_contribution')['type'];
-
-      // $columnName = E::getColumnNameByName('Amount_of_last_contribution');
-      // $select[] = $customTablename.".".$columnName." AS Amount_of_last_contribution";
-      // $this->_columnHeaders['Amount_of_last_contribution']['title'] = 'Amount of last contribution';
-      // $this->_columnHeaders['Amount_of_last_contribution']['type'] = CRM_Utils_Type::T_MONEY;
 
       $select[] = "GROUP_CONCAT(DISTINCT ".$this->getEntityTable('contribution').".currency) AS currency";
       $this->_columnHeaders['currency']['title'] = 'Currency';
@@ -269,10 +227,10 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
         switch ($fieldName) {
         case 'yid': // fund_13
          
-      if($this->getReportTemplate() == 'chreports/sybunt')
+      if($this->getReportTemplate() == 'chreports/contrib_sybunt')
       {
           $having[] = $this->whereClauseLast4Year("lastContributionTime");
-      }else if($this->getReportTemplate() == 'chreports/lybunt'){
+      }else if($this->getReportTemplate() == 'chreports/contrib_lybunt'){
           $having[] = $this->whereClauseLastYear("lastContributionTime");
       }
           break;

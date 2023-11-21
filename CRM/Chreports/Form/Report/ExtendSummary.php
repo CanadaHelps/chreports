@@ -13,9 +13,10 @@ class CRM_Chreports_Form_Report_ExtendSummary extends CRM_Report_Form_Contribute
     // Instantiate Report Instance if doesn't exists yet
     if ($this->_reportInstance == NULL) {
       $reportPath = $this->_attributes['action'];
-      $reportId = end(explode('/', $reportPath));
-      $reportInfo = CRM_Chreports_Reports_BaseReport::getReportInstanceDetails($reportId);
-      $reportName = $reportInfo['name'] ?? $reportInfo['title'];
+      list($reportId, $reportName) = CRM_Chreports_Reports_BaseReport::getReportDetail($reportPath);
+      // $reportId = end(explode('/', $reportPath));
+      // $reportInfo = CRM_Chreports_Reports_BaseReport::getReportInstanceDetails($reportId);
+      // $reportName = $reportInfo['name'] ?? $reportInfo['title'];
       $this->_reportInstance = new CRM_Chreports_Reports_SummaryReport('contribution', $reportId, $reportName);
     }
     

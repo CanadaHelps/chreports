@@ -7,7 +7,7 @@ return array(
     'entity' => 'ReportInstance',
     'params' => array(
       'version' => 3,
-      'report_id' => 'chreports/contrib_period_summary',
+      'report_id' => 'chreports/contrib_summary_yearly',
       'title' => ts('Contribution History by Fund (Yearly)'),
       'name' => 'contrib_yearly_fund',
       "description" => "Total amounts raised by Fund year over year",

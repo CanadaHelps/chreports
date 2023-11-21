@@ -7,7 +7,7 @@ return array(
     'entity' => 'ReportInstance',
     'params' => array(
       'version' => 3,
-      'report_id' => 'chreports/contrib_detailed',
+      'report_id' => 'chreports/contrib_recurring',
       'title' => ts('Recurring Contributions'),
       "description" => "Total amounts raised by Recurring Contributions with individual Contribution information",
       'name' => 'contrib_recurring',
