@@ -845,8 +845,8 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
     ];
   
     foreach($unwantedReportInstance as $reportInstance) {
-      $instanceCreate = "DELETE FROM civicrm_report_instance WHERE `name` = '".$reportInstance."' AND `created_id` = NULL";
-      CRM_Core_DAO::executeQuery($instanceCreate);
+      $instanceDelete = "DELETE FROM civicrm_report_instance WHERE `name` = '".$reportInstance."' AND `created_id` IS NULL";
+      CRM_Core_DAO::executeQuery($instanceDelete);
     }
     return TRUE;
   }
