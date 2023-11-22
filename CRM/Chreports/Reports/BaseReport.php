@@ -639,7 +639,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
      * @param array  $var Array used to show columns.
      * @return void
      */
-    public function alterColumnHeadersForDisplay(&$var, &$columnHeaders ){   
+    public function alterColumnHeadersForDisplay(&$var, &$columnHeaders ) { 
         //CRM-1878-Calculated and money type field should be right align , all other fields should be left align
         foreach($this->_calculatedFields as $fieldName => $value) {
             if(!in_array($columnHeaders[$fieldName]['type'],[CRM_Utils_Type::T_MONEY,CRM_Utils_Type::T_INT,CRM_Utils_TYPE::T_DATE + CRM_Utils_Type::T_TIME])) {
@@ -692,6 +692,8 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         //Modify column headers for monthly/yearly reports
         if($this->isPeriodicSummary()){
             unset($columnHeaders['count']);
+            $totalAmountArray = $columnHeaders['total_amount'];
+            unset($columnHeaders['total_amount']);
            
             foreach ($var as $rowId => $row) {
                 if($this->hasMonthlyBreakdown())
@@ -710,21 +712,44 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                 unset($columnHeaders['month']);
              }
             unset($columnHeaders['year']);
-            //re arrange column headers, move 'total_amount' field at the last
-            $fieldsToBeAranged = ['total_amount'];
-            $this->rearrangeColumnHeaders($fieldsToBeAranged,$columnHeaders);
-          }
+            $columnHeaders['total_amount'] = $totalAmountArray;
         }
+    }
+   /**
+     * function to Rearrange column header for display
+     * 
+     */
+    public function rearrangeColumnHeaders(&$columnHeaders) {
 
-    public function rearrangeColumnHeaders($fieldsToBeAranged,&$columnHeaders){
-        $arrangedColumns = [];
-        foreach ($fieldsToBeAranged as $name) {
-            if (array_key_exists($name, $columnHeaders)) {
-              $arrangedColumns[$name] = $columnHeaders[$name];
-              unset($columnHeaders[$name]);
-            }
+        $rearrangedDefaultColumns = [];
+        $rearrangedCalculatedColumns = [];
+  
+        foreach($columnHeaders as $key=>$value)
+        {
+          //check columnheader for Money type
+          if(in_array($value['type'],[CRM_Utils_Type::T_MONEY]))
+          {
+            $rearrangedCalculatedColumns[$key] = $columnHeaders[$key];
+            unset($columnHeaders[$key]);
           }
-          $columnHeaders = array_merge($columnHeaders, $arrangedColumns);
+          //check columnheader for calculated fields
+          if(in_array($key,array_keys($this->_calculatedFields)) && !in_array($key,array_keys($rearrangedCalculatedColumns))){
+            $rearrangedCalculatedColumns[$key] = $columnHeaders[$key];
+            unset($columnHeaders[$key]);
+          }
+          //check for default fields to add at the beginning of the columns
+          if(in_array($key,array_values($this->getDefaultColumns())) && !in_array($key,array_keys($rearrangedCalculatedColumns)) ){
+            $rearrangedDefaultColumns[$key] = $columnHeaders[$key];
+            unset($columnHeaders[$key]);
+          }
+  
+        }
+  
+        if($rearrangedDefaultColumns)
+        $columnHeaders = array_merge($rearrangedDefaultColumns, $columnHeaders); 
+        if($rearrangedCalculatedColumns)
+        $columnHeaders = array_merge($columnHeaders, $rearrangedCalculatedColumns);
+
     }
 
     /**
