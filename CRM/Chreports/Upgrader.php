@@ -841,11 +841,11 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
     $this->ctx->log->info('remove unused / old reports');
     $unwantedReportInstance = [
       'Contribution History by GL Account (Summary)[deprecated]',
-      'Contribution History by Fund (Detailed Contact',
+      'Contribution History by Fund (Detailed Contact)',
     ];
   
     foreach($unwantedReportInstance as $reportInstance) {
-      $instanceCreate = "DELETE FROM civicrm_report_instance WHERE `name` = '".$reportInstance."'";
+      $instanceCreate = "DELETE FROM civicrm_report_instance WHERE `name` = '".$reportInstance."' AND `created_id` = NULL";
       CRM_Core_DAO::executeQuery($instanceCreate);
     }
     return TRUE;
