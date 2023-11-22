@@ -110,6 +110,8 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
       {
         $select[] = "MAX(".$this->getEntityTable('contribution').".receive_date) as lastContributionTime";
       }
+      //function to rearrange columnheader for display
+      $this->rearrangeColumnHeaders($this->_columnHeaders);
       // Combine everything
       $this->_selectClauses = $select;
       $this->_select = $select;

@@ -71,7 +71,8 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
       $select[] = "GROUP_CONCAT(DISTINCT ".$this->getEntityTable().".currency) AS currency";
       $this->_columnHeaders['currency']['title'] = 'Currency';
       $this->_columnHeaders['currency']['type'] = CRM_Utils_Type::T_STRING;
-
+      //function to rearrange columnheader for display
+      $this->rearrangeColumnHeaders($this->_columnHeaders);
       // Combine everything
       $this->_selectClauses = $select;
       $this->_select = $select;
