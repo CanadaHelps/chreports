@@ -734,8 +734,12 @@ function chreports_civicrm_preProcess($formName, &$form) {
     }
 
     //CRM-2097: For Save/Copy bypass the post Process
-    if($form->getVar('_submitValues')['task'] == 'report_instance.copy') {
-      $reportInstance->setAction('copy');
+    $taskAction = [];
+    if(isset($form->getVar('_submitValues')['task'])) {
+      $taskAction = strtolower(str_replace('report_instance.', '', $form->getVar('_submitValues')['task']));
+    }
+    if(in_array($taskAction, ['save', 'copy'])) {
+      $reportInstance->setAction($taskAction);
       // Get all Submit Values
       $params = $form->getVar('_submitValues');
       $reportInstance->setFormParams($params);

@@ -18,7 +18,7 @@ class CRM_Chreports_Reports_ReportConfiguration {
         $this->loadMappings();
         // For base templates where JSON file is present but no report_instance in the DB
         if(in_array($name, E::getOnlyBaseTemplates())) {
-            $this->_settings = $this->_fetchConfigSettings(['name' => $name]);
+            $this->_settings = $this->_fetchConfigSettings(['name' => $name, 'id' => $id]);
         } else {
             $this->loadSettings();
         }
@@ -432,9 +432,14 @@ class CRM_Chreports_Reports_ReportConfiguration {
 
         // Write the JSON data to the file
         if (file_put_contents($filePath['source'], $jsonConfig) !== false) {
-            if($this->_action !== 'migrate') {
+            if($this->_action == 'copy') {
                 // Set status, check for _createNew param to identify new report
                 $statusMsg = ts('Your report has been successfully copied as "%1". You are currently viewing the new copy.', [1 => $instance->title]);
+                CRM_Core_Session::setStatus($statusMsg, '', 'success');
+            }
+            if($this->_action == 'save') {
+                // Set status, check for _createNew param to identify new report
+                $statusMsg = ts('Your report has been successfully created as "%1". You are currently viewing the new report.', [1 => $instance->title]);
                 CRM_Core_Session::setStatus($statusMsg, '', 'success');
             }
             // Redirect to the new report
@@ -565,6 +570,13 @@ class CRM_Chreports_Reports_ReportConfiguration {
         } else {
             $filePath['base'] = dirname(__DIR__, 1)  . "/Templates/";
             $filePath['source'] = $filePath['base']. $report_id.'.json';
+            if($reportDetails['id']) {
+                $reportInstanceDetails = self::getReportInstanceDetails($reportDetails['id']);
+                if($reportInstanceDetails['name'] == $report_id) {
+                    $filePath['base'] = CRM_Core_Config::singleton()->uploadDir.'reports/saved/';
+                    $filePath['source'] = $filePath['base']. $reportInstanceDetails['created_id']. '_' . $report_id . '_' . $reportInstanceDetails['id']. '.json';
+                }
+            }
         }
         return $filePath;
     }
