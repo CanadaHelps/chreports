@@ -3,7 +3,7 @@ return array(
   array(
     'module' => 'biz.jmaconsulting.chreports',
     'name' => 'Recurring Contributions (Summary)',
-    'update' => 'always',
+    'update' => 'never',
     'entity' => 'ReportInstance',
     'params' => array(
       'version' => 3,
