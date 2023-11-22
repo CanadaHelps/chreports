@@ -116,7 +116,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
 
     // extract reporting filter fields from JSON file
     // TODO: why do we have both getReportingFilters and getFilters
-    private function getReportingFilters(): array {
+    public function getReportingFilters(): array {
         $filterValues = [];
         if ($this->_settings['use_default_filters'] == TRUE) {
             $filterValues = array_fill_keys($this->_defaultFilters, []);
@@ -461,11 +461,11 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                     break;
 
                 case 'nll':
-                    $filterNames[$fieldName] = 'nll';
+                    $filterNames[$fieldName] = ['nll' => (int) 1];
                     break;
 
                 case 'nnll':
-                    $filterNames[$fieldName] = 'nnll';
+                    $filterNames[$fieldName] = ['nnll' => (int) 1];
                     break;
 
                 default:

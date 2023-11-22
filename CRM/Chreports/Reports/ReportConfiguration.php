@@ -357,7 +357,8 @@ class CRM_Chreports_Reports_ReportConfiguration {
         }
 
         // Copy Filters
-        foreach ($baseTemplateSettings['filters'] as $filterKey => $filterValue) {
+        $baseTemplateFilters = $this->getReportingFilters();
+        foreach ($baseTemplateFilters as $filterKey => $filterValue) {
             if(isset($filters[$filterKey])) {
                 $config['filters'][$filterKey] = $filters[$filterKey];
             } else {
