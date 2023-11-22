@@ -572,7 +572,7 @@ class CRM_Chreports_Reports_ReportConfiguration {
             $filePath['source'] = $filePath['base']. $report_id.'.json';
             if($reportDetails['id']) {
                 $reportInstanceDetails = self::getReportInstanceDetails($reportDetails['id']);
-                if($reportInstanceDetails['name'] == $report_id) {
+                if($reportInstanceDetails['name'] == $report_id && !empty($reportInstanceDetails['created_id'])) {
                     $filePath['base'] = CRM_Core_Config::singleton()->uploadDir.'reports/saved/';
                     $filePath['source'] = $filePath['base']. $reportInstanceDetails['created_id']. '_' . $report_id . '_' . $reportInstanceDetails['id']. '.json';
                 }
