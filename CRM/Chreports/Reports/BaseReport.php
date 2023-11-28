@@ -1416,6 +1416,19 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         $entityTableName = ($entityTableName == NULL) ? $this->getEntityTable() : $entityTableName;
         return "$joinType JOIN $tableName ON $tableName.$tableFieldName = $entityTableName.$fieldName";
     }
+    // Returns SQL JOIN statement for address, email, phone fields to avoid wrong Amount calculation if contact has 2 primary emails
+    protected function getSQLJoinForAddressField($fieldName, $tableName, $entityTableName = NULL, $tableFieldName = "id", $joinType = "LEFT" ): string {
+        $entityTableName = ($entityTableName == NULL) ? $this->getEntityTable() : $entityTableName;
+        return "$joinType JOIN $tableName ON $tableName.id = (
+            SELECT
+            $tableName.id
+            FROM $tableName
+            WHERE 
+                $tableName.$tableFieldName = $entityTableName.$fieldName
+                AND $tableName.is_primary = 1
+            LIMIT 1
+        )  ";
+    }
 
     //having clause
     public function whereClauseLast4Year($fieldName) {
@@ -1733,8 +1746,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                 if(!in_array($this->getEntityTable($fieldInfo['join_entity']),$this->_fromEntity))
                 {
                     //to prevent multiple enteries for the contact to be added , we are considering only primary key entry for address entity 
-                    $from[] = $this->getSQLJoinForField('id', $this->getEntityTable($fieldInfo['join_entity']), $this->getEntityTable('contact'),'contact_id'). " AND
-                    ".$this->getEntityTable($fieldInfo['join_entity']).".is_primary = 1 ";
+                    $from[] = $this->getSQLJoinForAddressField('id', $this->getEntityTable($fieldInfo['join_entity']), $this->getEntityTable('contact'),'contact_id');
                     $this->_fromEntity[] = $this->getEntityTable('address');
                 }       
                 $from[] = $this->getSQLJoinForField($fieldInfo['join_field_name'], $entityName, $this->getEntityTable($fieldInfo['join_entity']),'id');
@@ -1766,9 +1778,11 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                 // contact fields
                 } else if($fieldInfo['join_entity'] === 'contact'){ 
                     //to prevent multiple enteries for the contact to be added , we are considering only primary key entry for address,phone, email entities
-                    $isPrimary_clause = (in_array($fieldInfo['entity'], ['phone' , 'email', 'address']))? ' AND '.$this->getEntityTable($fieldInfo['entity']).'.is_primary = 1 ' : '';
-                    $from[] = $this->getSQLJoinForField($fieldInfo['join_field_name'], $entityName, $this->getEntityTable($fieldInfo['join_entity']),'contact_id').$isPrimary_clause;
-                
+                    if(in_array($fieldInfo['entity'], ['phone' , 'email', 'address'])){
+                        $from[] = $this->getSQLJoinForAddressField($fieldInfo['join_field_name'], $entityName, $this->getEntityTable($fieldInfo['join_entity']),'contact_id');
+                    }else{
+                        $from[] = $this->getSQLJoinForField($fieldInfo['join_field_name'], $entityName, $this->getEntityTable($fieldInfo['join_entity']),'contact_id');
+                    }
                 //entity_tag fields
                 } else if($fieldInfo['join_entity'] === 'entity_tag'){ 
                     $from[] = $this->getSQLJoinForField('id', $this->getEntityTable($fieldInfo['join_entity']), $this->getEntityTable('contact'),'entity_id');

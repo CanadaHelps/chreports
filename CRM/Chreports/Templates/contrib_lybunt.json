@@ -2,7 +2,7 @@
     "name": "contrib_lybunt",
     "title": "LYBNT",
     "type": "detailed",
-    "template": "chreports/lybunt",
+    "template": "chreports/contrib_lybunt",
     "entity": "contact",
     "fields":{
         "exposed_id": {"selected" : true},

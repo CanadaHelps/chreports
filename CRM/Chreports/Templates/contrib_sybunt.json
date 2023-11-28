@@ -2,7 +2,7 @@
     "name": "contrib_sybunt",
     "title": "SYBNT",
     "type": "detailed",
-    "template": "chreports/sybunt",
+    "template": "chreports/contrib_sybunt",
     "entity": "contact",
     "fields":{
         "exposed_id": {"selected" : true},
