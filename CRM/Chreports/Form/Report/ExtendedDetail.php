@@ -126,6 +126,7 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
     $havingClause = $this->buildHavingClause();
     if (!empty($havingClause)) {
       $var->setVar('_having', "HAVING " . implode(' AND ', $havingClause));
+      $this->_reportInstance->setHaving($var->getVar('_having'));
     }
 
     $var->setVar('_limit', $this->_reportInstance->getLimit());
@@ -133,10 +134,18 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
   private function buildHavingClause(): array {
     $havingclauses = [];
     foreach ($this->_reportInstance->getFilters() as $fieldName => $fieldInfo) {
-      if ( in_array($fieldInfo['dbAlias'], $this->_reportInstance->getHavingStatements()) ) {
+      if ( in_array($fieldInfo['dbAlias'], array_keys($this->_reportInstance->getHavingStatements())) ) {
          // Calculated Fields included in having
+         $fieldInfo['dbAlias'] = $this->_reportInstance->getHavingStatements()[$fieldName];
         $havingclauses[] = $this->generateFilterClause($fieldInfo, $fieldName);
       }
+    }
+   //Add aditional having clause for sybunt, lybunt report
+    if($this->_reportInstance->getReportTemplate() == 'chreports/contrib_sybunt')
+    {
+      $havingclauses[] = $this->_reportInstance->whereClauseLast4Year("lastContributionTime");
+    }else if($this->_reportInstance->getReportTemplate() == 'chreports/contrib_lybunt'){
+      $havingclauses[] = $this->_reportInstance->whereClauseLastYear("lastContributionTime");
     }
     return $havingclauses;
   }
@@ -188,7 +197,7 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
           case 'repeat_contri_second_date_range':
             break;
           default:
-            if ( !in_array($fieldInfo['dbAlias'], $this->_reportInstance->getHavingStatements()) )
+          if ( !in_array($fieldInfo['dbAlias'], array_keys($this->_reportInstance->getHavingStatements())) )
             $clauses[] = $this->generateFilterClause($fieldInfo, $fieldName);
             break;
         }

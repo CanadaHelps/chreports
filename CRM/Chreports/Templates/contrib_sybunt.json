@@ -59,6 +59,7 @@
     },
     "use_default_filters" : false,
     "filters":{
+        "life_time_total":{},
         "sort_name": {},
         "contact_type": {},
         "do_not_phone": {},

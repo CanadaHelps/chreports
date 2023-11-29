@@ -31,6 +31,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
 
     protected $_where = NULL;
     protected $_having = [];
+    protected $_havingClause= NULL;
     protected $_limit = NULL;
    
     public $_filters = NULL;
@@ -47,14 +48,13 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         "contribution_recur_id", //op
         "total_amount",
         "non_deductible_amount",
-        "total_sum",
         "campaign_id", //campaign group //op
         "card_type_id", //op
         "batch_id", //op
         "amount",
         "tagid", //op
         "gid", //op
-        "total_sum",
+        "total_contribution_sum",
         "total_count",
         "total_avg",
         "contribution_source", //op
@@ -213,6 +213,10 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     // to access where clause variable
     public function setWhere(string $where) {
         $this->_where = $where;
+    }
+    // to access having clause variable
+    public function setHaving(string $having) {
+        $this->_havingClause = $having;
     }
 
     /**
@@ -678,6 +682,15 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         // Hide contact id and contribution id from display result
         unset($columnHeaders['civicrm_contribution_contribution_id']);
         unset($columnHeaders['civicrm_contact_id']);
+        //For calculated fields for sorting condition we are adding column header field in select ,so here at the time of display we are unsetting it.
+        foreach ($this->_params['order_bys'] as $orderBy) {
+            //if order by option is selected on the report
+            if($orderBy['column'] != '-') {
+                if(in_array($orderBy['column'],array_keys($this->_calculatedFields)) && !in_array($orderBy['column'],array_keys($this->getColumns()))) {
+                    unset($columnHeaders[$orderBy['column']]);
+                }
+            }
+        }
         // Remove Sort by Sections from column headers
         foreach ($this->_orderByFields as $fieldName => $value) {
             if ($fieldName == 'financial_type') {
@@ -691,9 +704,9 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         }
         //Modify column headers for monthly/yearly reports
         if($this->isPeriodicSummary()){
-            unset($columnHeaders['count']);
-            $totalAmountArray = $columnHeaders['total_amount'];
-            unset($columnHeaders['total_amount']);
+            unset($columnHeaders['total_count']);
+            $totalAmountArray = $columnHeaders['total_contribution_sum'];
+            unset($columnHeaders['total_contribution_sum']);
            
             foreach ($var as $rowId => $row) {
                 if($this->hasMonthlyBreakdown())
@@ -712,7 +725,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                 unset($columnHeaders['month']);
              }
             unset($columnHeaders['year']);
-            $columnHeaders['total_amount'] = $totalAmountArray;
+            $columnHeaders['total_contribution_sum'] = $totalAmountArray;
         }
     }
    /**
@@ -801,8 +814,8 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                     $year = date('Y', strtotime($row['receive_date_start']));
                     $resultingRow[$year][] = $row;
                 }
-                $rollupTotalRow['total_amount'] += $row['total_amount'];
-                $rollupTotalRow['count'] += $row['count'];
+                $rollupTotalRow['total_contribution_sum'] += $row['total_contribution_sum'];
+                $rollupTotalRow['total_count'] += $row['total_count'];
             }
             if($this->hasQuarterlyBreakdown()){
                 $finalDisplay = [];
@@ -811,8 +824,8 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                     $subTotal = ['receive_date_start' => 'Yearly Subtotal'];
                     foreach($rowValue as $k=>$result)
                     {
-                        $subTotal['total_amount'] += $result['total_amount'];
-                        $subTotal['count'] += $result['count'];
+                        $subTotal['total_contribution_sum'] += $result['total_contribution_sum'];
+                        $subTotal['total_count'] += $result['total_count'];
                         $finalDisplay[] = $result;
                     }
                 $finalDisplay[] = $subTotal;
@@ -888,25 +901,25 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
             foreach($rowValue as $k=>$result)
             {
                 //
-                $count += $result['count'];
-                $total_amount += $result['total_amount'];
-                $rollupTotalRow['total_amount'] += $result['total_amount'];
+                $count += $result['total_count'];
+                $total_amount += $result['total_contribution_sum'];
+                $rollupTotalRow['total_contribution_sum'] += $result['total_contribution_sum'];
                 if($this->hasYearlyBreakdown())
                 {
-                    $columnHeaderValue['total_amount_'.$result['year']] = $result['total_amount'];
-                    $rollupTotalRow['total_amount_'.$result['year']] += $result['total_amount'];
+                    $columnHeaderValue['total_amount_'.$result['year']] = $result['total_contribution_sum'];
+                    $rollupTotalRow['total_amount_'.$result['year']] += $result['total_contribution_sum'];
                     
                 }else if($this->hasMonthlyBreakdown())
                 {
-                    $columnHeaderValue['total_amount_'.$result['month'].'_'.$result['year']] = $result['total_amount'];
-                    $rollupTotalRow['total_amount_'.$result['month'].'_'.$result['year']] += $result['total_amount'];
+                    $columnHeaderValue['total_amount_'.$result['month'].'_'.$result['year']] = $result['total_contribution_sum'];
+                    $rollupTotalRow['total_amount_'.$result['month'].'_'.$result['year']] += $result['total_contribution_sum'];
                 }
                 
             }
             $displayRows = [
                 $fieldName => $key,
-                'count' => $count,
-                'total_amount' => $total_amount,
+                'total_count' => $count,
+                'total_contribution_sum' => $total_amount,
               ];
             $finalDisplay[] = array_merge($displayRows,$columnHeaderValue);
          }
@@ -951,8 +964,8 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     
         // Add statistics to SELECT statement
         $select   = [];
-        $select[] = "COUNT(DISTINCT ".$this->getEntityTable($statEntity).".id ) as count";
-        $select[] = "SUM(".$this->getEntityTable($statEntity).".".$statTotalAmountField.") as total_amount";
+        $select[] = "COUNT(DISTINCT ".$this->getEntityTable($statEntity).".id ) as total_count";
+        $select[] = "SUM(".$this->getEntityTable($statEntity).".".$statTotalAmountField.") as total_contribution_sum";
         $select[] = $this->getEntityTable($statEntity).".currency as currency";
 
         if($this->isLYBNTSYBNTReport())
@@ -1007,7 +1020,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
             . " " . $this->_from 
             . " " . $this->_where 
             . " " . $this->_groupBy;
-            
+         $query    .= " " . $this->_havingClause;
         $dao = CRM_Core_DAO::executeQuery($query);
         $currencies = $currAmount = $currCount = $totalAmount = [];
         $totalCount = 0;
@@ -1022,10 +1035,10 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
             $currCount[$dao->currency]  = $currCount[$dao->currency]    ?? 0;
 
             //defining currency amount and count based upon currency
-            $currAmount[$dao->currency] += $dao->total_amount;
-            $currCount[$dao->currency]  += $dao->count;
+            $currAmount[$dao->currency] += $dao->total_contribution_sum;
+            $currCount[$dao->currency]  += $dao->total_count;
         
-            $totalCount += $dao->count;
+            $totalCount += $dao->total_count;
 
             if (!in_array($dao->currency, $currencies)) {
                 $currencies[] = $dao->currency;
@@ -1133,7 +1146,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         ];
 
         // total contribution count
-        $statistics['counts']['count'] = [
+        $statistics['counts']['total_count'] = [
             'title' => ts('Total Contributions'),
             'value' => $totalCount,
         ];
@@ -1218,7 +1231,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
 
         if ($showRepeatContributionStats) {
             unset($statistics['counts']['amount']);
-            unset($statistics['counts']['count']);
+            unset($statistics['counts']['total_count']);
             $statistics['counts']['range_one_title'] = array('title' => ts('Initial Date Range:'));
             if(count($range_one_statistics) > 0){
                 $statistics['counts']['range_one_stat'] = [

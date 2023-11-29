@@ -20,6 +20,11 @@ class CRM_Chreports_Form_Report_ExtendSummary extends CRM_Report_Form_Contribute
     return $this->_reportInstance;
   }
 
+  public static function formRule($fields, $files, $self) {
+    //To disable default validation for filters Contribution Aggregate,Contribution Count fields
+    return [];
+  }
+
   public function buildSQLQuery(&$var) {
 
     $params = $var->getVar('_params');
@@ -108,8 +113,27 @@ class CRM_Chreports_Form_Report_ExtendSummary extends CRM_Report_Form_Contribute
     }
 
     $this->_reportInstance->setWhere($var->getVar('_where'));
+
+    //HAVING
+    $havingClause = $this->buildHavingClause();
+    if (!empty($havingClause)) {
+      $var->setVar('_having', "HAVING " . implode(' AND ', $havingClause));
+      $this->_reportInstance->setHaving($var->getVar('_having'));
+    }
     $var->setVar('_limit', $this->_reportInstance->getLimit());
   }
+
+  private function buildHavingClause(): array {
+    $havingclauses = [];
+    foreach ($this->_reportInstance->getFilters() as $fieldName => $fieldInfo) {
+      if ( in_array($fieldInfo['dbAlias'], array_keys($this->_reportInstance->getHavingStatements())) ) {
+         // Calculated Fields included in having
+        $havingclauses[] = $this->generateFilterClause($fieldInfo, $fieldName);
+      }
+    }
+    return $havingclauses;
+  }
+
   private function buildWhereClause(): array {
     $clauses = [];
       
@@ -128,6 +152,7 @@ class CRM_Chreports_Form_Report_ExtendSummary extends CRM_Report_Form_Contribute
             $clauses[] = $this->generateFilterClause($fieldInfo, $fieldInfo['name']);
             break;
           default:
+          if ( !in_array($fieldInfo['dbAlias'], array_keys($this->_reportInstance->getHavingStatements())) )
             $clauses[] = $this->generateFilterClause($fieldInfo, $fieldName);
             break;
         }

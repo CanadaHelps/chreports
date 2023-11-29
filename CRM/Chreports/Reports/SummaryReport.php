@@ -17,7 +17,7 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
 
         if ($fieldName) {
           // skip total amount as part of calculated fields
-          if ($fieldName == 'total_amount')
+          if ($fieldName == 'total_contribution_sum')
             continue;
 
           $columnInfo = $this->getFieldMapping($this->getEntityTableFromField($fieldName), $fieldName);
@@ -55,18 +55,24 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
       }
       
       // Add default fields such as total, sum and currency
-      $contribCountStatement = "COUNT(".$this->getEntityTable().".id) AS count";
+      $contribCountStatement = "COUNT(".$this->getEntityTable().".id) AS total_count";
       $select[] = $contribCountStatement;
-      $this->_columnHeaders['count']['title'] = 'Number of Contributions';
-      $this->_columnHeaders['count']['type'] = CRM_Utils_Type::T_INT;
-      $this->_calculatedFields['count']=[ 'count' => $contribCountStatement];
+      $this->_columnHeaders['total_count']['title'] = 'Number of Contributions';
+      $this->_columnHeaders['total_count']['type'] = CRM_Utils_Type::T_INT;
+      $this->_calculatedFields['total_count']=[ 'total_count' => $contribCountStatement];
+      if( preg_match('/(MIN|SUM|AVG|COUNT|MAX|MIN)/', $contribCountStatement )) {
+        $this->_having['total_count'] =  strstr($contribCountStatement, 'AS total_count',true);
+      }
 
       // Total Amount
-      $totalAmountStatement = "SUM(".$this->getEntityTable('contribution').".`total_amount`) AS total_amount";
+      $totalAmountStatement = "SUM(".$this->getEntityTable('contribution').".`total_amount`) AS total_contribution_sum";
       $select[] = $totalAmountStatement;
-      $this->_columnHeaders['total_amount']['title'] = 'Total Amount';
-      $this->_columnHeaders['total_amount']['type'] = CRM_Utils_Type::T_MONEY;
-      $this->_calculatedFields['total_amount']=[ 'total_amount' => $totalAmountStatement];
+      $this->_columnHeaders['total_contribution_sum']['title'] = 'Total Amount';
+      $this->_columnHeaders['total_contribution_sum']['type'] = CRM_Utils_Type::T_MONEY;
+      $this->_calculatedFields['total_contribution_sum']=[ 'total_contribution_sum' => $totalAmountStatement];
+      if( preg_match('/(MIN|SUM|AVG|COUNT|MAX|MIN)/', $totalAmountStatement )) {
+        $this->_having['total_contribution_sum'] = strstr($totalAmountStatement, 'AS total_contribution_sum',true);
+      }
       
       $select[] = "GROUP_CONCAT(DISTINCT ".$this->getEntityTable().".currency) AS currency";
       $this->_columnHeaders['currency']['title'] = 'Currency';
@@ -101,7 +107,7 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
       if($fieldName){
       $fieldName = ($fieldName == 'financial_type') ? $fieldName . '_id' : $fieldName;
 
-      if ($fieldName == 'total_amount')
+      if ($fieldName == 'total_contribution_sum')
         continue;
      
       $groupBy[] =  $this->getEntityClauseFromField($fieldName);

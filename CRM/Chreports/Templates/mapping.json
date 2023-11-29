@@ -883,17 +883,17 @@
         "field_type": "money",
         "calculated_field": true
     },
-    "total_sum": {
+    "total_contribution_sum": {
         "title": "Contribution Aggregate",
         "entity": "contribution",
-        "field_name": "total_sum",
-        "field_type": "money"
+        "field_type": "money",
+        "calculated_field": true
     },
     "total_count": {
         "title": "Contribution Count",
         "entity": "contribution",
-        "field_name": "total_count",
-        "field_type": "int"
+        "field_type": "int",
+        "calculated_field": true
     },
     "account_type":{
         "title": "Account Type",
