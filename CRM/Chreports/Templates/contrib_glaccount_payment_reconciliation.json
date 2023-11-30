@@ -25,10 +25,7 @@
         "contribution_source":{},
         "check_number":{"selected" : true},
         "payment_instrument_id":{"selected" : true},
-        "contribution_id":{},
-       
-
-        
+        "contribution_id":{"selected" : true},
         "amount":{"selected" : true},       
         "id": {"default" : true},
         "contact_source":{},
@@ -45,6 +42,7 @@
     "use_default_filters" : false,
     "filters":{
         "sort_name":{},
+        "contribution_page_id":{},
         "contact_id":{},
         "contact_type":{},
         "receive_date":{},

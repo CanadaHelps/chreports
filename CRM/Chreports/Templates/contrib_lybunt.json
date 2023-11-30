@@ -57,6 +57,7 @@
     },
     "use_default_filters" : false,
     "filters":{
+        "life_time_total":{},
         "sort_name":{},
         "gender":{},
         "birth_date":{},

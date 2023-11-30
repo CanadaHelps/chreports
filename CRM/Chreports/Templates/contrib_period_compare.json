@@ -21,10 +21,10 @@
         "country":{ "selected" : true},
         "total_lifetime_contributions":{},
         "amount_of_last_contribution":{},
-        "date_of_last_contribution":{},
-        "date_of_first_contribution":{},
+        "date_of_last_contribution":{"selected" : true},
+        "date_of_first_contribution":{"selected" : true},
         "largest_contribution":{},
-        "count_of_contributions":{}
+        "count_of_contributions":{"selected" : true}
     },
     "order_bys":{
         "exposed_id": {

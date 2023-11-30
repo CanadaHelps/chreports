@@ -34,28 +34,11 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
 
       }
       
-      if(!parent::isRecurringContributionReport()){
-        //Contribution Table ID details
+      //Contribution Table ID details
       $select[] = "(".$this->getEntityTable().".id) as civicrm_contribution_contribution_id";
       $this->_columnHeaders['civicrm_contribution_contribution_id']['title'] = 'contribution_id';
       $this->_columnHeaders['civicrm_contribution_contribution_id']['type'] = CRM_Utils_Type::T_INT;
 
-      }else{
-        $contribCountStatement = "COUNT(".$this->getEntityTable('contribution').".id) as count";
-        $select[] = $contribCountStatement;
-        $this->_columnHeaders['count']['title'] = 'Contribution ID';
-        $this->_columnHeaders['count']['type'] = CRM_Utils_Type::T_INT;
-        $this->_calculatedFields['count']=[ 'count' => $contribCountStatement];
-        //get sg_flag_38 custom field table and value;
-        list($customTablename,$columnName) = $this->getCustomTableNameColumnName('SG_Flag');
-
-        $select[] = "IF(".$this->getEntityTable('contribution').".contribution_recur_id IS NOT NULL, 1, IF(".$customTablename.".".$columnName." IS NOT NULL, 1, 0)) as is_recurring";
-        $this->_columnHeaders['is_recurring']['title'] = 'Is Recurring';
-        $this->_columnHeaders['is_recurring']['type'] = CRM_Utils_Type::T_INT;
-        $this->_calculatedFields['is_recurring'];
-
-
-      }
       //Repeat contribution report 
       if((parent::isComparisonReport()))
       {
@@ -69,9 +52,10 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
         $this->_columnHeaders['per_change']['title'] = '% Change';
         $this->_columnHeaders['per_change']['type'] = CRM_Utils_Type::T_STRING;
         $this->_calculatedFields['per_change']= [ 'per_change' => $repeatContribPercentstatement];
+        $this->_statisticsCalculatedFields['per_change'] = ['title' =>$this->_columnHeaders['per_change']['title'],'select'=>['per_change'=> strstr($repeatContribPercentstatement, 'AS per_change',true)]];
         //For adding default 'percentage change' calculated field in filters, so need to add under having clause
         if( preg_match('/(MIN|SUM|AVG|COUNT|MAX|MIN)/', $repeatContribPercentstatement )) {
-          $this->_having[] = 'per_change';
+          $this->_having['per_change'] = strstr($repeatContribPercentstatement, 'AS per_change',true);
         }
       }
       
@@ -207,7 +191,7 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
         foreach($statements as $fieldName => $statement) {
           $select[] = $statement.' AS '.$fieldName;
           if ( preg_match('/(MIN|SUM|AVG|COUNT|MAX|MIN)/', $statement )) {
-            $this->_having[] = $fieldName;
+            $this->_having[$fieldName] = $statement;
           }
         }
       }
@@ -228,17 +212,9 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
     }
     
     $groupBy[] =  $this->getEntityClauseFromField($fieldEntityName);
-    $having = [];
       foreach($this->_filters as $fieldName => $fieldInfo) {
         switch ($fieldName) {
         case 'yid': // fund_13
-         
-      if($this->getReportTemplate() == 'chreports/contrib_sybunt')
-      {
-          $having[] = $this->whereClauseLast4Year("lastContributionTime");
-      }else if($this->getReportTemplate() == 'chreports/contrib_lybunt'){
-          $having[] = $this->whereClauseLastYear("lastContributionTime");
-      }
           break;
         }
       }
@@ -246,9 +222,6 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
       $this->_groupBy = ' GROUP BY ' . implode(', ', $groupBy);
     }
 
-    if (!empty($having)) {
-      $this->_groupBy .= " HAVING " . implode(', ', $having);
-    }
 
     } 
 
@@ -271,6 +244,10 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
             $orderBys[] = ($isCalculatedField) ? $fieldName." ".$orderBy['order'] : $this->getEntityClauseFromField($fieldName)." ".$orderBy['order'];
             $this->_orderByFieldsFrom[$orderBy['column']] = true;
   
+            //for order by calculated fields, alias calculated field we need to include original select calculated statement 
+            if($isCalculatedField && !in_array($fieldName,array_keys($this->_calculatedFields)) ) {
+              $this->addCalculatedFieldstoSelect($this->_select,$fieldName,$this->_columnHeaders);
+            }
 
             // assign order by fields which has section display checked
             if($orderBy['section']){

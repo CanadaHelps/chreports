@@ -126,22 +126,34 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
     $havingClause = $this->buildHavingClause();
     if (!empty($havingClause)) {
       $var->setVar('_having', "HAVING " . implode(' AND ', $havingClause));
+      $this->_reportInstance->setHaving($var->getVar('_having'));
     }
 
     $var->setVar('_limit', $this->_reportInstance->getLimit());
   }
   private function buildHavingClause(): array {
     $havingclauses = [];
+    //define Having clause array key values
+    $havingClauseKeyVal = array_keys($this->_reportInstance->getHavingStatements());
     foreach ($this->_reportInstance->getFilters() as $fieldName => $fieldInfo) {
-      if ( in_array($fieldInfo['dbAlias'], $this->_reportInstance->getHavingStatements()) ) {
+      if ( in_array($fieldInfo['dbAlias'], $havingClauseKeyVal) ) {
          // Calculated Fields included in having
+         $fieldInfo['dbAlias'] = $this->_reportInstance->getHavingStatements()[$fieldName];
         $havingclauses[] = $this->generateFilterClause($fieldInfo, $fieldName);
       }
+    }
+   //Add aditional having clause for sybunt, lybunt report
+    if($this->_reportInstance->getReportTemplate() == 'chreports/contrib_sybunt') {
+      $havingclauses[] = $this->_reportInstance->whereClauseLast4Year("lastContributionTime");
+    }else if($this->_reportInstance->getReportTemplate() == 'chreports/contrib_lybunt') {
+      $havingclauses[] = $this->_reportInstance->whereClauseLastYear("lastContributionTime");
     }
     return $havingclauses;
   }
   private function buildWhereClause(): array {
     $clauses = [];
+    //define Having clause array key values
+    $havingClauseKeyVal = array_keys($this->_reportInstance->getHavingStatements());
       
     if($this->_reportInstance->isRecurringContributionReport())
     {
@@ -167,16 +179,6 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
         OR (".$this->generateFilterClause($this->_reportInstance->getFilters()['repeat_contri_second_date_range'], 'repeat_contri_second_date_range')."))";
       }
       foreach ($this->_reportInstance->getFilters() as $fieldName => $fieldInfo) {
-        
-        //getFieldInfo
-
-
-        // Calculated Fields already included in having
-// if ( in_array($fieldInfo['dbAlias'], $this->_reportInstance->getHavingStatements()) ) {
-//           continue;
-//         }
-        //To DO create Havinf function to include having condition
-
         switch ($fieldName) {
           case 'total_range':
           case 'yid': // fund_13
@@ -188,7 +190,7 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
           case 'repeat_contri_second_date_range':
             break;
           default:
-            if ( !in_array($fieldInfo['dbAlias'], $this->_reportInstance->getHavingStatements()) )
+          if ( !in_array($fieldInfo['dbAlias'], $havingClauseKeyVal) )
             $clauses[] = $this->generateFilterClause($fieldInfo, $fieldName);
             break;
         }

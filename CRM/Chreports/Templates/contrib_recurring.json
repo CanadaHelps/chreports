@@ -15,7 +15,7 @@
         "recurring_contribution_total_amount":{"default" : true},
         "contribution_source":{ "selected" : true},
         "completed_contributions":{ "selected" : true},
-        "recurring_contribution_start_date":{},
+        "recurring_contribution_start_date":{"selected" : true},
         "last_month_amount":{"default" : true},
 
 
@@ -23,7 +23,9 @@
         "city":{ "selected" : true},
         "postal_code":{},
         "province":{ "selected" : true},
-        "country":{ "selected" : true}
+        "country":{ "selected" : true},
+        "contribution_page_id":{},
+        "financial_type_id":{}
     },
     "order_bys":{
         "exposed_id": {
@@ -36,7 +38,16 @@
         "receive_date":{"relative":"nnll"},
         "tagid":{},
         "gid":{},
-        "campaign_id":{}
+        "campaign_id":{},
+        "contribution_page_id":{},
+        "financial_type_id":{},
+        "contribution_source":{},
+        "total_lifetime_contributions":{},
+        "amount_of_last_contribution":{},
+        "date_of_last_contribution":{},
+        "date_of_first_contribution":{},
+        "largest_contribution":{},
+        "count_of_contributions":{}
     },
     "groupByClause" : false
 }
