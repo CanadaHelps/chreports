@@ -51,7 +51,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         "campaign_id", //campaign group //op
         "card_type_id", //op
         "batch_id", //op
-        "amount",
+        //"amount",
         "tagid", //op
         "gid", //op
         "total_contribution_sum",
@@ -644,6 +644,10 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
      * @return void
      */
     public function alterColumnHeadersForDisplay(&$var, &$columnHeaders ) { 
+        //define calculatedFields array Key values
+        $calculatedFieldsKeyVal = array_keys($this->_calculatedFields);
+        //define columns key values
+        $columnKeyVal = array_keys($this->getColumns());
         //CRM-1878-Calculated and money type field should be right align , all other fields should be left align
         foreach($this->_calculatedFields as $fieldName => $value) {
             if(!in_array($columnHeaders[$fieldName]['type'],[CRM_Utils_Type::T_MONEY,CRM_Utils_Type::T_INT,CRM_Utils_TYPE::T_DATE + CRM_Utils_Type::T_TIME])) {
@@ -673,7 +677,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                         break;
                 }
             }
-            if(!in_array($fieldName,array_keys($this->_calculatedFields)) && !in_array($value['type'],[CRM_Utils_Type::T_MONEY,CRM_Utils_Type::T_INT,CRM_Utils_TYPE::T_DATE + CRM_Utils_Type::T_TIME])) {
+            if(!in_array($fieldName,$calculatedFieldsKeyVal) && !in_array($value['type'],[CRM_Utils_Type::T_MONEY,CRM_Utils_Type::T_INT,CRM_Utils_TYPE::T_DATE + CRM_Utils_Type::T_TIME])) {
                 $columnHeaders[$fieldName] = ['title' => $value['title'],'type'=> CRM_Utils_Type::T_STRING];
             }
         }
@@ -686,7 +690,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         foreach ($this->_params['order_bys'] as $orderBy) {
             //if order by option is selected on the report
             if($orderBy['column'] != '-') {
-                if(in_array($orderBy['column'],array_keys($this->_calculatedFields)) && !in_array($orderBy['column'],array_keys($this->getColumns()))) {
+                if(in_array($orderBy['column'],$calculatedFieldsKeyVal) && !in_array($orderBy['column'],$columnKeyVal)) {
                     unset($columnHeaders[$orderBy['column']]);
                 }
             }
@@ -1019,8 +1023,8 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
             . implode(', ', $select) 
             . " " . $this->_from 
             . " " . $this->_where 
-            . " " . $this->_groupBy;
-         $query    .= " " . $this->_havingClause;
+            . " " . $this->_groupBy
+            . " " . $this->_havingClause;
         $dao = CRM_Core_DAO::executeQuery($query);
         $currencies = $currAmount = $currCount = $totalAmount = [];
         $totalCount = 0;

@@ -125,8 +125,10 @@ class CRM_Chreports_Form_Report_ExtendSummary extends CRM_Report_Form_Contribute
 
   private function buildHavingClause(): array {
     $havingclauses = [];
+    //define Having clause array key values
+    $havingClauseKeyVal = array_keys($this->_reportInstance->getHavingStatements());
     foreach ($this->_reportInstance->getFilters() as $fieldName => $fieldInfo) {
-      if ( in_array($fieldInfo['dbAlias'], array_keys($this->_reportInstance->getHavingStatements())) ) {
+      if ( in_array($fieldInfo['dbAlias'], $havingClauseKeyVal) ) {
          // Calculated Fields included in having
         $havingclauses[] = $this->generateFilterClause($fieldInfo, $fieldName);
       }
@@ -144,7 +146,9 @@ class CRM_Chreports_Form_Report_ExtendSummary extends CRM_Report_Form_Contribute
     $clauses[] = $this->_reportInstance->getEntityTable('contact').'.is_deleted = 0';
     
     // Filters
-    if(!empty($this->_reportInstance->getFilters())){
+    if(!empty($this->_reportInstance->getFilters())) {
+      //define Having clause array key values
+      $havingClauseKeyVal = array_keys($this->_reportInstance->getHavingStatements());
       foreach ($this->_reportInstance->getFilters() as $fieldName => $fieldInfo) {
         switch ($fieldName) {
           case 'campaign_type':
@@ -152,7 +156,7 @@ class CRM_Chreports_Form_Report_ExtendSummary extends CRM_Report_Form_Contribute
             $clauses[] = $this->generateFilterClause($fieldInfo, $fieldInfo['name']);
             break;
           default:
-          if ( !in_array($fieldInfo['dbAlias'], array_keys($this->_reportInstance->getHavingStatements())) )
+          if ( !in_array($fieldInfo['dbAlias'], $havingClauseKeyVal) )
             $clauses[] = $this->generateFilterClause($fieldInfo, $fieldName);
             break;
         }

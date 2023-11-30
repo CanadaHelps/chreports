@@ -34,28 +34,11 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
 
       }
       
-      if(!parent::isRecurringContributionReport()){
-        //Contribution Table ID details
+      //Contribution Table ID details
       $select[] = "(".$this->getEntityTable().".id) as civicrm_contribution_contribution_id";
       $this->_columnHeaders['civicrm_contribution_contribution_id']['title'] = 'contribution_id';
       $this->_columnHeaders['civicrm_contribution_contribution_id']['type'] = CRM_Utils_Type::T_INT;
 
-      }else{
-        $contribCountStatement = "COUNT(".$this->getEntityTable('contribution').".id) as count";
-        $select[] = $contribCountStatement;
-        $this->_columnHeaders['count']['title'] = 'Contribution ID';
-        $this->_columnHeaders['count']['type'] = CRM_Utils_Type::T_INT;
-        $this->_calculatedFields['count']=[ 'count' => $contribCountStatement];
-        //get sg_flag_38 custom field table and value;
-        list($customTablename,$columnName) = $this->getCustomTableNameColumnName('SG_Flag');
-
-        $select[] = "IF(".$this->getEntityTable('contribution').".contribution_recur_id IS NOT NULL, 1, IF(".$customTablename.".".$columnName." IS NOT NULL, 1, 0)) as is_recurring";
-        $this->_columnHeaders['is_recurring']['title'] = 'Is Recurring';
-        $this->_columnHeaders['is_recurring']['type'] = CRM_Utils_Type::T_INT;
-        $this->_calculatedFields['is_recurring'];
-
-
-      }
       //Repeat contribution report 
       if((parent::isComparisonReport()))
       {

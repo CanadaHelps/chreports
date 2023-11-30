@@ -36,8 +36,7 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
 
       //Monthly / Yerly report select clause
       if($this->isPeriodicSummary()){
-        if($this->hasMonthlyBreakdown())
-        {
+        if($this->hasMonthlyBreakdown()) {
           $select[] = "MONTH(".$this->getEntityTable().".`receive_date`) AS month";
           $this->_columnHeaders['month']['title'] = 'Month Name';
         }
@@ -46,9 +45,8 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
       }
 
       //fiscle year report
-      if($this->isPeriodicDetailed()){
-        if($this->hasQuarterlyBreakdown())
-        {
+      if($this->isPeriodicDetailed()) {
+        if($this->hasQuarterlyBreakdown()) {
           $select[] = "QUARTER(".$this->getEntityTable().".`receive_date`) AS quartername";
           $this->_columnHeaders['quartername']['title'] = 'Fiscal no.';
         }
@@ -91,49 +89,42 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
 
 
     public function buildGroupByQuery(){
-
-
-    $groupBy = [];
-     //Monthly / Yerly report group by clause
-    if($this->isPeriodicSummary()){
-      if($this->hasMonthlyBreakdown())
-      {
-        $groupBy[] = "MONTH(".$this->getEntityTable().".`receive_date`)";
+      $groupBy = [];
+      //Monthly / Yerly report group by clause
+      if($this->isPeriodicSummary()){
+        if($this->hasMonthlyBreakdown()) {
+          $groupBy[] = "MONTH(".$this->getEntityTable().".`receive_date`)";
+        }
+        $groupBy[] = "YEAR(".$this->getEntityTable().".`receive_date`)";
       }
-      $groupBy[] = "YEAR(".$this->getEntityTable().".`receive_date`)";
-    }
-      //columns and group by selection are always same that's why using columns here
-    foreach($this->_columns as $fieldName => $nodata) {
-      if($fieldName){
-      $fieldName = ($fieldName == 'financial_type') ? $fieldName . '_id' : $fieldName;
+        //columns and group by selection are always same that's why using columns here
+      foreach($this->_columns as $fieldName => $nodata) {
+        if($fieldName) {
+          $fieldName = ($fieldName == 'financial_type') ? $fieldName . '_id' : $fieldName;
+          if ($fieldName == 'total_contribution_sum')
+          continue;
+          $groupBy[] =  $this->getEntityClauseFromField($fieldName);
+        }
+      } 
 
-      if ($fieldName == 'total_contribution_sum')
-        continue;
-     
-      $groupBy[] =  $this->getEntityClauseFromField($fieldName);
-      
+      if($this->isPeriodicDetailed()) {
+        unset($groupBy);
+        if($this->hasMonthlyBreakdown()) {
+          $groupBy[] = "EXTRACT(YEAR_MONTH FROM ".$this->getEntityTable().".`receive_date`)";
+        }else{
+          $groupBy[] = "QUARTER(".$this->getEntityTable().".`receive_date`)";
+        }
       }
-    } 
 
-    if($this->isPeriodicDetailed()){
-      unset($groupBy);
-      if($this->hasMonthlyBreakdown())
-      {
-      $groupBy[] = "EXTRACT(YEAR_MONTH FROM ".$this->getEntityTable().".`receive_date`)";
+      if (!empty($groupBy)) {
+        $this->_groupBy = ' GROUP BY ' . implode(', ', $groupBy);
       }else{
-        $groupBy[] = "QUARTER(".$this->getEntityTable().".`receive_date`)";
+        $this->_groupBy = "GROUP BY ".$this->getEntityTable('contact').".id";
       }
-    }
-
-    if (!empty($groupBy)) {
-      $this->_groupBy = ' GROUP BY ' . implode(', ', $groupBy);
-    }else{
-      $this->_groupBy = "GROUP BY ".$this->getEntityTable('contact').".id";
-    }
 
     } 
 
-    public function buildOrderByQuery(){
+    public function buildOrderByQuery() {
 
       $orderBys = [];
       if (!empty($this->_params['order_bys']) && is_array($this->_params['order_bys'])) 
@@ -153,10 +144,9 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
         }
       }
       //Monthly / Yerly report order by clause
-      if($this->isPeriodicSummary()){
+      if($this->isPeriodicSummary()) {
         $orderBys[] = "YEAR(".$this->getEntityTable().".`receive_date`)";
-        if($this->hasMonthlyBreakdown())
-        {
+        if($this->hasMonthlyBreakdown()) {
           $orderBys[] = "MONTH(".$this->getEntityTable().".`receive_date`)";
         }
       }
