@@ -356,11 +356,11 @@ class CRM_Chreports_ExtensionUtil {
             ],
             'monthly' => [
               'report_id' => 'chreports/contrib_summary_monthly',
-              'name' => 'contrib_monthly',
+              'name' => 'contrib_summary_monthly',
             ],
             'yearly' => [
               'report_id' => 'chreports/contrib_summary_yearly',
-              'name' => 'contrib_yearly',
+              'name' => 'contrib_summary_yearly',
             ],
           ],
         ];
@@ -412,8 +412,8 @@ class CRM_Chreports_ExtensionUtil {
     return [
       'contrib_detailed',
       'contrib_summary',
-      'contrib_monthly',
-      'contrib_yearly',
+      'contrib_summary_monthly',
+      'contrib_summary_yearly',
     ];
   }
 
