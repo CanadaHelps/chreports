@@ -26,10 +26,12 @@ class CRM_Chreports_Form_Report_ExtendSummary extends CRM_Report_Form_Contribute
   }
 
   public function buildSQLQuery(&$var) {
-
+  //  echo '<pre>';print_r($var);echo '</pre>';
     $params = $var->getVar('_params');
+  //  echo '<pre>';print_r($params);echo '</pre>';
+  //  die('hello world');
     //CRM-2144 for precise "view results", filtering out preSelected fields 
-    if($var->getVar('_force') === 1){
+    if($var->getVar('_force') == 1){
       //set column fields to params
       $trueKeys =  array_keys($params['fields'],true);
       $params['fields'] = array_fill_keys($trueKeys, true);
@@ -60,7 +62,7 @@ class CRM_Chreports_Form_Report_ExtendSummary extends CRM_Report_Form_Contribute
     $this->_reportInstance->setLimit($var->getVar('_limit'));
 
     // forcefully apply default filter values to params only for 'View Results' action
-    if($var->getVar('_force') === 1){
+    if($var->getVar('_force') == 1){
         // Create params from the default JSON config file
         $this->_reportInstance->setDefaultFilterValues();
 
@@ -113,7 +115,6 @@ class CRM_Chreports_Form_Report_ExtendSummary extends CRM_Report_Form_Contribute
     }
 
     $this->_reportInstance->setWhere($var->getVar('_where'));
-
     //HAVING
     $havingClause = $this->buildHavingClause();
     if (!empty($havingClause)) {
@@ -135,7 +136,6 @@ class CRM_Chreports_Form_Report_ExtendSummary extends CRM_Report_Form_Contribute
     }
     return $havingclauses;
   }
-
   private function buildWhereClause(): array {
     $clauses = [];
       
@@ -150,10 +150,16 @@ class CRM_Chreports_Form_Report_ExtendSummary extends CRM_Report_Form_Contribute
       //define Having clause array key values
       $havingClauseKeyVal = array_keys($this->_reportInstance->getHavingStatements());
       foreach ($this->_reportInstance->getFilters() as $fieldName => $fieldInfo) {
+        // echo '<pre>';print_r($fieldName);echo '</pre>';
+        // echo '<pre>';print_r($fieldInfo);echo '</pre>';
         switch ($fieldName) {
           case 'campaign_type':
           case 'ch_fund': // fund_13
             $clauses[] = $this->generateFilterClause($fieldInfo, $fieldInfo['name']);
+            break;
+          case 'base_year': // BaseYear
+            $fieldInfo['dbAlias'] = "YEAR(".$fieldInfo['dbAlias'].")";
+            $clauses[] = str_replace("=", ">=", $this->generateFilterClause($fieldInfo, $fieldName)) ;
             break;
           default:
           if ( !in_array($fieldInfo['dbAlias'], $havingClauseKeyVal) )
@@ -162,6 +168,8 @@ class CRM_Chreports_Form_Report_ExtendSummary extends CRM_Report_Form_Contribute
         }
       }
     }
+    // echo '<pre>';print_r($clauses);echo '</pre>';
+    // die('test');
     return $clauses;
   }
 
@@ -242,6 +250,9 @@ class CRM_Chreports_Form_Report_ExtendSummary extends CRM_Report_Form_Contribute
   }
 
   public function statistics(&$rows) {
+    if($this->_reportInstance->isContribRetentionReport()){
+      return;
+    }
 
     $statistics = $this->_reportInstance->alterStatistics($rows);
     if($statistics){

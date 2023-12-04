@@ -34,6 +34,28 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
       // @todo move code below here
       $this->addCalculatedFieldstoSelect($select);
 
+      //Contribution Rentention Report
+      //CRM-2157  
+      if($this->isContribRetentionReport()){
+        $retentionYearSatement = "YEAR(".$this->getEntityTable().".`receive_date`) AS year";
+        $select[] = $retentionYearSatement;
+        $this->_columnHeaders['year']['title'] = 'Year Name';
+     //   $this->_statisticsCalculatedFields['year'] = ['title' =>$this->_columnHeaders['year']['title'],'select'=>['year'=> strstr($retentionYearSatement, 'AS year',true)]];
+        
+        $select[] = "COUNT(DISTINCT ".$this->getEntityTable().".`contact_id`) as all_donors";
+        $this->_columnHeaders['all_donors']['title'] = 'All Donors';
+        //Calculation for new donor
+        $select[] = "COUNT(DISTINCT ".$this->getEntityTable().".`contact_id`) as new_donor";
+        $this->_columnHeaders['new_donor']['title'] = 'New Donor';
+        // //calculation for retained donors
+        $select[] = "COUNT(DISTINCT future_contrib.`contact_id`) as retained_donors";
+        $this->_columnHeaders['retained_donors']['title'] = 'Retained Donors';
+        //calculation for retension rate
+
+        $select[] = "ROUND(COUNT(DISTINCT future_contrib.`contact_id`) / COUNT(DISTINCT ".$this->getEntityTable().".`contact_id`) * 100, 2) as retention";
+        $this->_columnHeaders['retention']['title'] = 'Retention Rate';
+      }
+
       //Monthly / Yerly report select clause
       if($this->isPeriodicSummary()){
         if($this->hasMonthlyBreakdown()) {
@@ -90,6 +112,10 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
 
     public function buildGroupByQuery(){
       $groupBy = [];
+      //CRM-2157
+      if($this->isContribRetentionReport()) {
+        $groupBy[] = "year";
+      }
       //Monthly / Yerly report group by clause
       if($this->isPeriodicSummary()){
         if($this->hasMonthlyBreakdown()) {

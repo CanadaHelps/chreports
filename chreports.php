@@ -224,6 +224,8 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
       }
 
       if ($varType == 'sql') {
+     //   echo '<pre>';print_r($var);echo '</pre>';
+      //  die('prrrr');
         //build main sql query to display result
         $object->buildSQLQuery($var);
         return;
@@ -726,11 +728,14 @@ function chreports_civicrm_preProcess($formName, &$form) {
     // if there are any Preselect Filters in Json, prepopulare on form load
     if($reportInstance->getPreSetFilterValues()) {
       $filterParams = $reportInstance->createCustomFilterParams();
+   //   echo '<pre>';print_r($filterParams);echo '</pre>';
       foreach($filterParams as $filterKey => $filterValue) {
         $defaultSelectedFilter[$filterKey] = $filterValue;
       }
       //$defaults[$filterKey] = $filterValue;
       $form->setVar('_formValues', $defaultSelectedFilter);
+    //  echo '<pre>';print_r($form->getVar('_defaults'));echo '</pre>';
+    //  echo '<pre>';print_r($form->getVar('_formValues'));echo '</pre>';
     }
 
     //CRM-2097: For Save/Copy bypass the post Process
