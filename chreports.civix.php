@@ -336,7 +336,7 @@ class CRM_Chreports_ExtensionUtil {
         $template = [
           'report_id' => 'chreports/contrib_summary_yearly',
           'entity' => 'contribution',
-          'name' => 'contrib_yearly',
+          'name' => 'contrib_summary_yearly',
           'sub_templates' => [
             'campaign_monthly' => [
               'report_id' => 'chreports/contrib_summary_monthly',
