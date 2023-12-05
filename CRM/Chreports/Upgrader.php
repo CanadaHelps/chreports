@@ -510,14 +510,14 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
       [
         'report_id'=>'chreports/contrib_summary_monthly',
         'name'=>'CRM_Chreports_Form_Report_ExtendSummary',
-        'label' => 'Summary (Monthly)',
+        'label' => 'Contribution History (Monthly)',
         'component' => 'CiviContribute',
         'weight' => 4
       ],
       [
         'report_id'=>'chreports/contrib_summary_yearly',
         'name'=>'CRM_Chreports_Form_Report_ExtendSummary',
-        'label' => 'Summary (Yearly)',
+        'label' => 'Contribution History (Yearly)',
         'component' => 'CiviContribute',
         'weight' => 4
       ],

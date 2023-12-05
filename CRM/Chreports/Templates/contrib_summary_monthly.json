@@ -1,5 +1,5 @@
 { 
-    "name": "contrib_monthly",
+    "name": "contrib_summary_monthly",
     "title": "Contribution History (Monthly)",
     "type": "summary",
     "period": "monthly",

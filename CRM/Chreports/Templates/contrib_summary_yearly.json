@@ -1,5 +1,5 @@
 { 
-    "name": "contrib_yearly",
+    "name": "contrib_summary_yearly",
     "title": "Contribution History (Yearly)",
     "type": "summary",
     "period": "yearly",
