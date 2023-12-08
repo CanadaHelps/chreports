@@ -47,6 +47,7 @@ class CRM_Chreports_Form_Report_ExtendSummary extends CRM_Report_Form_Contribute
         $settings[0] => 1
       ];
     }
+    if($params['fields'])
     $this->_reportInstance->setColumns($params['fields']);
     $this->_reportInstance->setFilters();
     //Remove limit, pagination parameter from query for monthly/yearly reports
