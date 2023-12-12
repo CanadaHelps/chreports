@@ -141,6 +141,23 @@ function chreports_civicrm_buildForm($formName, &$form) {
     'CRM_Chreports_Form_Report_GLSummaryReport',
     'CRM_Chreports_Form_Report_ExtendedDetail'
   ])) {
+    //CRM-799 To solve the issue of report columns being cut-off, limit the "Print report" function 
+    //to only be available when the selected report has 10 columns or less. If more than 10 columns are selected, hide "Print report" function
+    $selectedColumnFields = count($form->getVar('_submitValues')['fields']);
+    if(isset($selectedColumnFields) && $selectedColumnFields > 10) {
+      if (array_key_exists('task', $form->_elementIndex)) {
+        $optionsField = $form->getElement('task')->_options;
+        foreach($optionsField as $key=>$value) {
+          foreach($value['attr'] as $k=>$v) {
+            if($v === 'report_instance.print') {
+              unset($form->getElement('task')->_options[$key]);
+            }
+          }
+        }
+      }
+    }
+    
+   
     CRM_Core_Resources::singleton()->addScript(
       "CRM.$(function($) {
         $('.report-layout.display').wrap('<div class=\"new\" style=\"overflow:scroll; width:100%;\"></div>');
