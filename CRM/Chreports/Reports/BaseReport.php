@@ -350,10 +350,6 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
 
         // Get actual fields used for filters
         $filterNames = $this->getFieldNamesForFilters();
-
-       // echo '<pre>';print_r($this->getAllFieldsMapping());echo'</pre>';
-       // die('hell');
-
         // Get fields info
         foreach ($this->getAllFieldsMapping() as $entityTable => $entityData) {
             if (array_key_exists('filters', $entityData)) {
@@ -374,8 +370,6 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                 }
             }
         }
-        // echo '<pre>';print_r($filters);echo'</pre>';
-        // die('hell');
         $this->_filters = $filters;
     }
 
@@ -384,8 +378,6 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     private function getFieldNamesForFilters() {
         $filterNames = [];
         $params = $this->getFormParams();
-// echo '<pre>';print_r($params);echo '</pre>';
-//         die('hell');
         foreach ($params as $key => $value) {
             preg_match('/(.+)_(op|from|relative)$/i', $key, $matches);
             if ( count($matches) > 0 ) {
@@ -549,11 +541,8 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         // clear var completely to get blank slate
         $var = [];
 
-        
-
         foreach ($this->getAllColumns() as $fieldName => $fieldInfo) {
             $fieldInfo = array_merge( $fieldInfo, $this->getFieldInfo($fieldName) );
-            
             // field not found
             if ( isset($fieldInfo['error']) ) {
                 continue;
@@ -596,8 +585,6 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
 
         }
 
-        // echo '<pre>';print_r($var);echo '</pre>';
-        // die('test');
     }
     // fiscal and quarter report using same field with different title
     private function fixFieldTitle(string $fieldName, &$title) {
@@ -612,13 +599,9 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     
     private function setFormFilterOptions(&$var) {
 
-      //  echo '<pre>';print_r($var);echo '</pre>';
-       // echo '<pre>';print_r($this->getReportingFilters());echo '</pre>';
        
         foreach ($this->getReportingFilters() as $fieldName => $fieldInfo) {
 
-            //echo '<pre>';print_r($fieldName);echo '</pre>';
-            //echo '<pre>';print_r($fieldInfo);echo '</pre>';
             //check if filter value needs to be pre set
             if(count($fieldInfo) > 0) { 
                 $this->_preselected_filter[$fieldName] = $fieldInfo;
@@ -656,8 +639,6 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
 
 
         }
-       // echo '<pre>';print_r($var);echo '</pre>';
-       // die('test');
        
     }
 
@@ -855,23 +836,18 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
             $columnHeaderValue = [];
             foreach($rows as $rowNum => $row) {
                 $primaryRetentionRateData[$rowNum]['year'] = $row['year'];
-                $primaryRetentionRateData[$rowNum]['all_donors_'.$row['year']] = $row['all_donors'];
-                $primaryRetentionRateData[$rowNum]['new_donor_'.$row['year']] = $row['new_donor'];
                 $primaryRetentionRateData[$rowNum]['retained_donors_'.$row['year']] = $row['retained_donors'];
+                $primaryRetentionRateData[$rowNum]['new_donor_'.$row['year']] = $row['new_donor'];
                 $primaryRetentionRateData[$rowNum]['retention_'.$row['year']] = $row['retention'];
             }
             $retentionRowsDisplay = [
-            'all_donors'=>'All Donor',
-            'new_donor'=>'New Donor',
-            'retained_donors'=> 'Retained Donors',
-            'retention'=> 'Retention'];
+            'retained_donors'=> 'Repeat Donors',
+            'new_donor'=>'New Donors',
+            'retention'=> 'Retention Rate'];
 
             foreach($retentionRowsDisplay as $k=>$v) {
                 $columnHeaderValue['year'] = $v;
                 foreach($primaryRetentionRateData as $kk=>$vv) {
-                    if($k == 'all_donors') {
-                        $columnHeaderValue[$vv['year']] = $vv['all_donors_'.$vv['year']];
-                    }
                     if($k == 'new_donor') {
                         $columnHeaderValue[$vv['year']] = $vv['new_donor_'.$vv['year']];
                     }
@@ -1065,7 +1041,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         }
 
         //Name report by report define select statement
-        if($this->isComparisonReport() || $this->isRecurringContributionReport())
+        if($this->isComparisonReport() || $this->isRecurringContributionReport() || $this->isContribRetentionReport())
         {
             if($this->isComparisonReport()) {
                 $showRepeatContributionStats = true;
@@ -1369,6 +1345,10 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         if($this->isTopDonorReport())
         $statistics = [];
 
+        //CRM-1257
+        if($this->isContribRetentionReport()) {
+            $statistics = [];
+        }
         return $statistics;
     }
 
@@ -1924,6 +1904,13 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
           if(isset($fieldInfo['custom'])){
             $customTablename = EU::getTableNameByName($fieldInfo['group_name']);
             $selectOption = $customTablename.'_'.$fieldName.'_value.label';
+            //For CH Fund fields contributions that are not associated with any Ch-funds should be named as 'Unassigned' and contributions that are associated with empty CH-fund names should be named as blank spaces.
+            if($fieldName === 'ch_fund') {
+                $selectOption = "CASE
+                WHEN  (".$customTablename.".".$this->getEntityField($fieldName)." = ' ') THEN ' '
+                ELSE ".$customTablename."_".$fieldName."_value.label
+                END";
+            }
           }else{
             $selectOption = $this->getEntityTable($fieldInfo['entity']).'_'.$fieldName.'_value.label';
           }

@@ -184,9 +184,6 @@ class CRM_Chreports_Reports_ReportConfiguration {
     //generate filter options based upon values defined in mapping.json file
     public function getFilterOptions($fieldName) : array {
 
-     //   echo '<pre>';print_r($fieldName);echo '</pre>';
-       // die('test');
-     //  echo '<pre>'; echo $fieldName; echo '</pre>';
         $options = [];
         $fieldInfo = $this->getFieldInfo($fieldName);
 

@@ -555,6 +555,13 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
         'label' => 'Recurring Contributions',
         'component' => 'CiviContribute',
         'weight' => 41
+      ],
+      [
+        'report_id'=>'chreports/contrib_retention',
+        'name'=>'CRM_Chreports_Form_Report_ExtendSummary',
+        'label' => 'Retention Rate Report',
+        'component' => 'CiviContribute',
+        'weight' => 42
       ]
     ];
     foreach($templateParams as $templateId => $templateParam) {
@@ -707,6 +714,16 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
         'name'=>'Top Donors (Dashlet)',
         'report_id'=>'chreports/contact_top_donors',
         'title' => 'Top Donors (Dashlet)'
+      ],
+      'contrib_latest_dashlet' =>  [
+        'name'=>'Latest Contributions (Dashlet)',
+        'report_id'=>'chreports/contrib_detailed',
+        'title' => 'Latest Contributions (Dashlet)'
+      ],
+      'contrib_retention_dashlet' =>  [
+        'name'=>'Retention Rate Report (Dashlet)',
+        'report_id'=>'chreports/contrib_retention',
+        'title' => 'Retention Rate Report (Dashlet)'
       ]
     ];
    

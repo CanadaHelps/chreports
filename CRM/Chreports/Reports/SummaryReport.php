@@ -40,19 +40,18 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
         $retentionYearSatement = "YEAR(".$this->getEntityTable().".`receive_date`) AS year";
         $select[] = $retentionYearSatement;
         $this->_columnHeaders['year']['title'] = 'Year Name';
-     //   $this->_statisticsCalculatedFields['year'] = ['title' =>$this->_columnHeaders['year']['title'],'select'=>['year'=> strstr($retentionYearSatement, 'AS year',true)]];
+        $this->_statisticsCalculatedFields['year'] = ['title' =>$this->_columnHeaders['year']['title'],'select'=>['year'=> strstr($retentionYearSatement, 'AS year',true)]];
+        //calculation for repeat donors
+        $select[] = "COUNT(DISTINCT future_contrib.`contact_id`) as retained_donors";
+        $this->_columnHeaders['retained_donors']['title'] = 'Repeat Donors';
         
-        $select[] = "COUNT(DISTINCT ".$this->getEntityTable().".`contact_id`) as all_donors";
-        $this->_columnHeaders['all_donors']['title'] = 'All Donors';
         //Calculation for new donor
         $select[] = "COUNT(DISTINCT ".$this->getEntityTable().".`contact_id`) as new_donor";
-        $this->_columnHeaders['new_donor']['title'] = 'New Donor';
-        // //calculation for retained donors
-        $select[] = "COUNT(DISTINCT future_contrib.`contact_id`) as retained_donors";
-        $this->_columnHeaders['retained_donors']['title'] = 'Retained Donors';
+        $this->_columnHeaders['new_donor']['title'] = 'New Donors';
+        
         //calculation for retension rate
 
-        $select[] = "ROUND(COUNT(DISTINCT future_contrib.`contact_id`) / COUNT(DISTINCT ".$this->getEntityTable().".`contact_id`) * 100, 2) as retention";
+        $select[] = "CONCAT(ROUND(COUNT(DISTINCT future_contrib.`contact_id`) / COUNT(DISTINCT ".$this->getEntityTable().".`contact_id`) * 100, 2),'%') as retention";
         $this->_columnHeaders['retention']['title'] = 'Retention Rate';
       }
 
