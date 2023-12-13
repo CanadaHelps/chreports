@@ -677,7 +677,11 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                         break;
                 }
             }
+            $fieldInfo = $this->getFieldInfo($fieldName);
             if(!in_array($fieldName,$calculatedFieldsKeyVal) && !in_array($value['type'],[CRM_Utils_Type::T_MONEY,CRM_Utils_Type::T_INT,CRM_Utils_TYPE::T_DATE + CRM_Utils_Type::T_TIME])) {
+                $columnHeaders[$fieldName] = ['title' => $value['title'],'type'=> CRM_Utils_Type::T_STRING];
+            }
+            elseif(!in_array($fieldName,$calculatedFieldsKeyVal) && in_array($value['type'],[CRM_Utils_Type::T_INT]) && ($fieldInfo['select_name'] === 'option_value' ||!preg_match('/id$/', $fieldInfo['select_name']) )) {
                 $columnHeaders[$fieldName] = ['title' => $value['title'],'type'=> CRM_Utils_Type::T_STRING];
             }
         }
