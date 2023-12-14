@@ -240,11 +240,17 @@ class CRM_Chreports_Reports_ReportConfiguration {
         return $options;
     }
     //get option values from the entity defined for that field
-    public static function getOptionsListForEntity($fieldName,$fieldTable) {
+    public function getOptionsListForEntity($fieldName,$fieldTable) {
         $optionValue = [];
         $selectClause =  implode(', ', $fieldName);
     
         $optionsListings = CRM_Core_DAO::executeQuery('SELECT DISTINCT '.$selectClause.' FROM '.$fieldTable)->fetchAll();
+        switch ($selectClause) {
+            case "contact_sub_type":
+                $entityTable = $this->getEntityTable('contact_type');
+                $optionsListings = $this->getContactSubTypeOptions($entityTable,$selectClause);
+                break;
+        }
         foreach($optionsListings as $optionsListing) {
           if($optionsListing) {
             if(count($fieldName) > 1){
@@ -256,6 +262,14 @@ class CRM_Chreports_Reports_ReportConfiguration {
         }
         //$optionValue = array('' => '- select -') + $optionValue;
         return array_filter($optionValue);
+      }
+      
+      //Get contact_sub_type filter dropdown options
+      public static function getContactSubTypeOptions($tableName,$fieldName) : array {
+        $contactSubTypeList = [];
+        $query = "SELECT name as ".$fieldName." FROM ".$tableName." WHERE parent_id IS NOT NULL";
+        $contactSubTypeList =  CRM_Core_DAO::executeQuery($query)->fetchAll();
+        return $contactSubTypeList;
       }
       //get option values using civicrm_option_group,civicrm_option_value left join
       public static function getOptionsListForOptionGroup($fieldName,$fieldTable,$groupName) {
