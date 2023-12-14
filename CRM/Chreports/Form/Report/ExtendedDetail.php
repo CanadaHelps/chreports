@@ -67,6 +67,7 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
       $params['fields'] = array_fill_keys($trueKeys, true);
     }
     $this->_reportInstance->setFormParams($params);
+    if($params['fields'])
     $this->_reportInstance->setColumns($params['fields']);
     $this->_reportInstance->setFilters();
     $this->_reportInstance->setPagination($this->addPaging);

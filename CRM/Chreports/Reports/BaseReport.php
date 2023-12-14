@@ -1842,6 +1842,9 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
             $customTablename = EU::getTableNameByName($fieldInfo['group_name']);
             $selectOption = $customTablename.'_'.$fieldName.'_value.label';
           }else{
+            if ($fieldInfo['custom'] !== true && isset($fieldInfo['join_entity']) && isset($fieldInfo['join_field_name'])) 
+            $selectOption = $this->getEntityTable($fieldInfo['join_entity']).'_'.$fieldName.'_value.label';
+                else
             $selectOption = $this->getEntityTable($fieldInfo['entity']).'_'.$fieldName.'_value.label';
           }
           $selectStatement = $selectOption;
