@@ -143,7 +143,8 @@ function chreports_civicrm_buildForm($formName, &$form) {
   ])) {
     //CRM-799 To solve the issue of report columns being cut-off, limit the "Print report" function 
     //to only be available when the selected report has 10 columns or less. If more than 10 columns are selected, hide "Print report" function
-    $selectedColumnFields = count($form->getVar('_submitValues')['fields']);
+    $columnFields = $form->getVar('_submitValues')['fields']?$form->getVar('_submitValues')['fields']:$form->getVar('_params')['fields'];
+    $selectedColumnFields = count($columnFields);
     if(isset($selectedColumnFields) && $selectedColumnFields > 10) {
       if (array_key_exists('task', $form->_elementIndex)) {
         $optionsField = $form->getElement('task')->_options;
