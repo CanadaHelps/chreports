@@ -414,6 +414,14 @@ class CRM_Chreports_ExtensionUtil {
       'contrib_summary',
       'contrib_summary_monthly',
       'contrib_summary_yearly',
+      'contrib_sybunt',
+      'contrib_lybunt',
+      'contact_top_donors',
+      'opportunity_detailed',
+      'contrib_period_compare',
+      'contrib_recurring',
+      'contrib_glaccount_payment_reconciliation',
+      'contrib_quarterly_past_year'
     ];
   }
 
