@@ -477,84 +477,96 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
         'name'=>'CRM_Chreports_Form_Report_ExtendedDetail',
         'label' => 'Contribution (Detailed)',
         'component' => 'CiviContribute',
-        'weight' => 103
+        'weight' => 103,
+        'description' => 'Total amounts raised in detailed'
       ],
       [
         'report_id'=>'chreports/contrib_sybunt',
         'name'=>'CRM_Chreports_Form_Report_ExtendedDetail',
         'label' => 'SYBUNT',
         'component' => 'CiviContribute',
-        'weight' => 101
+        'weight' => 101,
+        'description' => 'Total amounts raised from Some Years But Not This Year'
       ],
       [
         'report_id'=>'chreports/contrib_summary',
         'name'=>'CRM_Chreports_Form_Report_ExtendSummary',
         'label' => 'Contribution (Summary)',
         'component' => 'CiviContribute',
-        'weight' => 102
+        'weight' => 102,
+        'description' => 'Total amounts raised in summaries'
       ],
       [
         'report_id'=>'chreports/contrib_lybunt',
         'name'=>'CRM_Chreports_Form_Report_ExtendedDetail',
         'label' => 'LYBUNT',
         'component' => 'CiviContribute',
-        'weight' => 107
+        'weight' => 107,
+        'description' => 'Total amounts raised from Last Year But Not This Year'
       ],
       [
         'report_id'=>'chreports/contrib_glaccount',
         'name'=>'CRM_Chreports_Form_Report_ExtendedDetail',
         'label' => 'GL Account Report',
         'component' => 'CiviContribute',
-        'weight' => 32
+        'weight' => 32,
+        'description' => 'Total amounts raised from GL Account'
       ],
       [
         'report_id'=>'chreports/contrib_summary_monthly',
         'name'=>'CRM_Chreports_Form_Report_ExtendSummary',
         'label' => 'Contribution History (Monthly)',
         'component' => 'CiviContribute',
-        'weight' => 4
+        'weight' => 4,
+        'description' => 'Total amounts raised month over month'
       ],
       [
         'report_id'=>'chreports/contrib_summary_yearly',
         'name'=>'CRM_Chreports_Form_Report_ExtendSummary',
         'label' => 'Contribution History (Yearly)',
         'component' => 'CiviContribute',
-        'weight' => 4
+        'weight' => 4,
+        'description' => 'Total amounts raised year over year'
       ],
       [
         'report_id'=>'chreports/contrib_period_detailed',
         'name'=>'CRM_Chreports_Form_Report_ExtendSummary',
         'label' => 'Fiscal / Quarterly Report',
         'component' => 'CiviContribute',
-        'weight' => 4
+        'weight' => 4,
+        'description' => 'Total amounts raised this fiscal / quarter'
       ],
       [
         'report_id'=>'chreports/contact_top_donors',
         'name'=>'CRM_Chreports_Form_Report_ExtendedDetail',
         'label' => 'Top Donors Report',
         'component' => 'CiviContribute',
-        'weight' => 13
+        'weight' => 13,
+        'description' => 'Top Donors for a defined date range'
       ],
       [
         'report_id'=>'chreports/opportunity_detailed',
         'name'=>'CRM_Chreports_Form_Report_ExtendedDetail',
         'label' => 'Opportunity Report',
         'component' => 'CiviGrant',
-        'weight' => 30
+        'weight' => 30,
+        'description' => 'All Opportunities with detailed information.'
       ],
       [
         'report_id'=>'chreports/contrib_period_compare',
         'name'=>'CRM_Chreports_Form_Report_ExtendedDetail',
         'label' => 'Comparison Report',
         'component' => 'CiviContribute',
-        'weight' => 4
+        'weight' => 4,
+        'description' => 'Total amounts raised from Comparison Report'
       ],
       [
         'report_id'=>'chreports/contrib_recurring',
         'name'=>'CRM_Chreports_Form_Report_ExtendedDetail',
         'label' => 'Recurring Contributions',
         'component' => 'CiviContribute',
-        'weight' => 41
+        'weight' => 41,
+        'description' => 'Total amounts raised from Recurring Contributions'
       ]
     ];
     foreach($templateParams as $templateId => $templateParam) {
@@ -568,6 +580,7 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
       ->addValue('is_active', TRUE)
       ->addValue('is_reserved', TRUE)
       ->addValue('weight', $templateParam['weight'])
+      ->addValue('description', $templateParam['description'])
       ->execute();
     }
     
