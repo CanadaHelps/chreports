@@ -63,7 +63,6 @@
         "birth_date":{},
         "contact_type":{},
         "contact_sub_type":{},
-        "is_deceased":{},
         "do_not_phone":{},
         "do_not_email":{},
         "do_not_sms":{},
