@@ -1841,6 +1841,13 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
           if(isset($fieldInfo['custom'])){
             $customTablename = EU::getTableNameByName($fieldInfo['group_name']);
             $selectOption = $customTablename.'_'.$fieldName.'_value.label';
+            //For CH Fund fields contributions that are not associated with any Ch-funds should be named as 'Unassigned' and contributions that are associated with empty CH-fund names should be named as blank spaces.
+            if($fieldName === 'ch_fund') {
+                $selectOption = "CASE
+                WHEN  (".$customTablename.".".$this->getEntityField($fieldName)." = ' ') THEN ' '
+                ELSE ".$customTablename."_".$fieldName."_value.label
+                END";
+            }
           }else{
             if ($fieldInfo['custom'] !== true && isset($fieldInfo['join_entity']) && isset($fieldInfo['join_field_name'])) 
             $selectOption = $this->getEntityTable($fieldInfo['join_entity']).'_'.$fieldName.'_value.label';

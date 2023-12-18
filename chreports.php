@@ -197,9 +197,12 @@ function chreports_civicrm_buildForm($formName, &$form) {
    
     CRM_Core_Resources::singleton()->addScript(
       "CRM.$(function($) {
-        $('#fields_total_amount').parent().hide();
-        $('.crm-report-criteria-field input:checkbox').click(function() {
-          $('#group_bys_' + this.id.substr(7)).prop('checked', this.checked);
+        $( document ).ready(function() {
+          $('#fields_total_amount').parent().hide();
+          $('#mainTabContainer').tabs('option', 'active', 0);
+          $('.crm-report-criteria-field input:checkbox').click(function() {
+            $('#group_bys_' + this.id.substr(7)).prop('checked', this.checked);
+          });
         });
       });");
    }
