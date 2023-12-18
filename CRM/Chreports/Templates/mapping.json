@@ -895,6 +895,13 @@
         "field_type": "int",
         "calculated_field": true
     },
+    "base_year": {
+        "title": "Base Year",
+        "field_name": "receive_date",
+        "field_type": "int",
+        "options": true,
+        "default": "date('Y')"
+    },
     "account_type":{
         "title": "Account Type",
         "entity": "financial_account",

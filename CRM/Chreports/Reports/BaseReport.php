@@ -292,6 +292,12 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         return false;
     }
 
+    //CRM-2157
+    //Retrieve contribution retention Report
+    public function isContribRetentionReport(): bool {
+        return $this->_settings['template'] == 'chreports/contrib_retention';
+    }
+
     //Retrieve Repeat Contributions Report
     public function isComparisonReport(): bool {
         return $this->_settings['template'] == 'chreports/contrib_period_compare';
@@ -344,7 +350,6 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
 
         // Get actual fields used for filters
         $filterNames = $this->getFieldNamesForFilters();
-
         // Get fields info
         foreach ($this->getAllFieldsMapping() as $entityTable => $entityData) {
             if (array_key_exists('filters', $entityData)) {
@@ -365,7 +370,6 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                 }
             }
         }
-
         $this->_filters = $filters;
     }
 
@@ -539,7 +543,6 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
 
         foreach ($this->getAllColumns() as $fieldName => $fieldInfo) {
             $fieldInfo = array_merge( $fieldInfo, $this->getFieldInfo($fieldName) );
-            
             // field not found
             if ( isset($fieldInfo['error']) ) {
                 continue;
@@ -581,6 +584,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
             }
 
         }
+
     }
     // fiscal and quarter report using same field with different title
     private function fixFieldTitle(string $fieldName, &$title) {
@@ -594,6 +598,8 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     }
     
     private function setFormFilterOptions(&$var) {
+
+       
         foreach ($this->getReportingFilters() as $fieldName => $fieldInfo) {
 
             //check if filter value needs to be pre set
@@ -735,6 +741,22 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
             unset($columnHeaders['year']);
             $columnHeaders['total_contribution_sum'] = $totalAmountArray;
         }
+
+        //CRM-2157
+        if($this->isContribRetentionReport()){
+            foreach ($var as $rowId => $row) {
+
+                $columnTitle = $row['year'];
+                $columnKey = $row['year'];
+                $columnHeaders[$columnKey] = ['title' => $columnTitle,'type'=> CRM_Utils_Type::T_INT];
+            }
+            unset($columnHeaders['total_contribution_sum']);
+            unset($columnHeaders['total_count']);
+            unset($columnHeaders['all_donors']);
+            unset($columnHeaders['new_donor']);
+            unset($columnHeaders['retained_donors']);
+            unset($columnHeaders['retention']);
+        }
     }
    /**
      * function to Rearrange column header for display
@@ -812,6 +834,39 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     // manage display of resulting rows
     //TODO : try to replace campaign_id with the name it self in the query rather than performing additional alter display
     public function alterDisplayRows(&$rows) {
+        //CRM-2157
+        if($this->isContribRetentionReport()) {
+            $primaryRetentionRateData = [];
+            $columnHeaderValue = [];
+            foreach($rows as $rowNum => $row) {
+                $primaryRetentionRateData[$rowNum]['year'] = $row['year'];
+                $primaryRetentionRateData[$rowNum]['retained_donors_'.$row['year']] = $row['retained_donors'];
+                $primaryRetentionRateData[$rowNum]['new_donor_'.$row['year']] = $row['new_donor'];
+                $primaryRetentionRateData[$rowNum]['retention_'.$row['year']] = $row['retention'];
+            }
+            $retentionRowsDisplay = [
+            'retained_donors'=> 'Repeat Donors',
+            'new_donor'=>'New Donors',
+            'retention'=> 'Retention Rate'];
+
+            foreach($retentionRowsDisplay as $k=>$v) {
+                $columnHeaderValue['year'] = $v;
+                foreach($primaryRetentionRateData as $kk=>$vv) {
+                    if($k == 'new_donor') {
+                        $columnHeaderValue[$vv['year']] = $vv['new_donor_'.$vv['year']];
+                    }
+                    if($k == 'retained_donors') {
+                        $columnHeaderValue[$vv['year']] = $vv['retained_donors_'.$vv['year']];
+                    }
+                    if($k == 'retention') {
+                        $columnHeaderValue[$vv['year']] = $vv['retention_'.$vv['year']];
+                    }
+                }
+                $finalDisplay[] = $columnHeaderValue;
+            }
+            $rows = $finalDisplay;
+        }
+        
         if($this->isPeriodicDetailed()){
             $rollupTotalRow = ['receive_date_start' => 'Grand Total'];
             $resultingRow = [];
@@ -990,7 +1045,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         }
 
         //Name report by report define select statement
-        if($this->isComparisonReport() || $this->isRecurringContributionReport())
+        if($this->isComparisonReport() || $this->isRecurringContributionReport() || $this->isContribRetentionReport())
         {
             if($this->isComparisonReport()) {
                 $showRepeatContributionStats = true;
@@ -1294,6 +1349,10 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         if($this->isTopDonorReport())
         $statistics = [];
 
+        //CRM-1257
+        if($this->isContribRetentionReport()) {
+            $statistics = [];
+        }
         return $statistics;
     }
 
@@ -1336,7 +1395,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
             case 'receive_date_start':
                 if($this->isPeriodicDetailed()){
                     if(!in_array($row['receive_date_start'],['Yearly Subtotal','Grand Total'])){
-                    $latestContribReport = $this->getReportInstanceDetailsByName('Latest Contributions (Dashlet)');
+                    $latestContribReport = $this->getReportInstanceDetailsByName('contrib_latest_dashlet');
                     $dateReformat=date("F Y",strtotime($row['receive_date_start']));
                     if($this->hasMonthlyBreakdown ())
                     {
@@ -1701,6 +1760,12 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                     }
                         
                         break;
+            }
+
+            //CRM-2157 pre-requision join for retentiion report
+            if($this->isContribRetentionReport()){
+                $from[] = "LEFT JOIN ".$this->getEntityTable()." as future_contrib".
+                " ON ".$this->getEntityTable().".contact_id = future_contrib.contact_id AND YEAR(future_contrib.receive_date) = YEAR(".$this->getEntityTable().".receive_date) - 1";
             }
 
             // adding financial_account_debit / credit

@@ -1,0 +1,28 @@
+{ 
+    "name": "contrib_retention",
+    "title": "Retention Rate Report",
+    "template": "chreports/contrib_retention",
+    "type": "summary",
+    "entity": "contribution",
+    "fields":{
+       
+    },
+    "groupByClause" : false,
+    "orderByClause" : false,
+    "use_default_filters" : false,
+    "filters":{
+        "financial_type_id": {},
+        "contribution_status_id": {
+            "in": [
+                "1"
+            ]
+        },
+        "contribution_source":{},   
+        "contribution_page_id":{},
+        "tagid":{},
+        "gid":{},
+        "contact_type" : {},
+        "contact_sub_type" :{},
+        "base_year":{ "calendar": 2017}
+    }
+}

@@ -29,8 +29,6 @@
         "amount":{"selected" : true},       
         "id": {"default" : true},
         "contact_source":{},
-
-
         "card_type_id":{}
     },
     "order_bys":{

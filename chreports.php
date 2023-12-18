@@ -245,6 +245,12 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
       }
 
       if ($varType == 'sql') {
+        //For empty fields or in case when fields are not default to get proper filters value need to reassign params and formvalues.
+        if(empty($var->getVar('_params')['fields'])) {
+          $intermediateParamsValue = $object->controller->exportValues($var->getVar('_name'));
+          $var->setVar('_params', $intermediateParamsValue);
+          $var->setVar('_formValues', $intermediateParamsValue);
+        }
         //build main sql query to display result
         $object->buildSQLQuery($var);
         return;

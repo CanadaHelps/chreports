@@ -131,7 +131,7 @@ class CRM_Chreports_Reports_ReportConfiguration {
         $operator = $fieldInfo['options'];
         $operatorType = '';
         switch (true) {
-            case ($type === "Boolean" || $fieldName==='yid'):
+            case ($type === "Boolean" || $fieldName==='yid' || $fieldName==='base_year'):
                 $operatorType = CRM_Report_Form::OP_SELECT;
                 break;
             case ($type === "Datetime"):
@@ -183,7 +183,7 @@ class CRM_Chreports_Reports_ReportConfiguration {
     }
     //generate filter options based upon values defined in mapping.json file
     public function getFilterOptions($fieldName) : array {
-     //  echo '<pre>'; echo $fieldName; echo '</pre>';
+
         $options = [];
         $fieldInfo = $this->getFieldInfo($fieldName);
 
@@ -224,6 +224,7 @@ class CRM_Chreports_Reports_ReportConfiguration {
                 case "on_hold":
                     $options = CRM_Core_PseudoConstant::emailOnHoldOptions();
                     break;
+                case "base_year":    
                 case "yid":
                     $yearsInPast = 10;
                     $yearsInFuture = 1;
