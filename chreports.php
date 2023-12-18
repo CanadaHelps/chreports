@@ -141,6 +141,24 @@ function chreports_civicrm_buildForm($formName, &$form) {
     'CRM_Chreports_Form_Report_GLSummaryReport',
     'CRM_Chreports_Form_Report_ExtendedDetail'
   ])) {
+    //CRM-799 To solve the issue of report columns being cut-off, limit the "Print report" function 
+    //to only be available when the selected report has 10 columns or less. If more than 10 columns are selected, hide "Print report" function
+    $columnFields = $form->getVar('_submitValues')['fields']?$form->getVar('_submitValues')['fields']:$form->getVar('_params')['fields'];
+    $selectedColumnFields = count($columnFields);
+    if(isset($selectedColumnFields) && $selectedColumnFields > 10) {
+      if (array_key_exists('task', $form->_elementIndex)) {
+        $optionsField = $form->getElement('task')->_options;
+        foreach($optionsField as $key=>$value) {
+          foreach($value['attr'] as $k=>$v) {
+            if($v === 'report_instance.print') {
+              unset($form->getElement('task')->_options[$key]);
+            }
+          }
+        }
+      }
+    }
+    
+   
     CRM_Core_Resources::singleton()->addScript(
       "CRM.$(function($) {
         $('.report-layout.display').wrap('<div class=\"new\" style=\"overflow:scroll; width:100%;\"></div>');
@@ -179,9 +197,12 @@ function chreports_civicrm_buildForm($formName, &$form) {
    
     CRM_Core_Resources::singleton()->addScript(
       "CRM.$(function($) {
-        $('#fields_total_amount').parent().hide();
-        $('.crm-report-criteria-field input:checkbox').click(function() {
-          $('#group_bys_' + this.id.substr(7)).prop('checked', this.checked);
+        $( document ).ready(function() {
+          $('#fields_total_amount').parent().hide();
+          $('#mainTabContainer').tabs('option', 'active', 0);
+          $('.crm-report-criteria-field input:checkbox').click(function() {
+            $('#group_bys_' + this.id.substr(7)).prop('checked', this.checked);
+          });
         });
       });");
    }

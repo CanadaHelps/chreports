@@ -683,7 +683,11 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                         break;
                 }
             }
+            $fieldInfo = $this->getFieldInfo($fieldName);
             if(!in_array($fieldName,$calculatedFieldsKeyVal) && !in_array($value['type'],[CRM_Utils_Type::T_MONEY,CRM_Utils_Type::T_INT,CRM_Utils_TYPE::T_DATE + CRM_Utils_Type::T_TIME])) {
+                $columnHeaders[$fieldName] = ['title' => $value['title'],'type'=> CRM_Utils_Type::T_STRING];
+            }
+            elseif(!in_array($fieldName,$calculatedFieldsKeyVal) && in_array($value['type'],[CRM_Utils_Type::T_INT]) && ($fieldInfo['select_name'] === 'option_value' ||!preg_match('/id$/', $fieldInfo['select_name']) )) {
                 $columnHeaders[$fieldName] = ['title' => $value['title'],'type'=> CRM_Utils_Type::T_STRING];
             }
         }
@@ -1743,18 +1747,6 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                     $this->_fromEntity[] = $aliasTableName;
                     break;
 
-                case ($entityName === 'civicrm_batch'):
-                    if (!$alreadyIncluded) {
-                        $from[] = "LEFT JOIN ".$this->getEntityTable('entity_batch').
-                            " ON  ".$this->getEntityTable('financial_trxn').".id = ".$this->getEntityTable('entity_batch').".entity_id". 
-                            " AND ".$this->getEntityTable('entity_batch').".entity_table = 'civicrm_financial_trxn'";
-                
-                        $from[] = $this->getSQLJoinForField('batch_id', $this->getEntityTable('batch'), $this->getEntityTable('entity_batch'),'id');
-                        $this->_fromEntity[] = $entityName;
-                        $alreadyIncluded = true;
-                    }
-                    
-                    break;
                 //prerequisite group join
                 case ($entityName === 'civicrm_group'):
                     if (!$alreadyIncluded) {
@@ -1779,47 +1771,57 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
             // adding financial_account_debit / credit
             if ( $fieldInfo['entity'] == "financial_account" || $fieldInfo['entity'] == "financial_trxn" || 
                 (($fieldInfo['join_entity'] == "financial_account_debit" || $fieldInfo['join_entity'] == "financial_account_credit") 
-                    && !in_array($fieldInfo['join_entity'],$this->_fromEntity))){
+                    && !in_array($fieldInfo['join_entity'],$this->_fromEntity)) || $entityName === 'civicrm_batch'){
 
-                // adding financial_trxn joins
-                $prerequisiteTable = "financial_trxn";
+                    // adding financial_trxn joins
+                    $prerequisiteTable = "financial_trxn";
 
-                if (!in_array($this->getEntityTable($prerequisiteTable),$this->_fromEntity) && ($fieldName !== 'gl_account')) {
-                    //modified from clause for financial_trxn entity to prevent multiple entries for the contribution 
-                    $from[] = "LEFT JOIN ( SELECT * FROM ".$this->getEntityTable('entity_' . $prerequisiteTable)." WHERE entity_table = 'civicrm_contribution'  GROUP BY entity_id HAVING SUM(amount)>0 )
-                     as ".$this->getEntityTable('entity_' . $prerequisiteTable).
-                    " ON (".$this->getEntityTable('contribution').".id = ".$this->getEntityTable('entity_' . $prerequisiteTable).".entity_id )";
-                
-                    // $from[] = "LEFT JOIN ".$this->getEntityTable('entity_' . $prerequisiteTable)."
-                    //  as ".$this->getEntityTable('entity_' . $prerequisiteTable).
-                    // " ON (".$this->getEntityTable('contribution').".id = ".$this->getEntityTable('entity_' . $prerequisiteTable).".entity_id ".
-                    // " AND ".$this->getEntityTable('entity_' . $prerequisiteTable).".entity_table = 'civicrm_contribution')";
-
-                    $from[] = "LEFT JOIN ".$this->getEntityTable($prerequisiteTable)." as ".$this->getEntityTable($prerequisiteTable).
-                    " ON ".$this->getEntityTable($prerequisiteTable).".id = ".$this->getEntityTable('entity_' . $prerequisiteTable).".financial_trxn_id";
-            
-                    $this->_fromEntity[] = $this->getEntityTable($prerequisiteTable);
+                    if (!in_array($this->getEntityTable($prerequisiteTable),$this->_fromEntity) && ($fieldName !== 'gl_account')) {
+                        //modified from clause for financial_trxn entity to prevent multiple entries for the contribution 
+                        $from[] = "LEFT JOIN ( SELECT * FROM ".$this->getEntityTable('entity_' . $prerequisiteTable)." WHERE entity_table = 'civicrm_contribution'  GROUP BY entity_id HAVING SUM(amount)>0 )
+                        as ".$this->getEntityTable('entity_' . $prerequisiteTable).
+                        " ON (".$this->getEntityTable('contribution').".id = ".$this->getEntityTable('entity_' . $prerequisiteTable).".entity_id )";
                     
-                }
+                        // $from[] = "LEFT JOIN ".$this->getEntityTable('entity_' . $prerequisiteTable)."
+                        //  as ".$this->getEntityTable('entity_' . $prerequisiteTable).
+                        // " ON (".$this->getEntityTable('contribution').".id = ".$this->getEntityTable('entity_' . $prerequisiteTable).".entity_id ".
+                        // " AND ".$this->getEntityTable('entity_' . $prerequisiteTable).".entity_table = 'civicrm_contribution')";
 
-                // adding financial_account joins
-                if($actualTable == "financial_account_debit" || $actualTable == "financial_account_credit"
-                || ($fieldInfo['join_entity'] == "financial_account_debit" || $fieldInfo['join_entity'] == "financial_account_credit"))
-                {
-                    if ( !in_array("financial_account_debit",$this->_fromEntity) && !in_array("financial_account_credit",$this->_fromEntity) ) {
-        
-                        $prerequisiteTable = "financial_account";
+                        $from[] = "LEFT JOIN ".$this->getEntityTable($prerequisiteTable)." as ".$this->getEntityTable($prerequisiteTable).
+                        " ON ".$this->getEntityTable($prerequisiteTable).".id = ".$this->getEntityTable('entity_' . $prerequisiteTable).".financial_trxn_id";
+                
+                        $this->_fromEntity[] = $this->getEntityTable($prerequisiteTable);
+                    
+                    }
+                    //CRM-2022-1 Repositioned batch condition from case to normal because civicrm_batch entity requires financial_trxn table join with entity_financial_trxn
+                    if ($entityName === 'civicrm_batch') {
+                        $from[] = "LEFT JOIN ".$this->getEntityTable('entity_batch').
+                            " ON  ".$this->getEntityTable('financial_trxn').".id = ".$this->getEntityTable('entity_batch').".entity_id". 
+                            " AND ".$this->getEntityTable('entity_batch').".entity_table = 'civicrm_financial_trxn'";
+                
+                        $from[] = $this->getSQLJoinForField('batch_id', $this->getEntityTable('batch'), $this->getEntityTable('entity_batch'),'id');
+                        $this->_fromEntity[] = $entityName;
+                        $alreadyIncluded = true;
+                    }
 
-                        $from[] = "LEFT JOIN ".$this->getEntityTable($prerequisiteTable)." as financial_account_debit".
-                            " ON financial_account_debit.id = ".$this->getEntityTable('financial_trxn').".to_financial_account_id";
-                        $from[] = "LEFT JOIN ".$this->getEntityTable($prerequisiteTable)." as financial_account_credit".
-                            " ON financial_account_credit.id = ".$this->getEntityTable('financial_trxn').".from_financial_account_id";
-                                
-                        $this->_fromEntity[] = "financial_account_debit";
-                        $this->_fromEntity[] = "financial_account_credit";
+                    // adding financial_account joins
+                    if($actualTable == "financial_account_debit" || $actualTable == "financial_account_credit"
+                    || ($fieldInfo['join_entity'] == "financial_account_debit" || $fieldInfo['join_entity'] == "financial_account_credit"))
+                    {
+                        if ( !in_array("financial_account_debit",$this->_fromEntity) && !in_array("financial_account_credit",$this->_fromEntity) ) {
+            
+                            $prerequisiteTable = "financial_account";
+
+                            $from[] = "LEFT JOIN ".$this->getEntityTable($prerequisiteTable)." as financial_account_debit".
+                                " ON financial_account_debit.id = ".$this->getEntityTable('financial_trxn').".to_financial_account_id";
+                            $from[] = "LEFT JOIN ".$this->getEntityTable($prerequisiteTable)." as financial_account_credit".
+                                " ON financial_account_credit.id = ".$this->getEntityTable('financial_trxn').".from_financial_account_id";
+                                    
+                            $this->_fromEntity[] = "financial_account_debit";
+                            $this->_fromEntity[] = "financial_account_credit";
+                        }
                     }
                 }
-            }
 
             
              //Adding predefine address joins for join_entity
@@ -1912,6 +1914,9 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                 END";
             }
           }else{
+            if ($fieldInfo['custom'] !== true && isset($fieldInfo['join_entity']) && isset($fieldInfo['join_field_name'])) 
+            $selectOption = $this->getEntityTable($fieldInfo['join_entity']).'_'.$fieldName.'_value.label';
+                else
             $selectOption = $this->getEntityTable($fieldInfo['entity']).'_'.$fieldName.'_value.label';
           }
           $selectStatement = $selectOption;

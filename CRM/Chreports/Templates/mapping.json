@@ -1065,11 +1065,11 @@
     },
     "payment_processor_id":{
         "title": " Payment Processor ID",
-        "field_name": "id",
+        "field_name": "payment_processor_id",
         "field_type": "int",
-        "entity": "payment_processor",
-        "join_field_name":"contact_id",
-        "join_entity":"contribution_recur"
+        "entity": "contribution_recur",
+        "join_field_name":"contribution_recur_id",
+        "join_entity":"contribution"
     },
     "recur_contribution_status_id":{
         "title": " Recurring Contribution Status",

@@ -336,7 +336,7 @@ class CRM_Chreports_ExtensionUtil {
         $template = [
           'report_id' => 'chreports/contrib_summary_yearly',
           'entity' => 'contribution',
-          'name' => 'contrib_yearly',
+          'name' => 'contrib_summary_yearly',
           'sub_templates' => [
             'campaign_monthly' => [
               'report_id' => 'chreports/contrib_summary_monthly',
@@ -356,11 +356,11 @@ class CRM_Chreports_ExtensionUtil {
             ],
             'monthly' => [
               'report_id' => 'chreports/contrib_summary_monthly',
-              'name' => 'contrib_monthly',
+              'name' => 'contrib_summary_monthly',
             ],
             'yearly' => [
               'report_id' => 'chreports/contrib_summary_yearly',
-              'name' => 'contrib_yearly',
+              'name' => 'contrib_summary_yearly',
             ],
           ],
         ];
@@ -412,8 +412,16 @@ class CRM_Chreports_ExtensionUtil {
     return [
       'contrib_detailed',
       'contrib_summary',
-      'contrib_monthly',
-      'contrib_yearly',
+      'contrib_summary_monthly',
+      'contrib_summary_yearly',
+      'contrib_sybunt',
+      'contrib_lybunt',
+      'contact_top_donors',
+      'opportunity_detailed',
+      'contrib_period_compare',
+      'contrib_recurring',
+      'contrib_glaccount_payment_reconciliation',
+      'contrib_quarterly_past_year'
     ];
   }
 
