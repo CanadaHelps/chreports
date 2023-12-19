@@ -8,8 +8,12 @@
         "gl_account": {
             "default" : true
         },
-        "account_type": {},
-        "gl_code": {}
+        "account_type": {
+            "default" : true
+        },
+        "gl_code": {
+            "default" : true
+        }
     },
     "order_bys":{
         "gl_account": {
