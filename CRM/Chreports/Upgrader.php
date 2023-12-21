@@ -567,6 +567,14 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
         'component' => 'CiviContribute',
         'weight' => 41,
         'description' => 'Total amounts raised from Recurring Contributions'
+      ],
+      [
+        'report_id'=>'chreports/contrib_retention',
+        'name'=>'CRM_Chreports_Form_Report_ExtendSummary',
+        'label' => 'Retention Rate Report',
+        'component' => 'CiviContribute',
+        'weight' => 42,
+        'description' => 'Retention Reate results for contributions'
       ]
     ];
     foreach($templateParams as $templateId => $templateParam) {
