@@ -838,7 +838,6 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
       'activityextended',
       'activity/pivot',
       'activityeditable',
-      'activity',
       'relationshipextended',
       'activityextended',
 
@@ -882,6 +881,67 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
     return TRUE;
   }
 
+  public function upgrade_2403() {
+    $this->ctx->log->info('Change Fiscal year to date and Last Year inc. Today report display dashlet layout');
+    $reportInstances = civicrm_api3('ReportInstance', 'get', [
+      'sequential' => 1,
+      'return' => ["id", "title", "name"],
+      'name' => ['IN' => ["contrib_monthly_fiscal_year", "contrib_quarterly_past_year"]],
+      'options' => ['limit' => 0],
+    ]);
+    if($reportInstances['values']) {
+      $reportInstanceDashlet = [];
+      foreach($reportInstances['values'] as $report) {
+        $report_name = 'report/'.$report['id'];
+        $dashlet = civicrm_api3('Dashboard', 'get', [
+          'sequential' => 1,
+          'name' => $report_name,
+        ]);
+        if(!empty($dashlet['values'][0])) {
+            civicrm_api3('Dashboard', 'create', [
+              'id' => $dashlet['values'][0]['id'],
+              'url' => "civicrm/report/instance/".$report['id']."?reset=1&section=2&context=dashlet",
+              'fullscreen_url' => "civicrm/report/instance/".$report['id']."?reset=1&section=2&context=dashletFullscreen",
+            ]);
+        }
+      }
+    }
+    //Check if other reports has charts
+    $dashboards = civicrm_api4('Dashboard', 'get', [
+      'select' => [
+        'url', 
+        'fullscreen_url',
+      ],
+      'where' => [
+        ['url', 'CONTAINS', 'charts'], 
+        ['fullscreen_url', 'CONTAINS', 'charts'],
+      ],
+    ]);
+  
+    if($dashboards->rowCount > 0) {
+  
+      foreach ($dashboards as $akey=>$avalue) {   
+        if( strpos( $avalue['url'], 'charts=barChart' ) !== false) {
+          $avalue['url']= str_replace("&section=1&charts=barChart", "&section=2", $avalue['url']);
+          $avalue['fullscreen_url']= str_replace("&section=1&charts=barChart", "&section=2", $avalue['fullscreen_url']);
+        }else if(strpos( $avalue['url'], 'charts=pieChart' ) !== false) {
+          $avalue['url']=str_replace("&section=1&charts=pieChart", "&section=2", $avalue['url']);
+          $avalue['fullscreen_url']=str_replace("&section=1&charts=pieChart", "&section=2", $avalue['fullscreen_url']);
+        }
+  
+        $results = civicrm_api4('Dashboard', 'update', [
+          'values' => [
+            'url' => $avalue['url'],
+            'fullscreen_url'=>$avalue['fullscreen_url']
+          ],
+          'where' => [
+            ['id', '=', $avalue['id']],
+          ],
+        ]);
+      }
+    }
+    return TRUE;
+  }
   /**
    * Example: Run an external SQL script.
    *
