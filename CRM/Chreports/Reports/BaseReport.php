@@ -344,6 +344,10 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     public function getFilters(): array {
         return $this->_filters;
     }
+    //to access calculated fields list for extended detail report
+    public function getCalculatedFieldsList(): array {
+        return $this->_calculatedFields;
+    }
     public function setFilters() {
 
         $filters = [];
@@ -802,6 +806,13 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
      * @return void
      */
     public function updateSelectWithSortBySections(){
+        list($select,$columnHeader) = $this->getSortBySectionDetails();
+        $this->_select = array_merge( $this->_select, $select);
+        $this->_selectClauses = array_merge( $this->_selectClauses, $select);
+        $this->_columnHeaders = array_merge( $this->_columnHeaders, $columnHeader);
+    }
+    //get section details for sort by fields if section checkbox is checked
+    public function getSortBySectionDetails(){
         $select = [];
         $columnHeader = [];
        
@@ -826,9 +837,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
            
            
         }
-        $this->_select = array_merge( $this->_select, $select);
-        $this->_selectClauses = array_merge( $this->_selectClauses, $select);
-        $this->_columnHeaders = array_merge( $this->_columnHeaders, $columnHeader);
+        return array($select,$columnHeader);
     }
 
     // manage display of resulting rows

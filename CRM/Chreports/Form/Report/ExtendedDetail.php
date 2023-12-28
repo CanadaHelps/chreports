@@ -36,11 +36,99 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
       return $statistics;
     }
   }
-  
+
   public function sectionTotals()
   {
-    return;
+    //get select clause statements for section headers
+    list($select, $columnHeader) = $this->_reportInstance->getSortBySectionDetails();
+    if (empty($select)) {
+      return;
+    } else {
+      // pull section aliases out of $this->_sections
+      $sectionAliases = array_keys($this->_sections);
+      $addtotals = '';
+      if (
+        array_search("civicrm_contribution_total_amount", $this->_selectAliases) !==
+        FALSE
+      ) {
+        $addtotals = ", sum(civicrm_contribution.total_amount) as sumcontribs";
+        $showsumcontribs = TRUE;
+      }
+      //to get correct section header for calculated fields
+      if (!empty($this->_reportInstance->getCalculatedFieldsList())) {
+        $deletedSectionClause = [];
+        foreach (array_keys($this->_reportInstance->getCalculatedFieldsList()) as $sectionkey => $sectionValue) {
+          $columnInfo = $this->_reportInstance->getFieldMapping($this->_reportInstance->getEntityTableFromField($sectionValue), $sectionValue);
+          $sortByAlias = ($columnInfo['custom_alias']) ? $columnInfo['custom_alias'] : $columnInfo['table_name'] . '_' . $sectionValue;
+          if (($key = array_search($sortByAlias, $sectionAliases)) !== false) {
+            //if calculated field is there in section header unset that clause first because it might have aggregated function in group by clause
+            unset($sectionAliases[$key]);
+            if (!in_array($columnInfo['table_name'] . '.id', $sectionAliases))
+              $sectionAliases[$key] = $columnInfo['table_name'] . '.id';
+            $deletedSectionClause[$sortByAlias] = $columnInfo['table_name'] . '.id';
+          }
+        }
+        ksort($sectionAliases);
+      }
+
+      $selectStatement = "SELECT " . implode(', ', $select) . " ";
+      $query = $selectStatement .
+        "$addtotals, count(*) as ct {$this->_from} {$this->_where} group by " .
+        implode(", ", $sectionAliases);
+      //after query formation reinstate section columns for calculated fields display
+      foreach ($deletedSectionClause as $k => $v) {
+        if (($key = array_search($v, $sectionAliases)) !== false) {
+          unset($sectionAliases[$key]);
+          $sectionAliases[$key] = $k;
+        }
+      }
+      // initialize array of total counts
+      $sumcontribs = $totals = [];
+      $dao = CRM_Core_DAO::executeQuery($query);
+      while ($dao->fetch()) {
+        $row = $dao->toArray();
+        // add totals for all permutations of section values
+        $values = [];
+        $i = 1;
+        ksort($sectionAliases);
+        $aliasCount = count($sectionAliases);
+        foreach ($sectionAliases as $alias) {
+          $values[] = $row[$alias];
+          $key = implode(CRM_Core_DAO::VALUE_SEPARATOR, $values);
+          if ($i == $aliasCount) {
+            // the last alias is the lowest-level section header; use count as-is
+            $totals[$key] = $dao->ct;
+            if ($showsumcontribs) {
+              $sumcontribs[$key] = $dao->sumcontribs;
+            }
+          } else {
+            // other aliases are higher level; roll count into their total
+            $totals[$key] = (array_key_exists($key, $totals)) ? $totals[$key] + $dao->ct : $dao->ct;
+            if ($showsumcontribs) {
+              $sumcontribs[$key] = array_key_exists($key, $sumcontribs) ? $sumcontribs[$key] + $dao->sumcontribs : $dao->sumcontribs;
+            }
+          }
+        }
+      }
+      //display contribution and total amount
+      if ($showsumcontribs) {
+        $totalandsum = [];
+        $title = '%1 contributions : %2';
+
+        foreach ($totals as $key => $total) {
+          $totalandsum[$key] = ts($title, [
+            1 => $total,
+            2 => CRM_Utils_Money::format($sumcontribs[$key]),
+          ]);
+        }
+        $this->assign('sectionTotals', $totalandsum);
+      } else {
+        //display total count
+        $this->assign('sectionTotals', $totals);
+      }
+    }
   }
+
   public function validate() {
     $grandparent = get_parent_class(get_parent_class($this));
     return $grandparent::validate(); 
@@ -340,10 +428,6 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
       }
       if ($value = CRM_Utils_Array::value('civicrm_contribution_contribution_page_id', $row)) {
         $rows[$rowNum]['civicrm_contribution_contribution_page_id'] = $contributionPages[$value];
-        $entryFound = TRUE;
-      }
-      if ($value = CRM_Utils_Array::value('civicrm_contribution_payment_instrument_id', $row)) {
-        $rows[$rowNum]['civicrm_contribution_payment_instrument_id'] = $paymentInstruments[$value];
         $entryFound = TRUE;
       }
       if (!empty($row['civicrm_batch_batch_id'])) {
