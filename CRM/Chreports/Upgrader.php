@@ -567,10 +567,27 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
         'component' => 'CiviContribute',
         'weight' => 41,
         'description' => 'Total amounts raised from Recurring Contributions'
+      ],
+      [
+        'report_id'=>'chreports/contrib_retention',
+        'name'=>'CRM_Chreports_Form_Report_ExtendSummary',
+        'label' => 'Retention Rate Report',
+        'component' => 'CiviContribute',
+        'weight' => 42,
+        'description' => 'Retention Reate results for contributions'
       ]
     ];
+    //Conditional check to prevent multiple report template id creation
+    $reportTemplates = array();
+    $optionValues = civicrm_api4('OptionValue', 'get', [
+      'where' => [
+        ['option_group_id:name', '=', 'report_template'],
+      ],
+      'limit' => 0,
+    ]);
+    $reportTemplates = $optionValues->column('value'); 
     foreach($templateParams as $templateId => $templateParam) {
-
+      if(!in_array($templateParam['report_id'],$reportTemplates)) {
         $results = \Civi\Api4\OptionValue::create(TRUE)
         ->addValue('option_group_id.name', 'report_template')
         ->addValue('label', $templateParam['label'])
@@ -582,6 +599,7 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
         ->addValue('weight', $templateParam['weight'])
         ->addValue('description', $templateParam['description'])
         ->execute();
+      }
     }
     
     // $this->ctx->log->info('Change report name and form values through upgrader function');
@@ -830,7 +848,6 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
       'activityextended',
       'activity/pivot',
       'activityeditable',
-      'activity',
       'relationshipextended',
       'activityextended',
 
@@ -874,6 +891,73 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
     return TRUE;
   }
 
+  public function upgrade_2403() {
+    $this->ctx->log->info('Change Fiscal year to date and Last Year inc. Today report display dashlet layout');
+    $reportInstances = civicrm_api3('ReportInstance', 'get', [
+      'sequential' => 1,
+      'return' => ["id", "title", "name"],
+      'name' => ['IN' => ["contrib_monthly_fiscal_year", "contrib_quarterly_past_year"]],
+      'options' => ['limit' => 0],
+    ]);
+    if($reportInstances['values']) {
+      $reportInstanceDashlet = [];
+      foreach($reportInstances['values'] as $report) {
+        $report_name = 'report/'.$report['id'];
+        $dashlet = civicrm_api3('Dashboard', 'get', [
+          'sequential' => 1,
+          'name' => $report_name,
+        ]);
+        if(!empty($dashlet['values'][0])) {
+            civicrm_api3('Dashboard', 'create', [
+              'id' => $dashlet['values'][0]['id'],
+              'url' => "civicrm/report/instance/".$report['id']."?reset=1&section=2&context=dashlet",
+              'fullscreen_url' => "civicrm/report/instance/".$report['id']."?reset=1&section=2&context=dashletFullscreen",
+            ]);
+        }
+      }
+    }
+    //Check if other reports has charts
+    $dashboards = civicrm_api4('Dashboard', 'get', [
+      'select' => [
+        'url', 
+        'fullscreen_url',
+      ],
+      'where' => [
+        ['url', 'CONTAINS', 'charts'], 
+        ['fullscreen_url', 'CONTAINS', 'charts'],
+      ],
+    ]);
+  
+    if($dashboards->rowCount > 0) {
+  
+      foreach ($dashboards as $akey=>$avalue) {   
+        if( strpos( $avalue['url'], 'charts=barChart' ) !== false) {
+          $avalue['url']= str_replace("&section=1&charts=barChart", "&section=2", $avalue['url']);
+          $avalue['fullscreen_url']= str_replace("&section=1&charts=barChart", "&section=2", $avalue['fullscreen_url']);
+        }else if(strpos( $avalue['url'], 'charts=pieChart' ) !== false) {
+          $avalue['url']=str_replace("&section=1&charts=pieChart", "&section=2", $avalue['url']);
+          $avalue['fullscreen_url']=str_replace("&section=1&charts=pieChart", "&section=2", $avalue['fullscreen_url']);
+        }
+  
+        $results = civicrm_api4('Dashboard', 'update', [
+          'values' => [
+            'url' => $avalue['url'],
+            'fullscreen_url'=>$avalue['fullscreen_url']
+          ],
+          'where' => [
+            ['id', '=', $avalue['id']],
+          ],
+        ]);
+      }
+    }
+    return TRUE;
+  }
+
+  public function upgrade_2404() {
+    $this->ctx->log->info('Execute updatesections API after adding records in report instance table through upgrade_2301');
+    $result = civicrm_api3('Job', 'updatesections');
+    return TRUE;
+  }
   /**
    * Example: Run an external SQL script.
    *
