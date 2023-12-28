@@ -570,15 +570,6 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
       ]
     ];
     foreach($templateParams as $templateId => $templateParam) {
-
-      //Conditional check to prevent multiple report template id creation
-      $optionValues = civicrm_api4('OptionValue', 'get', [
-        'where' => [
-          ['value', '=', $templateParam['report_id']],
-        ],
-        'limit' => 0,
-      ]);
-      if($optionValues->rowCount == 0) {
         $results = \Civi\Api4\OptionValue::create(TRUE)
         ->addValue('option_group_id.name', 'report_template')
         ->addValue('label', $templateParam['label'])
@@ -590,7 +581,6 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
         ->addValue('weight', $templateParam['weight'])
         ->addValue('description', $templateParam['description'])
         ->execute();
-      }
     }
     
     // $this->ctx->log->info('Change report name and form values through upgrader function');
@@ -882,6 +872,7 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
     }
     return TRUE;
   }
+  
 
   /**
    * Example: Run an external SQL script.
