@@ -570,6 +570,7 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
       ]
     ];
     foreach($templateParams as $templateId => $templateParam) {
+
         $results = \Civi\Api4\OptionValue::create(TRUE)
         ->addValue('option_group_id.name', 'report_template')
         ->addValue('label', $templateParam['label'])
@@ -872,7 +873,6 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
     }
     return TRUE;
   }
-  
 
   /**
    * Example: Run an external SQL script.

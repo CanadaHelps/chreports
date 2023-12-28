@@ -36,50 +36,48 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
       return $statistics;
     }
   }
-  
+
   public function sectionTotals()
-  { 
+  {
     //get select clause statements for section headers
-    list($select,$columnHeader) =$this->_reportInstance->getSortBySectionDetails();
+    list($select, $columnHeader) = $this->_reportInstance->getSortBySectionDetails();
     if (empty($select)) {
       return;
-    }else{
+    } else {
       // pull section aliases out of $this->_sections
       $sectionAliases = array_keys($this->_sections);
       $addtotals = '';
-      if (array_search("civicrm_contribution_total_amount", $this->_selectAliases) !==
+      if (
+        array_search("civicrm_contribution_total_amount", $this->_selectAliases) !==
         FALSE
       ) {
         $addtotals = ", sum(civicrm_contribution.total_amount) as sumcontribs";
         $showsumcontribs = TRUE;
       }
       //to get correct section header for calculated fields
-      if(!empty($this->_reportInstance->getCalculatedFieldsList()))
-      {
+      if (!empty($this->_reportInstance->getCalculatedFieldsList())) {
         $deletedSectionClause = [];
-        foreach(array_keys($this->_reportInstance->getCalculatedFieldsList()) as $sectionkey => $sectionValue)
-        {
-          $columnInfo = $this->_reportInstance->getFieldMapping( $this->_reportInstance->getEntityTableFromField($sectionValue), $sectionValue);
-            $sortByAlias = ($columnInfo['custom_alias']) ? $columnInfo['custom_alias'] : $columnInfo['table_name'].'_'.$sectionValue;
-              if (($key = array_search($sortByAlias,$sectionAliases)) !== false) {
-                //if calculated field is there in section header unset that clause first because it might have aggregated function in group by clause
-                unset($sectionAliases[$key]);
-                if(!in_array($columnInfo['table_name'].'.id',$sectionAliases))
-                  $sectionAliases[$key] = $columnInfo['table_name'].'.id';
-                $deletedSectionClause[$sortByAlias] = $columnInfo['table_name'].'.id';
-              }
+        foreach (array_keys($this->_reportInstance->getCalculatedFieldsList()) as $sectionkey => $sectionValue) {
+          $columnInfo = $this->_reportInstance->getFieldMapping($this->_reportInstance->getEntityTableFromField($sectionValue), $sectionValue);
+          $sortByAlias = ($columnInfo['custom_alias']) ? $columnInfo['custom_alias'] : $columnInfo['table_name'] . '_' . $sectionValue;
+          if (($key = array_search($sortByAlias, $sectionAliases)) !== false) {
+            //if calculated field is there in section header unset that clause first because it might have aggregated function in group by clause
+            unset($sectionAliases[$key]);
+            if (!in_array($columnInfo['table_name'] . '.id', $sectionAliases))
+              $sectionAliases[$key] = $columnInfo['table_name'] . '.id';
+            $deletedSectionClause[$sortByAlias] = $columnInfo['table_name'] . '.id';
+          }
         }
         ksort($sectionAliases);
       }
-    
+
       $selectStatement = "SELECT " . implode(', ', $select) . " ";
       $query = $selectStatement .
         "$addtotals, count(*) as ct {$this->_from} {$this->_where} group by " .
         implode(", ", $sectionAliases);
       //after query formation reinstate section columns for calculated fields display
-      foreach($deletedSectionClause as $k => $v)
-      {
-        if (($key = array_search($v,$sectionAliases)) !== false) {
+      foreach ($deletedSectionClause as $k => $v) {
+        if (($key = array_search($v, $sectionAliases)) !== false) {
           unset($sectionAliases[$key]);
           $sectionAliases[$key] = $k;
         }
@@ -103,8 +101,7 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
             if ($showsumcontribs) {
               $sumcontribs[$key] = $dao->sumcontribs;
             }
-          }
-          else {
+          } else {
             // other aliases are higher level; roll count into their total
             $totals[$key] = (array_key_exists($key, $totals)) ? $totals[$key] + $dao->ct : $dao->ct;
             if ($showsumcontribs) {
@@ -125,13 +122,13 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
           ]);
         }
         $this->assign('sectionTotals', $totalandsum);
-      }
-      else {
-         //display total count
+      } else {
+        //display total count
         $this->assign('sectionTotals', $totals);
       }
     }
   }
+
   public function validate() {
     $grandparent = get_parent_class(get_parent_class($this));
     return $grandparent::validate(); 
