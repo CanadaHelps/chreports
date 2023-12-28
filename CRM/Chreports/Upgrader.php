@@ -577,19 +577,29 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
         'description' => 'Retention Reate results for contributions'
       ]
     ];
+    //Conditional check to prevent multiple report template id creation
+    $reportTemplates = array();
+    $optionValues = civicrm_api4('OptionValue', 'get', [
+      'where' => [
+        ['option_group_id:name', '=', 'report_template'],
+      ],
+      'limit' => 0,
+    ]);
+    $reportTemplates = $optionValues->column('value'); 
     foreach($templateParams as $templateId => $templateParam) {
-
-      $results = \Civi\Api4\OptionValue::create(TRUE)
-      ->addValue('option_group_id.name', 'report_template')
-      ->addValue('label', $templateParam['label'])
-      ->addValue('value', $templateParam['report_id'])
-      ->addValue('name', $templateParam['name'])
-      ->addValue('component_id:name', $templateParam['component'])
-      ->addValue('is_active', TRUE)
-      ->addValue('is_reserved', TRUE)
-      ->addValue('weight', $templateParam['weight'])
-      ->addValue('description', $templateParam['description'])
-      ->execute();
+      if(!in_array($templateParam['report_id'],$reportTemplates)) {
+        $results = \Civi\Api4\OptionValue::create(TRUE)
+        ->addValue('option_group_id.name', 'report_template')
+        ->addValue('label', $templateParam['label'])
+        ->addValue('value', $templateParam['report_id'])
+        ->addValue('name', $templateParam['name'])
+        ->addValue('component_id:name', $templateParam['component'])
+        ->addValue('is_active', TRUE)
+        ->addValue('is_reserved', TRUE)
+        ->addValue('weight', $templateParam['weight'])
+        ->addValue('description', $templateParam['description'])
+        ->execute();
+      }
     }
     
     // $this->ctx->log->info('Change report name and form values through upgrader function');
@@ -940,6 +950,12 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
         ]);
       }
     }
+    return TRUE;
+  }
+
+  public function upgrade_2404() {
+    $this->ctx->log->info('Execute updatesections API after adding records in report instance table through upgrade_2301');
+    $result = civicrm_api3('Job', 'updatesections');
     return TRUE;
   }
   /**
