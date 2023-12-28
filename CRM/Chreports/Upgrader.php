@@ -585,12 +585,7 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
       ],
       'limit' => 0,
     ]);
-    if($optionValues->rowCount > 0) {
-      foreach($optionValues as $optionarrayKey =>$optionarrayValue)
-      {
-        $reportTemplates[] = $optionarrayValue['value'];
-      }
-    }
+    $reportTemplates = $optionValues->column('value'); 
     foreach($templateParams as $templateId => $templateParam) {
       if(!in_array($templateParam['report_id'],$reportTemplates)) {
         $results = \Civi\Api4\OptionValue::create(TRUE)
