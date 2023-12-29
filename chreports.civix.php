@@ -408,7 +408,7 @@ class CRM_Chreports_ExtensionUtil {
    * Return only base template where JSON config file is present but no corresponding report_instance_id
    * @return array
   */
-  public function getOnlyBaseTemplates() {
+  public static function getOnlyBaseTemplates() {
     return [
       'contrib_detailed',
       'contrib_summary',

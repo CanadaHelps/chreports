@@ -116,7 +116,7 @@ class CRM_Chreports_Reports_ReportConfiguration {
      * @return array
      */
     public function getFieldInfo( $fieldName ): array {
-        if ($this->_mappings[$fieldName]){
+        if ( isset($this->_mappings[$fieldName]) ){
             return $this->_mappings[$fieldName];
         }
             
@@ -127,8 +127,8 @@ class CRM_Chreports_Reports_ReportConfiguration {
     //get operator type values for filters 
     public function getOperatorType($fieldName) : string {
         $fieldInfo = $this->getFieldInfo($fieldName);
-        $type = ucwords($fieldInfo["field_type"]);
-        $operator = $fieldInfo['options'];
+        $type = isset($fieldInfo["field_type"]) ? ucwords($fieldInfo["field_type"]) : false;
+        $operator = $fieldInfo['options'] ?? false;
         $operatorType = '';
         switch (true) {
             case ($type === "Boolean" || $fieldName==='yid' || $fieldName==='base_year'):
@@ -191,7 +191,7 @@ class CRM_Chreports_Reports_ReportConfiguration {
         $fieldTable = $this->getEntityTableFromField($fieldName,true);
        
         // option values being created for custom fields such as ch_fund
-        if(isset($fieldInfo['custom']) && $fieldInfo['custom'] === true && $fieldInfo['field_type'] !== boolean){
+        if(isset($fieldInfo['custom']) && $fieldInfo['custom'] === true && !is_bool($fieldInfo['field_type']) ){
             
             $columnName = E::getColumnNameByName($fieldInfo['custom_fieldName']);
             $optionGroupName = E::getOptionGroupNameByColumnName($columnName);
@@ -204,7 +204,7 @@ class CRM_Chreports_Reports_ReportConfiguration {
             $options =   $this->getOptionsListForOptionGroup($fieldNameVal,$fieldTable,$groupName);
 
         // option values for boolean fields
-        } else if (isset($fieldInfo['field_type']) && $fieldInfo['field_type'] === boolean){ 
+        } else if (isset($fieldInfo['field_type']) && is_bool($fieldInfo['field_type'])){ 
             
             $options =   [
               '' => ts('Any'),
@@ -564,7 +564,8 @@ class CRM_Chreports_Reports_ReportConfiguration {
     public static function getFilePath(array $reportDetails, $action = 'save'): array {
         if($reportDetails['name'])
             $report_id = self::escapeFileName($reportDetails['name']);
-        if($action == 'copy' || $action == 'migrate' || $reportDetails['created_id']) {
+
+        if($action == 'copy' || $action == 'migrate' || isset($reportDetails['created_id']) ) {
             $filePath['base'] = CRM_Core_Config::singleton()->uploadDir.'reports/saved/';
             $filePath['source'] = $filePath['base']. $reportDetails['created_id']. '_' . $report_id . '_' . $reportDetails['id']. '.json';
             // For migration, possibilty is there that core template report instance is missing

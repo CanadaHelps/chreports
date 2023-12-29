@@ -138,7 +138,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         // TODO: use array_search 
         $defaultFields = [];
         foreach($this->_settings['fields'] as $fieldKey => $value) {
-            if($this->_settings['fields'][$fieldKey]['default']){
+            if ( isset($this->_settings['fields'][$fieldKey]['default']) ){
                 $defaultFields[] = $fieldKey;
             }
         }
@@ -564,7 +564,8 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
             //$entityName = $fieldInfo['entity'];
             $var[$entityName]['fields'][$fieldName] = [
                 "title" => $fieldInfo["title"],
-                "default" => ( $fieldInfo["default"] === true || $fieldInfo["selected"] === true ),
+                "default" => ( (isset($fieldInfo["default"]) && $fieldInfo["default"] === true) 
+                || (isset($fieldInfo["selected"]) && $fieldInfo["selected"] === true) ),
                 "type" => $filterType['type'],
                 "custom_alias" =>  $entityName.'_'.$fieldName,
             ];
@@ -583,7 +584,8 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
             }else{
                 $var[$entityName]['group_bys'][$fieldName] = [
                     'title' => $fieldInfo["title"],
-                    "default" => ( $fieldInfo["default"] === true || $fieldInfo["selected"] === true ),
+                    "default" => ( (isset($fieldInfo["default"]) && $fieldInfo["default"] === true) 
+                        || (isset($fieldInfo["selected"]) && $fieldInfo["selected"] === true) ),
                 ];
             }
 
@@ -925,8 +927,8 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         $reportType = $this->getReportType();
         foreach($this->_params['order_bys'] as $orderbyColumnKey=>$orderbyColumnValue) {
             //For detail and summary report if Section Header / Group By is checked, for those fields null data will use "Unassigned" as value
-            if($orderbyColumnValue['section'])
-            $unassignedDataFields[] = $orderbyColumnValue['column'];
+            if ( isset($orderbyColumnValue['section']) )
+                $unassignedDataFields[] = $orderbyColumnValue['column'];
 
             //For default sorting fields
             if(!empty($this->getDefaultColumns()) 
@@ -1451,12 +1453,14 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     //set default option value to Sort by section
     // TODO: explain + rename?
     public function setDefaultOptionSortBy(array $defaults) {
-        if(!empty($this->_settings['order_bys']))
-        {
+        if(!empty($this->_settings['order_bys'])) {
             unset($defaults['order_bys']);
-            foreach($this->_settings['order_bys'] as $fieldName => $orderConfig)
-            {
-                $defaults['order_bys'][] = ['column'=>$fieldName,'order'=>$orderConfig['order'],'section'=>$orderConfig['header'] ? true : false];
+            foreach($this->_settings['order_bys'] as $fieldName => $orderConfig) {
+                $defaults['order_bys'][] = [
+                    'column'=>$fieldName,
+                    'order'=>$orderConfig['order'],
+                    'section'=> isset($orderConfig['header']) ? true : false
+                ];
             }
         }
         return $defaults;
