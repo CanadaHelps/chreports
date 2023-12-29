@@ -1,0 +1,24 @@
+{ 
+    "name": "contrib_summary_monthly",
+    "title": "Contribution History (Monthly)",
+    "type": "summary",
+    "period": "monthly",
+    "entity": "contribution",
+    "template": "chreports/contrib_summary_monthly",
+    "fields":{
+        "contribution_source": {},
+        "campaign_id": {},
+        "financial_type_id": {},
+        "contribution_page_id": {}
+    },
+    "use_default_filters" : true,
+    "groupByClause" : false,
+    "orderByClause" : false,
+    "filters":{
+        "contribution_status_id": {
+            "in": [
+                "1"
+            ]
+        }
+    }
+}

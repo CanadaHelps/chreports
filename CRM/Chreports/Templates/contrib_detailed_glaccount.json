@@ -1,0 +1,47 @@
+{ 
+    "name": "contrib_detailed_glaccount",
+    "title": "Contribution History By GL Account (Detailed)",
+    "template": "chreports/contrib_detailed",
+    "type": "detailed",
+    "entity": "contribution",
+    "fields":{
+        "gl_account": {
+            "default" : true
+        },
+        "contribution_source": {},
+        "financial_type_id":{},
+        "payment_instrument_id":{},
+        "gl_code": {"selected" : true},
+        "account_type": {"selected" : true},
+        "sort_name": {"selected" : true},
+        "exposed_id": {"selected" : true},
+        "receive_date": {"selected" : true},
+        "total_amount": {"selected" : true}
+        
+    },
+    "order_bys":{
+        "gl_account": {
+            "order": "ASC"
+        }
+    },
+    "use_default_filters" : false,
+    "filters":{
+        "contact_type" : {},
+        "contact_sub_type" :{},
+        "contribution_id":{},
+        "receive_date":{},
+        "receipt_date":{},
+        "gl_account":{},
+        "contribution_status_id": {
+            "in": [
+                "1"
+            ]
+        },
+        "financial_type_id":{},
+        "payment_instrument_id":{},
+        "card_type_id":{},
+        "receipted_amount":{},
+        "disbursment_date":{}
+    },
+    "groupByClause" : false
+}

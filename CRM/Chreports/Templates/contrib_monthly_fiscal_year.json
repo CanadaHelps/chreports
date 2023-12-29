@@ -1,0 +1,28 @@
+{ 
+    "name": "contrib_monthly_fiscal_year",
+    "title": "Fiscal Year to Date (Monthly)",
+    "type": "summary",
+    "template": "chreports/contrib_period_detailed",
+    "period":"monthly",
+    "entity": "contribution",
+    "fields":{
+        "receive_date_start": {"default" : true}
+    },
+    "order_bys":{
+        "receive_date_start": {
+            "order": "ASC"
+        }
+    },
+    "use_default_filters" : true,
+    "groupByClause" : false,
+    "filters":{
+        "contribution_status_id": {
+            "in": [
+                "1"
+            ]
+        },
+        "receive_date": {
+            "relative": "this.fiscal_year"
+        }
+    }
+}

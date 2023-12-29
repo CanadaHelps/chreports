@@ -1,0 +1,53 @@
+{ 
+    "name": "contrib_sybunt",
+    "title": "SYBNT",
+    "type": "detailed",
+    "template": "chreports/contrib_sybunt",
+    "entity": "contact",
+    "fields":{
+        "exposed_id": {"selected" : true},
+        "sort_name": {"default" : true},
+        "first_name": {},
+        "last_name": {},
+        "contact_type": {},
+        "contact_sub_type": {},
+        "organization_name": {},
+        "email": {},
+        "phone": {},
+        "street_address": {},
+        "city": {},
+        "postal_code": {},
+        "country": {},
+        "province": {},
+        "life_time_total": {"default" : true},
+        "last_four_year_total_amount": {"selected" : true},
+        "last_three_year_total_amount": {"selected" : true},
+        "last_two_year_total_amount": {"selected" : true},
+        "last_year_total_amount": {"default" : true}
+    },
+    "order_bys":{
+        "last_year_total_amount": {
+            "order": "DESC"
+        },
+        "sort_name": {
+            "order": "ASC"
+        }
+    },
+    "use_default_filters" : false,
+    "filters":{
+        "life_time_total":{},
+        "contact_type": {},
+        "contact_sub_type": {},
+        "tagid":{},
+        "gid":{},
+        "do_not_phone": {},
+        "do_not_email": {},
+        "do_not_sms": {},
+        "do_not_mail": {},
+        "is_opt_out": {},
+        "yid": {
+            "calendar": 2023
+        }
+    },
+    "groupByClause" : false
+}

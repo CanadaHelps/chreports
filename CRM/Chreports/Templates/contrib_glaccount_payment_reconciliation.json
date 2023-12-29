@@ -1,0 +1,76 @@
+{ 
+    "name": "contrib_glaccount_payment_reconciliation",
+    "title": "GL Account & Payment Method Reconciliation Report (Full)",
+    "type": "detailed",
+    "template": "chreports/contrib_glaccount",
+    "entity": "contribution",
+    "fields":{
+        "contact_name":{},
+        "sort_name":{"selected" : true},
+        "external_identifier":{},
+        "contact_type":{},
+        "debit_accounting_code":{},
+        "debit_contact_id":{},
+        "credit_accounting_code":{},
+        "credit_contact_id":{},
+        "debit_name":{},
+        "credit_name":{"default" : true},
+        "financial_type_id":{"selected" : true},
+        "batch_title":{},
+        "batch_name":{"selected" : true},
+        "receive_date":{"selected" : true},
+        "invoice_id":{"selected" : true},
+        "invoice_number":{},
+        "contribution_status_id":{"selected" : true},
+        "contribution_source":{},
+        "check_number":{"selected" : true},
+        "payment_instrument_id":{"selected" : true},
+        "contribution_id":{"selected" : true},
+        "amount":{"selected" : true},       
+        "id": {"default" : true},
+        "contact_source":{},
+        "card_type_id":{}
+    },
+    "order_bys":{
+        "credit_name": {
+            "order": "ASC",
+            "header": true
+        }
+    },
+    "use_default_filters" : false,
+    "filters":{
+        "sort_name":{},
+        "contribution_page_id":{},
+        "contact_id":{},
+        "contact_type":{},
+        "receive_date":{},
+        "tagid":{},
+        "gid":{},
+        "campaign_id":{},
+        "amount":{},
+        "debit_accounting_code":{},
+        "debit_contact_id":{},
+        "credit_accounting_code":{},
+        "credit_contact_id":{},
+        "debit_name":{},
+        "credit_name":{},
+        "financial_type_id":{},
+        "contribution_id":{},
+        "receipt_date":{},
+        "contribution_source":{},
+        "payment_instrument_id":{},
+        "contribution_currency":{},
+        "contribution_status_id": {
+            "in": [
+                "1"
+            ]
+        },
+        "financial_trxn_status_id": {
+            "in": [
+                "1"
+            ]
+        },
+        "card_type_id":{}
+    },
+    "groupByClause" : false
+}

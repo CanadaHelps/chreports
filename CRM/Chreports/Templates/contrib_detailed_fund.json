@@ -1,0 +1,56 @@
+{ 
+    "name": "contrib_detailed_fund",
+    "title": "Contribution History by Fund (Detailed)",
+    "template": "chreports/contrib_detailed",
+    "type": "detailed",
+    "entity": "contribution",
+    "fields":{
+        "sort_name": {"selected" : true},
+        "first_name": {},
+        "last_name": {},
+        "organization_name": {},
+        "exposed_id": {},
+        "payment_instrument_id": {},
+        "campaign_id": {},
+        "financial_type_id": {"selected" : true},
+        "contribution_page_id": {},
+        "contribution_source": {},
+        "receive_date": {},
+        "total_amount": {
+            "default" : true
+        }
+    },
+    "order_bys":{
+        "financial_type_id": {
+            "order": "ASC",
+            "header": true
+        }
+    },
+    "use_default_filters" : false,
+    "filters":{
+        "contact_type" : {},
+        "contact_sub_type" :{},
+        "sort_name": {},
+        "first_name": {},
+        "last_name": {},
+        "tagid":{},
+        "gid":{},
+        "receive_date":{},
+        "receipt_date":{},
+        "contribution_source":{},
+        "non_deductible_amount":{},
+        "financial_type_id":{},
+        "contribution_page_id":{},
+        "campaign_id":{},
+        "total_amount":{},
+        "contribution_status_id": {
+            "in": [
+                "1"
+            ]
+        },
+        "payment_instrument_id":{},
+        "campaign_type":{},
+        "ch_fund":{}
+    },
+    "groupByClause" : false
+}

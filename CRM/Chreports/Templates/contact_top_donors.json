@@ -1,0 +1,66 @@
+{ 
+    "name": "contact_top_donors",
+    "title": "Top contributors",
+    "template": "chreports/contact_top_donors",
+    "type": "detailed",
+    "entity": "contact",
+    "fields":{
+        "exposed_id": {},
+        "sort_name": {"default" : true},
+        "first_name": {},
+        "middle_name": {},
+        "last_name": {},
+        "contact_type": {},
+        "contact_sub_type": {},
+        "gender_id": {},
+        "birth_date": {},
+        "age": {},
+        "email": {},
+        "phone": {},
+        "street_address": {},
+        "supplemental_address_1": {},
+        "supplemental_address_2": {},
+        "city": {},
+        "postal_code": {},
+        "country": {},
+        "province": {},
+        "card_type_id": {},
+        "location_type_id":{},
+        "address_id":{},
+        "is_primary_address":{},
+        "total_lifetime_contributions": {"default" : true},
+        "amount_of_last_contribution": {"default" : true}
+    },
+    "order_bys":{
+        "sort_name": {
+            "order": "ASC"
+        },
+        "total_lifetime_contributions": {
+            "order": "DESC"
+        }
+    },
+    "use_default_filters" : false,
+    "filters":{
+        "receive_date":{
+            "relative": "this.month"
+        },
+        "receipt_date":{},
+        "total_range":{
+            "eq": 15
+        },
+        "financial_type_id":{},
+        "contribution_status_id": {
+            "in": [
+                "1"
+            ]
+        },
+        "financial_account":{},
+        "card_type_id":{},
+        "tagid":{},
+        "disbursement_date":{},
+        "gid":{},
+        "on_hold":{},
+        "ch_fund":{}
+    },
+    "groupByClause" : false
+}

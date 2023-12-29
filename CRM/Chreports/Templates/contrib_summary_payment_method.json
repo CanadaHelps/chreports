@@ -1,0 +1,25 @@
+{ 
+    "name": "contrib_summary_payment_method",
+    "title": "Contribution History By Payment Method (Summary)",
+    "template": "chreports/contrib_summary",
+    "type": "summary",
+    "entity": "contribution",
+    "fields":{
+        "payment_instrument_id": {
+            "default" : true
+        }
+    },
+    "order_bys":{
+        "payment_instrument_id": {
+            "order": "ASC"
+        }
+    },
+    "use_default_filters" : true,
+    "filters":{
+        "contribution_status_id": {
+            "in": [
+                "1"
+            ]
+        }
+    }
+}

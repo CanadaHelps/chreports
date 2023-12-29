@@ -1,0 +1,26 @@
+{ 
+    "name": "contrib_monthly_campaign",
+    "title": "Contribution History By Camapaign (Monthly)",
+    "type": "summary",
+    "template": "chreports/contrib_summary_monthly",
+    "period": "monthly",
+    "entity": "contribution",
+    "fields":{
+        "contribution_source": {},
+        "campaign_id": {},
+        "financial_type_id": {},
+        "contribution_page_id": {
+            "selected" : true
+        }
+    },
+    "use_default_filters" : true,
+    "groupByClause" : false,
+    "orderByClause" : false,
+    "filters":{
+        "contribution_status_id": {
+            "in": [
+                "1"
+            ]
+        }
+    }
+}

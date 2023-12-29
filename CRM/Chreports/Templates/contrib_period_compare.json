@@ -1,0 +1,71 @@
+{
+    "name": "contrib_period_compare",
+    "title": "Comparison Report",
+    "type": "detailed",
+    "template": "chreports/contrib_period_compare",
+    "entity": "contact",
+    "fields":{
+        "exposed_id":{"default" : true},
+        "sort_name":{"default" : true},
+        "first_name": {},
+        "last_name": {},
+        "phone":{ "selected" : true},
+        "organization_name":{},
+        "email":{},
+        "range_one_stat":{"default" : true},
+        "range_two_stat":{"default" : true},
+        "street_address":{ "selected" : true},
+        "city":{ "selected" : true},
+        "province":{},
+        "postal_code":{ "selected" : true},
+        "country":{ "selected" : true},
+        "total_lifetime_contributions":{},
+        "amount_of_last_contribution":{},
+        "date_of_last_contribution":{"selected" : true},
+        "date_of_first_contribution":{"selected" : true},
+        "largest_contribution":{},
+        "count_of_contributions":{"selected" : true}
+    },
+    "order_bys":{
+        "exposed_id": {
+            "order": "ASC"
+        }
+    },
+    "use_default_filters" : false,
+    "filters":{
+        "id":{},
+        "exposed_id":{},
+        "sort_name":{},
+        "first_name":{},
+        "last_name":{},
+        "phone":{},
+        "organization_name":{},
+        "email":{},
+        "street_address":{},
+        "city":{},
+        "province":{},
+        "postal_code":{},
+        "country":{},
+        "total_lifetime_contributions":{},
+        "amount_of_last_contribution":{},
+        "date_of_last_contribution":{},
+        "date_of_first_contribution":{},
+        "largest_contribution":{},
+        "count_of_contributions":{},
+        "range_one_stat":{},
+        "range_two_stat":{},
+        "repeat_contri_initial_date_range": {
+            "relative": "previous.year"
+        },
+        "repeat_contri_second_date_range": {
+            "relative": "this.year"
+        },
+        "contribution_status_id": {
+            "in": [
+                "1"
+            ]
+        },
+        "per_change":{}
+    },
+    "groupByClause" : false
+}

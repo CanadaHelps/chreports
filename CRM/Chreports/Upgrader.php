@@ -467,6 +467,497 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
     return TRUE;
   }
 
+  public function upgrade_2301() {
+
+    $this->ctx->log->info('Change template id in option_value table');
+
+    $templateParams = [
+      [
+        'report_id'=>'chreports/contrib_detailed',
+        'name'=>'CRM_Chreports_Form_Report_ExtendedDetail',
+        'label' => 'Contribution (Detailed)',
+        'component' => 'CiviContribute',
+        'weight' => 103,
+        'description' => 'Total amounts raised in detailed'
+      ],
+      [
+        'report_id'=>'chreports/contrib_sybunt',
+        'name'=>'CRM_Chreports_Form_Report_ExtendedDetail',
+        'label' => 'SYBUNT',
+        'component' => 'CiviContribute',
+        'weight' => 101,
+        'description' => 'Total amounts raised from Some Years But Not This Year'
+      ],
+      [
+        'report_id'=>'chreports/contrib_summary',
+        'name'=>'CRM_Chreports_Form_Report_ExtendSummary',
+        'label' => 'Contribution (Summary)',
+        'component' => 'CiviContribute',
+        'weight' => 102,
+        'description' => 'Total amounts raised in summaries'
+      ],
+      [
+        'report_id'=>'chreports/contrib_lybunt',
+        'name'=>'CRM_Chreports_Form_Report_ExtendedDetail',
+        'label' => 'LYBUNT',
+        'component' => 'CiviContribute',
+        'weight' => 107,
+        'description' => 'Total amounts raised from Last Year But Not This Year'
+      ],
+      [
+        'report_id'=>'chreports/contrib_glaccount',
+        'name'=>'CRM_Chreports_Form_Report_ExtendedDetail',
+        'label' => 'GL Account Report',
+        'component' => 'CiviContribute',
+        'weight' => 32,
+        'description' => 'Total amounts raised from GL Account'
+      ],
+      [
+        'report_id'=>'chreports/contrib_summary_monthly',
+        'name'=>'CRM_Chreports_Form_Report_ExtendSummary',
+        'label' => 'Contribution History (Monthly)',
+        'component' => 'CiviContribute',
+        'weight' => 4,
+        'description' => 'Total amounts raised month over month'
+      ],
+      [
+        'report_id'=>'chreports/contrib_summary_yearly',
+        'name'=>'CRM_Chreports_Form_Report_ExtendSummary',
+        'label' => 'Contribution History (Yearly)',
+        'component' => 'CiviContribute',
+        'weight' => 4,
+        'description' => 'Total amounts raised year over year'
+      ],
+      [
+        'report_id'=>'chreports/contrib_period_detailed',
+        'name'=>'CRM_Chreports_Form_Report_ExtendSummary',
+        'label' => 'Fiscal / Quarterly Report',
+        'component' => 'CiviContribute',
+        'weight' => 4,
+        'description' => 'Total amounts raised this fiscal / quarter'
+      ],
+      [
+        'report_id'=>'chreports/contact_top_donors',
+        'name'=>'CRM_Chreports_Form_Report_ExtendedDetail',
+        'label' => 'Top Donors Report',
+        'component' => 'CiviContribute',
+        'weight' => 13,
+        'description' => 'Top Donors for a defined date range'
+      ],
+      [
+        'report_id'=>'chreports/opportunity_detailed',
+        'name'=>'CRM_Chreports_Form_Report_ExtendedDetail',
+        'label' => 'Opportunity Report',
+        'component' => 'CiviGrant',
+        'weight' => 30,
+        'description' => 'All Opportunities with detailed information.'
+      ],
+      [
+        'report_id'=>'chreports/contrib_period_compare',
+        'name'=>'CRM_Chreports_Form_Report_ExtendedDetail',
+        'label' => 'Comparison Report',
+        'component' => 'CiviContribute',
+        'weight' => 4,
+        'description' => 'Total amounts raised from Comparison Report'
+      ],
+      [
+        'report_id'=>'chreports/contrib_recurring',
+        'name'=>'CRM_Chreports_Form_Report_ExtendedDetail',
+        'label' => 'Recurring Contributions',
+        'component' => 'CiviContribute',
+        'weight' => 41,
+        'description' => 'Total amounts raised from Recurring Contributions'
+      ],
+      [
+        'report_id'=>'chreports/contrib_retention',
+        'name'=>'CRM_Chreports_Form_Report_ExtendSummary',
+        'label' => 'Retention Rate Report',
+        'component' => 'CiviContribute',
+        'weight' => 42,
+        'description' => 'Retention Reate results for contributions'
+      ]
+    ];
+    //Conditional check to prevent multiple report template id creation
+    $reportTemplates = array();
+    $optionValues = civicrm_api4('OptionValue', 'get', [
+      'where' => [
+        ['option_group_id:name', '=', 'report_template'],
+      ],
+      'limit' => 0,
+    ]);
+    $reportTemplates = $optionValues->column('value'); 
+    foreach($templateParams as $templateId => $templateParam) {
+      if(!in_array($templateParam['report_id'],$reportTemplates)) {
+        $results = \Civi\Api4\OptionValue::create(TRUE)
+        ->addValue('option_group_id.name', 'report_template')
+        ->addValue('label', $templateParam['label'])
+        ->addValue('value', $templateParam['report_id'])
+        ->addValue('name', $templateParam['name'])
+        ->addValue('component_id:name', $templateParam['component'])
+        ->addValue('is_active', TRUE)
+        ->addValue('is_reserved', TRUE)
+        ->addValue('weight', $templateParam['weight'])
+        ->addValue('description', $templateParam['description'])
+        ->execute();
+      }
+    }
+    
+    // $this->ctx->log->info('Change report name and form values through upgrader function');
+    $newReportParams = [
+      'contrib_detailed_campaign' => [
+        'name'=>'Contribution History by Campaign (Detailed)',
+        'report_id'=>'chreports/contrib_detailed',
+        'title' => 'Contribution History by Campaign (Detailed)'
+      ],
+      'contrib_detailed_campaign_group' => [
+        'name'=>'Contribution History by Campaign Group (Detailed)',
+        'report_id'=>'chreports/contrib_detailed',
+        'title' => 'Contribution History by Campaign Group (Detailed)'
+      ],
+      'contrib_detailed_fund' => [
+        'name'=>'Contribution History by Fund (Detailed)',
+        'report_id'=>'chreports/contrib_detailed',
+        'title' => 'Contribution History by Fund (Detailed)'
+      ],
+      'contrib_sybunt' => [
+        'name'=>'SYBNT',
+        'report_id'=>'chreports/contrib_sybunt',
+        'title' => 'SYBNT'
+      ],
+      'contrib_summary_campaign' =>  [
+        'name'=>'Contribution History by Campaign (Summary)',
+        'report_id'=>'chreports/contrib_summary',
+        'title' => 'Contribution History by Campaign (Summary)'
+      ],
+      'contrib_summary_campaign_group' => [
+        'name'=>'Contribution History by Campaign Group (Summary)',
+        'report_id'=>'chreports/contrib_summary',
+        'title' => 'Contribution History by Campaign Group (Summary)'
+      ],
+      'contrib_summary_chfund' =>  [
+        'name'=>'Contribution History by CH Fund (Summary)',
+        'report_id'=>'chreports/contrib_summary',
+        'title' => 'Contribution History by CH Fund (Summary)'
+      ],
+      'contrib_summary_fund' =>  [
+        'name'=>'Contribution History by Fund (Summary)',
+        'report_id'=>'chreports/contrib_summary',
+        'title' => 'Contribution History by Fund (Summary)'
+      ],
+      'contrib_summary_source' => [
+        'name'=>'Contribution History by Source (Summary)',
+        'report_id'=>'chreports/contrib_summary',
+        'title' => 'Contribution History by Source (Summary)'
+      ],
+      'contrib_detailed_glaccount' => [
+        'name'=>'Contribution History by GL Account (Detailed)',
+        'report_id'=>'chreports/contrib_detailed',
+        'title' => 'Contribution History by GL Account (Detailed)'
+      ],
+      'contrib_summary_glaccount' => [
+        'name'=>'Contribution History by GL Account (Summary)',
+        'report_id'=>'chreports/contrib_summary',
+        'title' => 'Contribution History by GL Account (Summary)'
+      ],
+      'contrib_recurring' => [
+        'name'=>'Recurring Contributions (Summary)',
+        'report_id'=>'chreports/contrib_recurring',
+        'title' => 'Recurring Contributions'
+      ],
+      'contrib_lybunt' => [
+        'name'=>'LYBNT',
+        'report_id'=>'chreports/contrib_lybunt',
+        'title' => 'LYBNT'
+      ],
+      'contrib_glaccount_payment_reconciliation' =>  [
+        'name'=>'GL Account & Payment Method Reconciliation Report (Full)',
+        'report_id'=>'chreports/contrib_glaccount',
+        'title' => 'GL Account & Payment Method Reconciliation Report (Full)'
+      ],
+      'contrib_summary_payment_method' =>  [
+        'name'=>'Contribution History By Payment Method (Summary)',
+        'report_id'=>'chreports/contrib_summary',
+        'title' => 'Contribution History By Payment Method (Summary)'
+      ],
+      'contrib_monthly_fiscal_year' =>  [
+        'name'=>'Fiscal Year to Date',
+        'report_id'=>'chreports/contrib_period_detailed',
+        'title' => 'Fiscal Year to Date (Monthly)'
+      ],
+      'contrib_quarterly_past_year' => [
+        'name'=>'Last Year inc. Today',
+        'report_id'=>'chreports/contrib_period_detailed',
+        'title' => 'Last 12 Months (Quarterly)'
+      ],
+      'contact_top_donors' => [
+        'name'=>'Top contributors',
+        'report_id'=>'chreports/contact_top_donors',
+        'title' => 'Top Contributors'
+      ],
+      'contrib_monthly_campaign' => [
+        'name'=>'Contribution History by Campaign (Monthly)',
+        'report_id'=>'chreports/contrib_summary_monthly',
+        'title' => 'Contribution History by Campaign (Monthly)'
+      ],
+      'contrib_yearly_campaign' =>  [
+        'name'=>'Contribution History by Campaign (Yearly)',
+        'report_id'=>'chreports/contrib_summary_yearly',
+        'title' => 'Contribution History by Campaign (Yearly)'
+      ],
+      'contrib_monthly_fund' => [
+        'name'=>'Contribution History by Fund (Monthly)',
+        'report_id'=>'chreports/contrib_summary_monthly',
+        'title' => 'Contribution History by Fund (Monthly)'
+      ],
+      'contrib_yearly_fund' => [
+        'name'=>'Contribution History by Fund (Yearly)',
+        'report_id'=>'chreports/contrib_summary_yearly',
+        'title' => 'Contribution History by Fund (Yearly)'
+      ],
+      'opportunity_detailed' =>  [
+        'name'=>'Opportunity Details',
+        'report_id'=>'chreports/opportunity_detailed',
+        'title' => 'Opportunity Details'
+      ],
+      'contrib_detailed_inhonour' =>  [
+        'name'=>'In Honour of',
+        'report_id'=>'chreports/contrib_detailed',
+        'title' => 'In Honour of'
+      ],
+      'contrib_detailed_inmemory' =>  [
+        'name'=>'In Memory of',
+        'report_id'=>'chreports/contrib_detailed',
+        'title' => 'In Memory of'
+      ],
+      'contrib_detailed_receipts' =>  [
+        'name'=>'Receipts',
+        'report_id'=>'chreports/contrib_detailed',
+        'title' => 'Receipts'
+      ],
+      'contact_top_donors_dashlet' =>  [
+        'name'=>'Top Donors (Dashlet)',
+        'report_id'=>'chreports/contact_top_donors',
+        'title' => 'Top Donors (Dashlet)'
+      ],
+      'contrib_latest_dashlet' =>  [
+        'name'=>'Latest Contributions (Dashlet)',
+        'report_id'=>'chreports/contrib_detailed',
+        'title' => 'Latest Contributions (Dashlet)'
+      ],
+      'contrib_retention_dashlet' =>  [
+        'name'=>'Retention Rate Report (Dashlet)',
+        'report_id'=>'chreports/contrib_retention',
+        'title' => 'Retention Rate Report (Dashlet)'
+      ]
+    ];
+   
+    foreach($newReportParams as $newName => $reportParam) {
+      $existingName = $reportParam['name'];
+      $newTemplateID = $reportParam['report_id'];
+      $newtitle = $reportParam['title'];
+      $sql = "UPDATE civicrm_report_instance SET `name` = '".$newName."',`report_id` = '".$newTemplateID."', `title`= '".$newtitle."', `form_values` = NULL
+      WHERE `name` = '".$existingName."'";
+      CRM_Core_DAO::executeQuery($sql);
+      
+    }
+
+   
+      $instanceCreation = [
+        'contrib_period_compare'
+        ];
+  
+      foreach($instanceCreation as $test)
+      {
+        $reportInstanceCount = CRM_Core_DAO::singleValueQuery("SELECT count(*) from civicrm_report_instance where `name` = '$test'");
+        $domainID = CRM_Core_Config::domainID();
+        
+        if($reportInstanceCount < 1){
+        switch($test){
+          case 'contrib_period_compare':
+                  $instanceCreate = "INSERT INTO civicrm_report_instance (`domain_id`, `title`, `report_id`, `name`, `description`,`form_values`, `permission`, `is_active`, `is_reserved`, `grouprole`)
+            VALUES ( $domainID,'Comparison Report', 'chreports/contrib_period_compare','contrib_period_compare','Comaprision Report for contributions',NULL,'access CiviReport',1,1,'authenticated user' )";
+              CRM_Core_DAO::executeQuery($instanceCreate);
+            break;
+          }
+        }
+      }
+      
+    return TRUE;
+  }
+
+  public function upgrade_2400() {
+    $this->ctx->log->info('Migrate Reports to a new template');
+    $non_migrated_templates = E::getNonMigratedReportTemplates();
+    $reportCountCount = civicrm_api3('ReportInstance', 'getcount');
+    $reportInstances = civicrm_api3('ReportInstance', 'get', [
+      'sequential' => 1,
+      'options' => ['limit' => 0],
+    ]);
+    if($reportInstances) {
+      foreach($reportInstances['values'] as $report) {
+        $name = str_replace("(");
+        if(!empty($report['created_id']) && !empty($report['form_values'])) {
+          if(!in_array($report['report_id'], $non_migrated_templates)) {
+            // Extract form Values and clean up the data
+            $report['form_values'] = unserialize(preg_replace_callback ( '!s:(\d+):"(.*?)";!', function($match) {      
+              return ($match[1] == strlen($match[2])) ? $match[0] : 's:' . strlen($match[2]) . ':"' . $match[2] . '";';
+            }, $report['form_values']));
+            // Identify reportId and Base template
+            $baseTemplate = E::getBaseTemplate($report);
+            if($baseTemplate) {
+              $reportConfiguration = new CRM_Chreports_Reports_BaseReport($baseTemplate['entity'], $baseTemplate['id'], $baseTemplate['values'][$baseTemplate['id']]['name']);
+              $reportConfiguration->setParamsForMigration($report, $baseTemplate['values'][$baseTemplate['id']]['report_id'], $baseTemplate['values'][$baseTemplate['id']]['name']);
+              $reportConfiguration->buildJsonConfigSettings();
+              $reportConfiguration->writeMigrateConfigFile();
+            }
+          }
+        }
+      }
+    }
+    return TRUE;
+  }
+
+
+  public function upgrade_2401() {
+    $this->ctx->log->info('remove unused / old report templates');
+    $unwantedtemplates = [
+      'contribute/summary',
+      'contribute/detail',
+      'contribute/repeat',
+      'contribute/topDonor',
+      'contribute/sybunt',
+      'contribute/lybunt',
+      'contribute/bookkeeping',
+      'contribute/organizationSummary',
+      'contribute/householdSummary',
+      'contribute/history',
+      'contribution/overview',
+      'contribution/contributions',
+      'contribution/pivot',
+      'contribution/detailextended',
+      'contribution/bookkeeping_extended',
+      'contribute/recursummary',
+      'contribute/recur',
+      'contribution/recur-pivot',
+      'contribution/recurring_contributions',
+      'cdntaxreceipts/receiptsissued',
+      'cdntaxreceipts/receiptsnotissued',
+
+      'contact/contactbasic',
+      'contact/contactextended',
+      'activityextended',
+      'activity/pivot',
+      'activityeditable',
+      'relationshipextended',
+      'activityextended',
+
+      'grant/detail',
+      'grant/statistics',
+      'grant/detailextended',
+
+
+      'member/summary',
+      'member/detail',
+      'member/lapse',
+      'member/contributionDetail',
+      'member/membershippivot',
+      'price/lineitemmembership',
+
+      'survey/detail',
+      'campaign/progress',
+
+    ];
+    $checkReportID = "SELECT id FROM civicrm_option_group WHERE `name`='report_template'";
+    $reportID = CRM_Core_DAO::singleValueQuery($checkReportID);
+      foreach($unwantedtemplates as $report_id) {
+        $sql = "UPDATE civicrm_option_value SET `is_active` = 0
+      WHERE `value` = '".$report_id."' AND `option_group_id`=$reportID";
+      CRM_Core_DAO::executeQuery($sql);
+      }
+      return TRUE;
+  }
+
+  public function upgrade_2402() {
+    $this->ctx->log->info('remove unused / old reports');
+    $unwantedReportInstance = [
+      'Contribution History by GL Account (Summary)[deprecated]',
+      'Contribution History by Fund (Detailed Contact)',
+    ];
+  
+    foreach($unwantedReportInstance as $reportInstance) {
+      $instanceDelete = "DELETE FROM civicrm_report_instance WHERE `name` = '".$reportInstance."' AND `created_id` IS NULL";
+      CRM_Core_DAO::executeQuery($instanceDelete);
+    }
+    return TRUE;
+  }
+
+  public function upgrade_2403() {
+    $this->ctx->log->info('Change Fiscal year to date and Last Year inc. Today report display dashlet layout');
+    $reportInstances = civicrm_api3('ReportInstance', 'get', [
+      'sequential' => 1,
+      'return' => ["id", "title", "name"],
+      'name' => ['IN' => ["contrib_monthly_fiscal_year", "contrib_quarterly_past_year"]],
+      'options' => ['limit' => 0],
+    ]);
+    if($reportInstances['values']) {
+      $reportInstanceDashlet = [];
+      foreach($reportInstances['values'] as $report) {
+        $report_name = 'report/'.$report['id'];
+        $dashlet = civicrm_api3('Dashboard', 'get', [
+          'sequential' => 1,
+          'name' => $report_name,
+        ]);
+        if(!empty($dashlet['values'][0])) {
+            civicrm_api3('Dashboard', 'create', [
+              'id' => $dashlet['values'][0]['id'],
+              'url' => "civicrm/report/instance/".$report['id']."?reset=1&section=2&context=dashlet",
+              'fullscreen_url' => "civicrm/report/instance/".$report['id']."?reset=1&section=2&context=dashletFullscreen",
+            ]);
+        }
+      }
+    }
+    //Check if other reports has charts
+    $dashboards = civicrm_api4('Dashboard', 'get', [
+      'select' => [
+        'url', 
+        'fullscreen_url',
+      ],
+      'where' => [
+        ['url', 'CONTAINS', 'charts'], 
+        ['fullscreen_url', 'CONTAINS', 'charts'],
+      ],
+    ]);
+  
+    if($dashboards->rowCount > 0) {
+  
+      foreach ($dashboards as $akey=>$avalue) {   
+        if( strpos( $avalue['url'], 'charts=barChart' ) !== false) {
+          $avalue['url']= str_replace("&section=1&charts=barChart", "&section=2", $avalue['url']);
+          $avalue['fullscreen_url']= str_replace("&section=1&charts=barChart", "&section=2", $avalue['fullscreen_url']);
+        }else if(strpos( $avalue['url'], 'charts=pieChart' ) !== false) {
+          $avalue['url']=str_replace("&section=1&charts=pieChart", "&section=2", $avalue['url']);
+          $avalue['fullscreen_url']=str_replace("&section=1&charts=pieChart", "&section=2", $avalue['fullscreen_url']);
+        }
+  
+        $results = civicrm_api4('Dashboard', 'update', [
+          'values' => [
+            'url' => $avalue['url'],
+            'fullscreen_url'=>$avalue['fullscreen_url']
+          ],
+          'where' => [
+            ['id', '=', $avalue['id']],
+          ],
+        ]);
+      }
+    }
+    return TRUE;
+  }
+
+  public function upgrade_2404() {
+    $this->ctx->log->info('Execute updatesections API after adding records in report instance table through upgrade_2301');
+    $result = civicrm_api3('Job', 'updatesections');
+    return TRUE;
+  }
   /**
    * Example: Run an external SQL script.
    *

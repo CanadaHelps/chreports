@@ -1,0 +1,59 @@
+{ 
+    "name": "contact_top_donors_dashlet",
+    "title": "Top Donors (Dashlet)",
+    "template": "chreports/contact_top_donors",
+    "type": "detailed",
+    "entity": "contact",
+    "fields":{
+        "exposed_id": {"selected" : true},
+        "sort_name": {"default" : true},
+        "first_name": {"selected" : true},
+        "middle_name": {},
+        "last_name": {"selected" : true},
+        "contact_type": {"selected" : true},
+        "contact_sub_type": {"selected" : true},
+        "gender_id": {"selected" : true},
+        "birth_date": {},
+        "age": {"selected" : true},
+        "email": {"selected" : true},
+        "phone": {"selected" : true},
+        "street_address": {},
+        "supplemental_address_1": {},
+        "supplemental_address_2": {},
+        "city": {"selected" : true},
+        "postal_code": {"selected" : true},
+        "country": {},
+        "province": {"selected" : true},
+        "card_type_id": {},
+        "amount_of_last_contribution": {"default" : true}
+    },
+    "order_bys":{
+        "sort_name": {
+            "order": "ASC"
+        }
+    },
+    "use_default_filters" : false,
+    "filters":{
+        "receive_date":{
+            "relative":"nnll"
+        },
+        "receipt_date":{},
+        "total_range":{
+            "eq": 10
+        },
+        "financial_type_id":{},
+        "contribution_status_id": {
+            "in": [
+                "1"
+            ]
+        },
+        "financial_account":{},
+        "card_type_id":{},
+        "tagid":{},
+        "disbursement_date":{},
+        "gid":{},
+        "on_hold":{},
+        "ch_fund":{}
+    },
+    "groupByClause" : false
+}

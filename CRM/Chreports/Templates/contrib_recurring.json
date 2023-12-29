@@ -1,0 +1,53 @@
+{ 
+    "name": "contrib_recurring",
+    "title": "Recurring Contributions",
+    "type": "detailed",
+    "template": "chreports/contrib_recurring",
+    "entity": "contact",
+    "fields":{
+        "exposed_id":{"default" : true},
+        "sort_name":{"default" : true},
+        "first_name": {},
+        "last_name": {},
+        "phone":{ "selected" : true},
+       
+        "email":{},
+        "recurring_contribution_total_amount":{"default" : true},
+        "contribution_source":{ "selected" : true},
+        "completed_contributions":{ "selected" : true},
+        "recurring_contribution_start_date":{"selected" : true},
+        "last_month_amount":{"default" : true},
+
+
+        "street_address":{ "selected" : true},
+        "city":{ "selected" : true},
+        "postal_code":{},
+        "province":{ "selected" : true},
+        "country":{ "selected" : true},
+        "contribution_page_id":{},
+        "financial_type_id":{}
+    },
+    "order_bys":{
+        "exposed_id": {
+            "order": "ASC"
+        }
+    },
+    "use_default_filters" : false,
+    "filters":{
+        "sort_name":{},
+        "receive_date":{"relative":"nnll"},
+        "tagid":{},
+        "gid":{},
+        "campaign_id":{},
+        "contribution_page_id":{},
+        "financial_type_id":{},
+        "contribution_source":{},
+        "total_lifetime_contributions":{},
+        "amount_of_last_contribution":{},
+        "date_of_last_contribution":{},
+        "date_of_first_contribution":{},
+        "largest_contribution":{},
+        "count_of_contributions":{}
+    },
+    "groupByClause" : false
+}

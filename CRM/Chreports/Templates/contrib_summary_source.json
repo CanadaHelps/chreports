@@ -1,0 +1,28 @@
+{ 
+    "name": "contrib_summary_source",
+    "title": "Contribution History By Source (Summary)",
+    "template": "chreports/contrib_summary",
+    "type": "summary",
+    "entity": "contribution",
+    "fields":{
+        "financial_type_id": {},
+        "campaign_id": {},
+        "contribution_source": {
+            "default" : true
+        },
+        "contribution_page_id": {}
+    },
+    "order_bys":{
+        "contribution_source": {
+            "order": "ASC"
+        }
+    },
+    "use_default_filters" : true,
+    "filters":{
+        "contribution_status_id": {
+            "in": [
+                "1"
+            ]
+        }
+    }
+}

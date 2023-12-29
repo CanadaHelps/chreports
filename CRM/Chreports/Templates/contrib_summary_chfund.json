@@ -1,0 +1,30 @@
+{ 
+    "name": "contrib_summary_chfund",
+    "title": "Contribution History By CH Fund (Summary)",
+    "type": "summary",
+    "template": "chreports/contrib_summary",
+    "entity": "contribution",
+    "fields":{
+        "ch_fund": {
+            "default" : true
+        },
+        "contribution_source": {},
+        "campaign_id": {},
+        "financial_type_id": {},
+        "contribution_page_id": {}
+    },
+    "order_bys":{
+        "ch_fund": {
+            "order": "ASC"
+        }
+    },
+    "use_default_filters" : true,
+    "filters":{
+        "ch_fund":{},
+        "contribution_status_id": {
+            "in": [
+                "1"
+            ]
+        }
+    }
+}

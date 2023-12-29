@@ -1,0 +1,32 @@
+{ 
+    "name": "contrib_summary_glaccount",
+    "title": "Contribution History By GL Account (Summary)",
+    "template": "chreports/contrib_summary",
+    "type": "summary",
+    "entity": "contribution",
+    "fields":{
+        "gl_account": {
+            "default" : true
+        },
+        "account_type": {
+            "default" : true
+        },
+        "gl_code": {
+            "default" : true
+        }
+    },
+    "order_bys":{
+        "gl_account": {
+            "order": "ASC"
+        }
+    },
+    "use_default_filters" : true,
+    "filters":{
+        "gl_account":{},
+        "contribution_status_id": {
+            "in": [
+                "1"
+            ]
+        }
+    }
+}

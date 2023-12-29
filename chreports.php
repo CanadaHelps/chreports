@@ -137,22 +137,61 @@ function chreports_civicrm_entityTypes(&$entityTypes) {
 function chreports_civicrm_buildForm($formName, &$form) {
   if (in_array($formName, [
     'CRM_Report_Form_Contact_Summary',
-    'CRM_Chreports_Form_Report_ExtendedDetail',
+    'CRM_Chreports_Form_Report_ExtendSummary',
     'CRM_Chreports_Form_Report_GLSummaryReport',
     'CRM_Chreports_Form_Report_ExtendedDetail'
   ])) {
-    CRM_Core_Resources::singleton()->addScript(
-      "CRM.$(function($) {
-        $('.report-layout.display').wrap('<div class=\"new\" style=\"overflow:scroll; width:100%;\"></div>');
-      });"
-    );
+    //CRM-799 To solve the issue of report columns being cut-off, limit the "Print report" function 
+    //to only be available when the selected report has 10 columns or less. If more than 10 columns are selected, hide "Print report" function
+    $columnFields = $form->getVar('_submitValues')['fields']?$form->getVar('_submitValues')['fields']:$form->getVar('_params')['fields'];
+    $selectedColumnFields = count($columnFields);
+    if(isset($selectedColumnFields) && $selectedColumnFields > 10) {
+      if (array_key_exists('task', $form->_elementIndex)) {
+        $optionsField = $form->getElement('task')->_options;
+        foreach($optionsField as $key=>$value) {
+          foreach($value['attr'] as $k=>$v) {
+            if($v === 'report_instance.print') {
+              unset($form->getElement('task')->_options[$key]);
+            }
+          }
+        }
+      }
+    }
+    
+   
+   
   }
-  if ($formName == 'CRM_Chreports_Form_Report_ExtendSummary' || $formName == 'CRM_Report_Form_Contact_Summary') {
+  if ($formName == 'CRM_Chreports_Form_Report_ExtendSummary' || $formName == 'CRM_Chreports_Form_Report_GLSummaryReport' || $formName == 'CRM_Chreports_Form_Report_ExtendedDetail' || $formName == "CRM_Chreports_Form_Report_ExtendLYBUNT" || $formName == "CRM_Chreports_Form_Report_ExtendMonthlyYearly") {
+    //default pre-select the column and group by
+    if (array_key_exists('fields', $form->_elementIndex)) {
+      $reportInstance = $form->getReportInstance();
+      foreach( ['fields','group_bys'] as $entity) {
+        $elementField = $form->getElement($entity)->_elements;
+        $reportInstance->setPreSelectField($elementField);
+      }
+      //For monthly and yearly report only one column should be checked at a time
+      if($reportInstance->isPeriodicSummary()){
+        CRM_Core_Resources::singleton()->addScript(
+          "CRM.$(function($) {
+            $('.crm-report-criteria-field input:checkbox').on('change',function() {
+              $('.crm-form-checkbox').not(this).prop('checked', false);
+            });
+          });"
+        );
+      }
+    }
+
+  }
+  if ($formName == 'CRM_Chreports_Form_Report_ExtendSummary' || $formName == 'CRM_Report_Form_Contact_Summary'|| $formName == 'CRM_Chreports_Form_Report_GLSummaryReport' || $formName == "CRM_Chreports_Form_Report_ExtendLYBUNT" || $formName == "CRM_Chreports_Form_Report_ExtendMonthlyYearly") {
+   
     CRM_Core_Resources::singleton()->addScript(
       "CRM.$(function($) {
-        $('#fields_total_amount').parent().hide();
-        $('.crm-report-criteria-field input:checkbox').click(function() {
-          $('#group_bys_' + this.id.substr(7)).prop('checked', this.checked);
+        $( document ).ready(function() {
+          $('#fields_total_amount').parent().hide();
+          $('#mainTabContainer').tabs('option', 'active', 0);
+          $('.crm-report-criteria-field input:checkbox').click(function() {
+            $('#group_bys_' + this.id.substr(7)).prop('checked', this.checked);
+          });
         });
       });");
    }
@@ -177,6 +216,49 @@ function chreports_civicrm_buildForm($formName, &$form) {
 }
 
 function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
+
+  if ($object instanceof CRM_Chreports_Form_Report_ExtendSummary || $object instanceof CRM_Chreports_Form_Report_ExtendedDetail || $object instanceof CRM_Chreports_Form_Report_ExtendMonthlyYearly) {
+   
+      $reportInstance = $object->getReportInstance();
+
+      if ($varType == 'columns') {
+        //manage columns, group bys, sorts, filters based on json config
+        $reportInstance->setFormOptions($var);
+
+        //make the default field selected for sort by option
+        $defaults = $object->getVar('_defaults') ? $object->getVar('_defaults') : array();
+        $defaults = $reportInstance->setDefaultOptionSortBy($defaults);
+        $object->setVar('_defaults', $defaults);
+       
+        return;
+      }
+
+      if ($varType == 'sql') {
+        //For empty fields or in case when fields are not default to get proper filters value need to reassign params and formvalues.
+        if(empty($var->getVar('_params')['fields'])) {
+          $intermediateParamsValue = $object->controller->exportValues($var->getVar('_name'));
+          $var->setVar('_params', $intermediateParamsValue);
+          $var->setVar('_formValues', $intermediateParamsValue);
+        }
+        //build main sql query to display result
+        $object->buildSQLQuery($var);
+        return;
+      }
+
+      if ($varType == 'rows') {
+
+         // remove unwanted columns from display
+         $reportInstance->alterColumnHeadersForDisplay($var,$object->_columnHeaders);
+        //manage display of result
+        $reportInstance->alterDisplayRows($var);
+        return;
+      }
+  }
+  if ($object instanceof CRM_Chreports_Form_Report_GLSummaryReport) {
+    return;
+  }
+
+  // anything BELOW, we should exclude
   if ($object instanceof CRM_Report_Form_Contact_Summary && $varType == 'columns') {
     $var['civicrm_contact']['filters']['id'] = [
       'title' => 'Contact ID(s)',
@@ -534,7 +616,7 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
       }
     }
   }
-  if ($object instanceof CRM_Report_Form_Contribute_Summary || $object instanceof CRM_Chreports_Form_Report_ExtendSummary) {
+  if ($object instanceof CRM_Report_Form_Contribute_Summary || $object instanceof CRM_Chreports_Form_Report_ExtendSummary || $object instanceof CRM_Chreports_Form_Report_ExtendMonthlyYearly) {
     $tablename = E::getTableNameByName('Campaign_Information');
     if ($varType == 'columns') {
       if ($object instanceof CRM_Chreports_Form_Report_ExtendSummary) {
@@ -649,8 +731,63 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
  * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_preProcess
  */
 function chreports_civicrm_preProcess($formName, &$form) {
+  if($formName == "CRM_Chreports_Form_Report_ExtendSummary" || $formName == "CRM_Chreports_Form_Report_GLSummaryReport" || $formName == "CRM_Chreports_Form_Report_ExtendedDetail" || $formName == "CRM_Chreports_Form_Report_ExtendLYBUNT")
+  {
+    //hide empty custom fields based filter sections on filter tab
+    $reportInstance = $form->getReportInstance();
+    $filters = $form->getVar('_filters');
+    $filters = $reportInstance->unsetEmptyFilterEntity($filters);
+    $form->setVar('_filters', $filters);
 
+    // if there are any Preselect Filters in Json, prepopulare on form load
+    if($reportInstance->getPreSetFilterValues()) {
+      $filterParams = $reportInstance->createCustomFilterParams();
+      foreach($filterParams as $filterKey => $filterValue) {
+        $defaultSelectedFilter[$filterKey] = $filterValue;
+      }
+      //$defaults[$filterKey] = $filterValue;
+      $form->setVar('_formValues', $defaultSelectedFilter);
+    }
+
+    //CRM-2097: For Save/Copy bypass the post Process
+    $taskAction = [];
+    if(isset($form->getVar('_submitValues')['task'])) {
+      $taskAction = strtolower(str_replace('report_instance.', '', $form->getVar('_submitValues')['task']));
+    }
+    if(in_array($taskAction, ['save', 'copy'])) {
+      $reportInstance->setAction($taskAction);
+      // Get all Submit Values
+      $params = $form->getVar('_submitValues');
+      $reportInstance->setFormParams($params);
+
+      // Set Columns
+      if($params['fields'])
+        $reportInstance->setColumns($params['fields']);
+
+      // Build the Json File Config
+      $reportInstance->buildJsonConfigSettings();
+
+      // Save and create the JSON File
+      // Redirect is set to TRUE by default
+      $reportInstance->writeJsonConfigFile();
+    }
+  }
 } // */
+
+/**
+ * Implements hook_civicrm_post().
+ *
+ * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_preProcess
+ */
+function chreports_civicrm_post($op, $objectName, $objectId, &$objectRef) {
+  if ($objectName == "ReportInstance" && $op == "delete") {
+    $filePath = CRM_Chreports_Reports_ReportConfiguration::getFilePath((array) $objectRef);
+    if (is_file($filePath['source'])) {
+      unlink($filePath['source']);
+    }
+  }
+}
+
 
 /**
  * Implements hook_civicrm_navigationMenu().

@@ -1,0 +1,67 @@
+{
+    "name": "contrib_detailed_inhonour",
+    "title": "In Honour of",
+    "type": "detailed",
+    "template": "chreports/contrib_detailed",
+    "entity": "contribution",
+    "fields":{
+        "sort_name":{"selected" : true},
+        "contact_id":{"selected" : true},
+        "contact_type":{},
+        "contact_sub_type":{},
+        "phone": {},
+        "email":{},
+        "financial_type_id":{"selected" : true},
+        "contribution_page_id":{"selected" : true},
+        "contribution_id":{}, 
+        "payment_instrument_id":{},
+        "check_number":{},
+        "receive_date":{"selected" : true},
+        "total_amount":{"default" : true},
+        "street_address":{},
+        "city":{},
+        "postal_code":{},
+        "province":{},
+        "country":{},
+        "ch_fund":{},
+        "receipt_number":{},
+        "in_memory_of":{},
+        "in_honour_of":{},
+        "name_of_honoree":{"selected" : true}
+    },
+    "order_bys":{
+        "sort_name": {
+            "order": "ASC"
+        }
+    },
+    "use_default_filters" : false,
+    "filters":{
+        "name_of_honoree":{},
+        "sort_name":{},
+        "contact_type":{},
+        "contact_sub_type":{},
+        "first_name":{},
+        "last_name": {},
+        "receive_date":{},
+        "receipt_date":{},
+        "contribution_source":{}, 
+        "total_amount":{}, 
+        "contribution_status_id": {
+            "in": [
+                "1"
+            ]
+        },
+        "payment_instrument_id":{},
+        "financial_type_id":{},
+        "contribution_page_id":{},
+        "campaign_id":{},
+        "tagid":{},
+        "gid":{},
+        "ch_fund":{},
+        "in_memory_of":{},
+        "in_honour_of":{
+            "eq":1
+        }
+    },
+    "groupByClause" : false
+}

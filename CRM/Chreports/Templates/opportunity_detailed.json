@@ -1,0 +1,47 @@
+{ 
+    "name": "opportunity_detailed",
+    "title": "Opportunity Details",
+    "template": "chreports/opportunity_detailed",
+    "type": "detailed",
+    "entity": "grant",
+    "fields":{
+        "contact_name": {"selected" : true},
+        "contact_type": {},
+        "contact_sub_type": {},
+        "exposed_id": {},
+        "email": {},
+        "phone": {},
+        "grant_type_id": {},
+        "grant_status_id": {},
+        "grant_total_amount": {"default" : true},
+        "amount_granted": {},
+        "application_received_date": {"selected" : true},
+        "grant_due_date": {"selected" : true},
+        "decision_date": {"selected" : true},
+        "application_submitted": {"selected" : true},
+        "probability": {"selected" : true},
+        "Opportunity_Name": {"selected" : true},
+        "Opportunity_Owner": {"selected" : true}
+        
+    },
+    "order_bys":{
+        "Opportunity_Name": {
+            "order": "ASC"
+        }
+    },
+    "use_default_filters" : false,
+    "filters":{
+        "grant_type_id":{},
+        "grant_status_id":{},
+        "amount_granted":{},
+        "grant_total_amount":{},
+        "application_received_date":{},
+        "grant_due_date":{},
+        "decision_date":{},
+        "application_submitted":{},
+        "probability":{},
+        "Opportunity_Name":{},
+        "Opportunity_Owner":{}
+    },
+    "groupByClause" : false
+}
