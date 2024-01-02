@@ -795,7 +795,6 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
     ]);
     if($reportInstances) {
       foreach($reportInstances['values'] as $report) {
-        $name = str_replace("(");
         if(!empty($report['created_id']) && !empty($report['form_values'])) {
           if(!in_array($report['report_id'], $non_migrated_templates)) {
             // Extract form Values and clean up the data

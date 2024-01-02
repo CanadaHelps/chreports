@@ -490,6 +490,10 @@ class CRM_Chreports_Reports_ReportConfiguration {
         $params['header'] = 'NULL';
         $params['footer'] = 'NULL';
 
+        // Unset Params Navigation
+        unset($params['navigation']);
+        unset($params['is_navigation']);
+
         // Update the report
         $instance = CRM_Report_BAO_ReportInstance::create($params);
 
