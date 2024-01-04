@@ -488,7 +488,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                         ];
                     } elseif ($matches[2] == 'relative' && $params[$matches[0]]) {
                         $filterNames[$fieldName]['relative'] = $params[$matches[0]];
-                    } elseif($params[$fieldName.'_value']) {
+                    } elseif(!empty($params[$fieldName.'_value'])) {
                         $filterNames[$matches[1]][$params[$matches[0]]] = $params[$fieldName.'_value'];
                     }
                     break;
