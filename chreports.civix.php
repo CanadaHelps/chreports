@@ -134,8 +134,6 @@ class CRM_Chreports_ExtensionUtil {
    * @return array $base_report 
   */
   public static function getBaseTemplate ($reportInstance) {
-    $title = $reportInstance['title'];
-    $description = $reportInstance['description'];
     $report_id = $reportInstance['report_id'];
     $formValues = $reportInstance['form_values'];
 
@@ -144,7 +142,7 @@ class CRM_Chreports_ExtensionUtil {
     if(isset($migratedTemplate['sub_templates'])) {
       // Step 1: Get it by Title
       $match = self::matchKeywordForTemplate($reportInstance['title']);
-      if(!$match['title'] || empty($migratedTemplate['sub_templates'][$match])) {
+      if(!$match || empty($migratedTemplate['sub_templates'][$match])) {
         // Step 2: Get it by description
         $match = self::matchKeywordForTemplate($reportInstance['description']);
         if(!$match || empty($migratedTemplate['sub_templates'][$match])) {
@@ -160,7 +158,9 @@ class CRM_Chreports_ExtensionUtil {
         $base_report_name = $migratedTemplate['name'];
       }
     } else {
-      $base_report_name = $migratedTemplate['name'];
+      $base_report_name = FALSE;
+      if(isset($migratedTemplate['name']))
+        $base_report_name = $migratedTemplate['name'];
     }
     if($base_report_name) {
       $base_report = civicrm_api3('ReportInstance', 'get', [
@@ -173,8 +173,10 @@ class CRM_Chreports_ExtensionUtil {
         $base_report['is_template'] = (int) 1;
         $base_report['values'][$reportInstance['id']]['name'] = $base_report_name;
         $base_report['values'][$reportInstance['id']]['report_id'] = $migratedTemplate['report_id'];
-        if(isset($migratedTemplate['sub_templates'][$match]['report_id'])) {
-          $base_report['values'][$reportInstance['id']]['report_id'] = $migratedTemplate['sub_templates'][$match]['report_id'];
+        if(isset($match)) {
+          if(isset($migratedTemplate['sub_templates'][$match]['report_id'])) {
+            $base_report['values'][$reportInstance['id']]['report_id'] = $migratedTemplate['sub_templates'][$match]['report_id'];
+          }
         }
       }
       $base_report['entity'] = $migratedTemplate['entity'];
@@ -187,7 +189,8 @@ class CRM_Chreports_ExtensionUtil {
    * @param string $reportId The template of the report
    * @return array $template The migrated template of the new system 
   */
-  private function getMigratedTemplate($reportId) {
+  public static function getMigratedTemplate($reportId): array {
+    $template = [];
     switch (strtolower($reportId)) {
       case 'biz.jmaconsulting.chreports/extendeddetail' :
       case 'contribution/contributions' :
@@ -503,7 +506,7 @@ class CRM_Chreports_ExtensionUtil {
    * @param string $type Entity name, defaults to contribution
    * @return string $keyword the matching term
   */
-  public function matchKeywordForTemplate($inputString, $type = 'contribution') {
+  public static function matchKeywordForTemplate($inputString, $type = 'contribution') {
     // Define the keywords to search for
     $keywords = [
       'contribution' => [
@@ -555,7 +558,7 @@ class CRM_Chreports_ExtensionUtil {
    * @param string $type the entity name
   */
 
-  public function matchbyFormValue($formValues, $reportId, $type = 'contribution') {
+  public static function matchbyFormValue($formValues, $reportId, $type = 'contribution') {
     if($type == 'contribution') {
       //Loop through fields
       $fieldsPreferenceOrder = [

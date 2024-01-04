@@ -788,12 +788,27 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
   public function upgrade_2400() {
     $this->ctx->log->info('Migrate Reports to a new template');
     $non_migrated_templates = E::getNonMigratedReportTemplates();
-    $reportCountCount = civicrm_api3('ReportInstance', 'getcount');
+
+    // Initiate Logger for migration
+    $csvFilePath = '/tmp/aegir.csv';
+    $logger = new CRM_Utils_Report_Migration_Logger($csvFilePath);
+    $logger->setInstance(parse_url(CRM_Utils_System::baseURL(), PHP_URL_HOST));
+
+    //Set up Stats Variable for logger (pre migration)
+    $stats['total_custom_reports'] = civicrm_api3('ReportInstance', 'getcount', [
+      'created_id' => ['IS NOT NULL' => 1],
+      'form_values' => ['IS NOT NULL' => 1],
+    ]);
+    $stats['success'] = 0;
+    $stats['failed'] = 0;
+
+    // Fetch all the reports
     $reportInstances = civicrm_api3('ReportInstance', 'get', [
       'sequential' => 1,
       'options' => ['limit' => 0],
     ]);
     if($reportInstances) {
+      // Iterate through all the reports
       foreach($reportInstances['values'] as $report) {
         if(!empty($report['created_id']) && !empty($report['form_values'])) {
           if(!in_array($report['report_id'], $non_migrated_templates)) {
@@ -804,14 +819,30 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
             // Identify reportId and Base template
             $baseTemplate = E::getBaseTemplate($report);
             if($baseTemplate) {
-              $reportConfiguration = new CRM_Chreports_Reports_BaseReport($baseTemplate['entity'], $baseTemplate['id'], $baseTemplate['values'][$baseTemplate['id']]['name']);
+              $reportId = $baseTemplate['values'][$baseTemplate['id']]['name'];
+              $logData = [
+                'id' => $report['id'],
+                'reportTitle' => $report['title'] ?? $report['name'],
+                'migratedFrom' => $report['report_id'],
+                'migratedTo' => $reportId,
+              ];
+              $reportConfiguration = new CRM_Chreports_Reports_BaseReport($baseTemplate['entity'], $baseTemplate['id'], $reportId);
               $reportConfiguration->setParamsForMigration($report, $baseTemplate['values'][$baseTemplate['id']]['report_id'], $baseTemplate['values'][$baseTemplate['id']]['name']);
               $reportConfiguration->buildJsonConfigSettings();
-              $reportConfiguration->writeMigrateConfigFile();
+              $migrationStatus = $reportConfiguration->writeMigrateConfigFile();
+              if($migrationStatus['success']) {
+                $stats['success'] += 1;
+                $logger->addStatus($logData, true);
+              } else {
+                $stats['failed'] += 1;
+                $logData['errorMessage'] = $migrationStatus['error'];
+                $logger->addStatus($logData, false);
+              }
             }
           }
         }
       }
+      $logger->addStats($stats);
     }
     return TRUE;
   }
