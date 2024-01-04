@@ -790,7 +790,7 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
     $non_migrated_templates = E::getNonMigratedReportTemplates();
 
     // Initiate Logger for migration
-    $csvFilePath = '/tmp/aegir.csv';
+    $csvFilePath = '/var/log/report-module-migration.csv';
     $logger = new CRM_Utils_Report_Migration_Logger($csvFilePath);
     $logger->setInstance(parse_url(CRM_Utils_System::baseURL(), PHP_URL_HOST));
 
