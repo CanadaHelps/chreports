@@ -14,7 +14,6 @@ class CRM_Chreports_Reports_ReportConfiguration {
     public function __construct($id = NULL, string $name) {
         if($id)
         $this->_id = $id;
-        $this->_action = $action;    
         $this->loadMappings();
         // For base templates where JSON file is present but no report_instance in the DB
         if(in_array($name, E::getOnlyBaseTemplates())) {
@@ -364,7 +363,7 @@ class CRM_Chreports_Reports_ReportConfiguration {
         foreach ($baseTemplateSettings['fields'] as $fieldKey => $fieldValue) {
             if(isset($fieldValue['default'])) {
                 $config['fields'][$fieldKey] = $fieldValue;
-            } elseif ($fields[$fieldKey]) {
+            } elseif (isset($fields[$fieldKey])) {
                 $config['fields'][$fieldKey] = ['selected' => true];
             } else {
                 $config['fields'][$fieldKey] = [];
@@ -473,22 +472,25 @@ class CRM_Chreports_Reports_ReportConfiguration {
      *
      * Create a json file for the migrated report
      * Update the entry to DB 
-     * @return void
+     * @return array
      */
-    public function writeMigrateConfigFile(): void {
+    public function writeMigrateConfigFile(): array {
 
         $config = $this->_settings;
         if(empty($config)) {
-            return;
+            return ['success' => false, 'error' => 'Config Missing'];
         }
 
         $params = $this->getFormParams();
-
         // Make Form Values, header and footer NULL, not needed for custom reports
         // CIVI Hack: Setting them NULL as a string
         $params['form_values'] = 'NULL';
         $params['header'] = 'NULL';
         $params['footer'] = 'NULL';
+
+        // Unset Params Navigation
+        unset($params['navigation']);
+        unset($params['is_navigation']);
 
         // Update the report
         $instance = CRM_Report_BAO_ReportInstance::create($params);
@@ -510,12 +512,13 @@ class CRM_Chreports_Reports_ReportConfiguration {
         if (file_put_contents($filePath['source'], $jsonConfig) !== false) {
             // Log success message
             watchdog('report_migration', 'Successfully migrated report'. $instance->id, NULL, WATCHDOG_INFO);
-            
+            return ['success' => true];
         } else {
             // Log Error writing the file
             watchdog('report_migration', 'Error Writing the file', NULL, WATCHDOG_ERROR);
+            return ['success' => false, 'error' => 'Error Writing to the file'];
         }
-        return;
+        return ['success' => false, 'error' => 'Unknown error'];
     }
 
 
@@ -532,12 +535,15 @@ class CRM_Chreports_Reports_ReportConfiguration {
         $reportInstance['form_values']['title'] = $reportInstance['title'];
         $reportInstance['form_values']['name'] = $reportName;
         $reportInstance['form_values']['report_id'] = $reportId;
-        $reportInstance['form_values']['description'] = $reportInstance['description'];
+        if(!empty($reportInstance['description']))
+            $reportInstance['form_values']['description'] = $reportInstance['description'];
         $reportInstance['form_values']['created_id'] = $reportInstance['created_id'];
-        $reportInstance['form_values']['owner_id'] = $reportInstance['owner_id'];
+        if (!empty($reportInstance['form_values']['owner_id'])) {
+            $reportInstance['form_values']['owner_id'] = $reportInstance['owner_id'];
+        }
         $this->setAction('migrate');
         $this->setFormParams($reportInstance['form_values']);
-        if($reportInstance['form_values']['fields']) {
+        if(!empty($reportInstance['form_values']['fields'])) {
             $this->setColumns($reportInstance['form_values']['fields']);
         }
     }
@@ -562,15 +568,15 @@ class CRM_Chreports_Reports_ReportConfiguration {
      * @return array
      */
     public static function getFilePath(array $reportDetails, $action = 'save'): array {
-        if($reportDetails['name'])
+        if(!empty($reportDetails['name']))
             $report_id = self::escapeFileName($reportDetails['name']);
-
-        if($action == 'copy' || $action == 'migrate' || isset($reportDetails['created_id']) ) {
+        if($action == 'copy' || $action == 'migrate' || !empty($reportDetails['created_id'])) {
             $filePath['base'] = CRM_Core_Config::singleton()->uploadDir.'reports/saved/';
-            $filePath['source'] = $filePath['base']. $reportDetails['created_id']. '_' . $report_id . '_' . $reportDetails['id']. '.json';
+            if(isset($report_id))
+                $filePath['source'] = $filePath['base']. $reportDetails['created_id']. '_' . $report_id . '_' . $reportDetails['id']. '.json';
             // For migration, possibilty is there that core template report instance is missing
             // as an exception, pull the base Report (redundant call here)
-            if(!$report_id || in_array(strtolower($reportDetails['report_id']), E::getMigratedTemplateList())) {
+            if(!isset($report_id) || in_array(strtolower($reportDetails['report_id']), E::getMigratedTemplateList())) {
                 if($reportDetails['form_values']) {
                     $reportDetails['form_values'] = unserialize(preg_replace_callback ( '!s:(\d+):"(.*?)";!', function($match) {      
                         return ($match[1] == strlen($match[2])) ? $match[0] : 's:' . strlen($match[2]) . ':"' . $match[2] . '";';
@@ -588,9 +594,11 @@ class CRM_Chreports_Reports_ReportConfiguration {
             $filePath['source'] = $filePath['base']. $report_id.'.json';
             if($reportDetails['id']) {
                 $reportInstanceDetails = self::getReportInstanceDetails($reportDetails['id']);
-                if($reportInstanceDetails['name'] == $report_id && !empty($reportInstanceDetails['created_id'])) {
-                    $filePath['base'] = CRM_Core_Config::singleton()->uploadDir.'reports/saved/';
-                    $filePath['source'] = $filePath['base']. $reportInstanceDetails['created_id']. '_' . $report_id . '_' . $reportInstanceDetails['id']. '.json';
+                if(!empty($reportInstanceDetails['name'])) {
+                    if($reportInstanceDetails['name'] == $report_id && !empty($reportInstanceDetails['created_id'])) {
+                        $filePath['base'] = CRM_Core_Config::singleton()->uploadDir.'reports/saved/';
+                        $filePath['source'] = $filePath['base']. $reportInstanceDetails['created_id']. '_' . $report_id . '_' . $reportInstanceDetails['id']. '.json';
+                    }
                 }
             }
         }
