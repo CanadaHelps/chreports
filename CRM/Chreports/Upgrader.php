@@ -790,7 +790,13 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
     $non_migrated_templates = E::getNonMigratedReportTemplates();
 
     // Initiate Logger for migration
-    $csvFilePath = '/var/log/report-module-migration.csv';
+    $civicrm_root = Civi::paths()->getPath("[civicrm.root]/.");
+    $env = strpos($civicrm_root, 'civicrm-dev') !== false ? 'dev' : ((strpos($civicrm_root, 'civicrm-staging') !== false) ? 'staging' : 'production');
+    $base_dir = '/var/aegir/migration/'. $env;
+    $csvFilePath = $base_dir.'/report.csv';
+    if (!is_dir($base_dir)) {
+      mkdir($base_dir, 0775, true);
+    }
     $logger = new CRM_Utils_Report_Migration_Logger($csvFilePath);
     $logger->setInstance(parse_url(CRM_Utils_System::baseURL(), PHP_URL_HOST));
 

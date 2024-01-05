@@ -492,6 +492,10 @@ class CRM_Chreports_Reports_ReportConfiguration {
         unset($params['navigation']);
         unset($params['is_navigation']);
 
+        //Filter Out unnecessary keys from params
+        $allowedKeys = ['id', 'title', 'name', 'description', 'report_id', 'created_id', 'form_values', 'header', 'footer'];
+        $params = array_intersect_key($params, array_flip($allowedKeys));
+
         // Update the report
         $instance = CRM_Report_BAO_ReportInstance::create($params);
 
