@@ -386,6 +386,7 @@ class CRM_Chreports_ExtensionUtil {
       case 'biz.jmaconsulting.chreports/glsummaryreport' :
       case 'chreports/glaccountdetail' :
       case 'chreports/glsummaryreport':
+      case 'biz.jmaconsulting.chreports/glaccountdetail':
         $template = [
           'name' => 'contrib_detailed_glaccount',
           'report_id' => 'chreports/contrib_period_detailed',
@@ -496,6 +497,7 @@ class CRM_Chreports_ExtensionUtil {
       'biz.jmaconsulting.chreports/glsummaryreport',
       'chreports/glsummaryreport',
       'chreports/glaccountdetail',
+      'biz.jmaconsulting.chreports/glaccountdetail',
     ];
   }
 
