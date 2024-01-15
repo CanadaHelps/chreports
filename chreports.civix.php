@@ -198,8 +198,8 @@ class CRM_Chreports_ExtensionUtil {
       case 'contribute/detail' :
       case 'chreports/extendeddetail':
       case 'contribute/history':
-      case 'contribute/householdSummary':
-      case 'contribute/organizationSummary':
+      case 'contribute/householdsummary':
+      case 'contribute/organizationsummary':
         $template = [
           'report_id' => 'chreports/contrib_detailed',
           'entity' => 'contribution',
