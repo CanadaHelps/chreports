@@ -403,6 +403,13 @@ class CRM_Chreports_ExtensionUtil {
           ],
         ];
       break;
+      case 'biz.jmaconsulting.chreports/retentionrate':
+        $template = [
+          'name' => 'contrib_retention',
+          'report_id' => 'chreports/contrib_retention',
+          'entity' => 'contribution',
+        ];
+      break;
     }
     return $template;
   }
@@ -446,7 +453,6 @@ class CRM_Chreports_ExtensionUtil {
       'contact/log',
       'relationshipextended',
       'com.iatspayments.com/recur',
-      'biz.jmaconsulting.chreports/retentionrate',
       'contribution/overview',
       'contribution/recur-pivot',
       'grant/statistics',
@@ -498,6 +504,7 @@ class CRM_Chreports_ExtensionUtil {
       'chreports/glsummaryreport',
       'chreports/glaccountdetail',
       'biz.jmaconsulting.chreports/glaccountdetail',
+      'biz.jmaconsulting.chreports/retentionrate',
     ];
   }
 
