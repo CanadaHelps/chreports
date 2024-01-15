@@ -755,8 +755,9 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
       $existingName = $reportParam['name'];
       $newTemplateID = $reportParam['report_id'];
       $newtitle = $reportParam['title'];
-      $sql = "UPDATE civicrm_report_instance SET `name` = '".$newName."',`report_id` = '".$newTemplateID."', `title`= '".$newtitle."', `form_values` = NULL
-      WHERE `name` = '".$existingName."'";
+      $sql = "UPDATE civicrm_report_instance SET `name` = '".$newName."',`report_id` = '".$newTemplateID."', `title`= '".$newtitle."', `form_values` = NULL, created_id = NULL
+      WHERE `name` = '".$existingName."' LIMIT 1";
+
       CRM_Core_DAO::executeQuery($sql);
       
     }
@@ -825,7 +826,14 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
             // Identify reportId and Base template
             $baseTemplate = E::getBaseTemplate($report);
             if($baseTemplate) {
-              $reportId = $baseTemplate['values'][$baseTemplate['id']]['name'];
+              if(count($baseTemplate['values']) > 1) {
+                // Edge Case Scenario:: where there are multiple entries with the same name and empty (form_values & created_id)
+                // return the first entry in the array
+                $baseTemplate['id'] = reset($baseTemplate['values'])['id'];
+                $reportId = reset($baseTemplate['values'])['name'];
+              } else {
+                $reportId = $baseTemplate['values'][$baseTemplate['id']]['name'];
+              }
               $logData = [
                 'id' => $report['id'],
                 'reportTitle' => $report['title'] ?? $report['name'],
