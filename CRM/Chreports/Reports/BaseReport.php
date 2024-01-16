@@ -42,25 +42,24 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     [
         "receive_date",
         "receipt_date",
-        "contribution_status_id", //op
-        "contribution_page_id", //op //campaign
-        "financial_type_id", //fund  //op
-        "contribution_recur_id", //op
+        "contribution_status_id",
+        "contribution_page_id", //campaign
+        "financial_type_id", //fund
+        "contribution_recur_id",
         "total_amount",
         "non_deductible_amount",
-        "campaign_id", //campaign group //op
-        "card_type_id", //op
-        "batch_id", //op
-        //"amount",
-        "tagid", //op
-        "gid", //op
+        "campaign_id", //campaign group
+        "card_type_id",
+        "batch_id",
+        "tagid",
+        "gid",
         "total_contribution_sum",
         "total_count",
         "total_avg",
-        "contribution_source", //op
-        "payment_instrument_id", //op //payment method
-        "campaign_type", //op
-        "ch_fund" //op //custom
+        "contribution_source",
+        "payment_instrument_id",//payment method
+        "campaign_type",
+        "ch_fund"//custom
     ];
 
     public function __construct( string $entity, $id = NULL, string $name ) {
@@ -144,10 +143,6 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         }
         return $defaultFields;
     }
-    // manage pre set filters
-    // public function setFieldsMapping(array $mapping) {
-    //     $this->_mapping = $mapping;
-    // }
 
     public function getPreSetFilterValues(): array {
         return $this->_preselected_filter;
@@ -259,29 +254,11 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     public function getReportName(): string {
         return $this->_settings['name'];
     }
-     //get type of the report from settings
-    //  public function isFiscalQuarterReport(): bool {
-    //     if($this->_settings['template'] == 'chreports/contrib_period_detailed')
-    //     {
-    //         return true; 
-    //     }
-    //     return false;
-    // }
 
     public function isPeriodicDetailed(): bool {
         $status = ($this->_settings['template'] == 'chreports/contrib_period_detailed') ? true : false;
         return $status;
     }
-
-    //get type of the report from settings
-    // public function isMonthlyYearlyReport(): bool {
-    //     if(($this->_settings['period'] == 'monthly' && $this->_settings['name'] !== 'contrib_monthly_fiscal_year') || $this->_settings['period'] == 'yearly')
-    //     {
-    //         $this->_limit = '';
-    //         return true; 
-    //     }
-    //     return false;
-    // }
 
     public function isPeriodicSummary (): bool {
         if(in_array($this->_settings['template'], ['chreports/contrib_summary_monthly' , 'chreports/contrib_summary_yearly']))
@@ -501,8 +478,6 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     //get field details from array
     public function getFieldMapping(string $fieldEntity, string $fieldName): array {
         $entityTable = ($fieldEntity != NULL) ? $fieldEntity : $this->getEntity();
-
-        //$entityTable = ($this->_entityTableMapping[$fieldName] == NULL) ? $this->getEntityTable() : $this->_entityTableMapping[$fieldName];
         if ( !array_key_exists($entityTable, $this->_mapping) 
             || !array_key_exists($fieldName, $this->_mapping[$entityTable]['fields']) ) {
                 return ['name' => $fieldName, 'title' => $fieldName, 'table_name' => $entityTable];
@@ -561,7 +536,6 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
             $filterType = $this->getFilterType($fieldName);
             //manage title
             $this->fixFieldTitle($fieldName,$fieldInfo["title"]);
-            //$entityName = $fieldInfo['entity'];
             $var[$entityName]['fields'][$fieldName] = [
                 "title" => $fieldInfo["title"],
                 "default" => ( (isset($fieldInfo["default"]) && $fieldInfo["default"] === true) 
@@ -1435,7 +1409,6 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
             {
                 unset($filters[$fk]);
             }
-            //$filters['civicrm_contribution']['contribution_status_id']['default'] = [1];
         }
         return $filters;
     }
@@ -1617,7 +1590,6 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         $isCalculatedField = isset($fieldInfo['calculated_field']) && $fieldInfo['calculated_field'] === true;
         $entityTable = $fieldInfo['table_alias'] ?? $this->getEntityTableFromField($fieldName);
         $entityField = ($forceId) ? 'id' : $this->getEntityField($fieldName);
-        //$entityField =  $this->getEntityField($fieldName);
         //don't include entity table for calculated fields as they don't belong to any entity
         $entityClauseStatement = ($isCalculatedField) ? $this->getCalculatedFieldStatement($fieldName) : $entityTable.'.'.$entityField ;
            
@@ -1795,11 +1767,6 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                         as ".$this->getEntityTable('entity_' . $prerequisiteTable).
                         " ON (".$this->getEntityTable('contribution').".id = ".$this->getEntityTable('entity_' . $prerequisiteTable).".entity_id )";
                     
-                        // $from[] = "LEFT JOIN ".$this->getEntityTable('entity_' . $prerequisiteTable)."
-                        //  as ".$this->getEntityTable('entity_' . $prerequisiteTable).
-                        // " ON (".$this->getEntityTable('contribution').".id = ".$this->getEntityTable('entity_' . $prerequisiteTable).".entity_id ".
-                        // " AND ".$this->getEntityTable('entity_' . $prerequisiteTable).".entity_table = 'civicrm_contribution')";
-
                         $from[] = "LEFT JOIN ".$this->getEntityTable($prerequisiteTable)." as ".$this->getEntityTable($prerequisiteTable).
                         " ON ".$this->getEntityTable($prerequisiteTable).".id = ".$this->getEntityTable('entity_' . $prerequisiteTable).".financial_trxn_id";
                 

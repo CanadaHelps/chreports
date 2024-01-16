@@ -138,7 +138,6 @@ function chreports_civicrm_buildForm($formName, &$form) {
   if (in_array($formName, [
     'CRM_Report_Form_Contact_Summary',
     'CRM_Chreports_Form_Report_ExtendSummary',
-    'CRM_Chreports_Form_Report_GLSummaryReport',
     'CRM_Chreports_Form_Report_ExtendedDetail'
   ])) {
     //CRM-799 To solve the issue of report columns being cut-off, limit the "Print report" function 
@@ -161,7 +160,7 @@ function chreports_civicrm_buildForm($formName, &$form) {
    
    
   }
-  if ($formName == 'CRM_Chreports_Form_Report_ExtendSummary' || $formName == 'CRM_Chreports_Form_Report_GLSummaryReport' || $formName == 'CRM_Chreports_Form_Report_ExtendedDetail' || $formName == "CRM_Chreports_Form_Report_ExtendLYBUNT" || $formName == "CRM_Chreports_Form_Report_ExtendMonthlyYearly") {
+  if ($formName == 'CRM_Chreports_Form_Report_ExtendSummary' || $formName == 'CRM_Chreports_Form_Report_ExtendedDetail') {
     //default pre-select the column and group by
     if (array_key_exists('fields', $form->_elementIndex)) {
       $reportInstance = $form->getReportInstance();
@@ -182,7 +181,7 @@ function chreports_civicrm_buildForm($formName, &$form) {
     }
 
   }
-  if ($formName == 'CRM_Chreports_Form_Report_ExtendSummary' || $formName == 'CRM_Report_Form_Contact_Summary'|| $formName == 'CRM_Chreports_Form_Report_GLSummaryReport' || $formName == "CRM_Chreports_Form_Report_ExtendLYBUNT" || $formName == "CRM_Chreports_Form_Report_ExtendMonthlyYearly") {
+  if ($formName == 'CRM_Chreports_Form_Report_ExtendSummary' || $formName == 'CRM_Report_Form_Contact_Summary') {
    
     CRM_Core_Resources::singleton()->addScript(
       "CRM.$(function($) {
@@ -267,12 +266,8 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
       'options' => [CRM_Core_Session::getLoggedInContactID()],
     ];
   }
-  if (($object instanceof CRM_Chreports_Form_Report_ExtendedDetail ||
-    $object instanceof CRM_Chreports_Form_Report_ExtendSummary ||
-    $object instanceof CRM_Chreports_Form_Report_GLSummaryReport ||
-    $object instanceof CRM_Report_Form_Contact_Summary ||
+  if (($object instanceof CRM_Report_Form_Contact_Summary ||
     $object instanceof CRM_Report_Form_Activity ||
-    $object instanceof CRM_Report_Form_Grant_Detail ||
     $object instanceof CRM_Report_Form_Contact_Relationship
     ) && $varType == 'columns') {
 
@@ -384,65 +379,6 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
         $fieldsToHide['civicrm_contact'][] = 'exposed_id';
       }
     }
-    if ($object instanceof CRM_Chreports_Form_Report_ExtendSummary) {
-      $fieldsToHide['civicrm_contact'] = array_merge($fieldsToHide['civicrm_contact'], [
-        'sort_name',
-        'contact_type',
-        'contact_sub_type',
-        'organization_name', // not sure
-        'is_deceased', // not sure
-      ]);
-      if ($isCharityAdmin) {
-        $fieldsToHide['civicrm_contact'][] = 'exposed_id';
-      }
-      $fieldsToHide['civicrm_phone'] = ['phone'];
-      $fieldsToHide['civicrm_email'] = ['email'];
-      $fieldsToHide['civicrm_contribution'] = array_merge($fieldsToHide['civicrm_contribution'], [
-        'thankyou_date',
-        'non_deductible_amount',
-        'card_type_id', // not sure
-        'payment_instrument_id',
-      ]);
-      $fieldsToHide['civicrm_financial_trxn'] = [
-        'card_type_id',
-      ];
-      $fieldsToHide['civicrm_address'] = [
-        'address_name',
-        'street_number',
-        'street_name',
-        'street_address',
-        'supplemental_address_1',
-        'supplemental_address_2',
-        'supplemental_address_3',
-        'city',
-        'street_unit',
-        'postal_code',
-        'state_province_id',
-        'postal_code_suffix',
-        'county_id',
-        'country_id',
-        'location_type_id',
-        'address_id',
-        'is_primary',
-      ];
-      $fieldsToHide['civicrm_batch'] = ['batch_id'];
-      $fieldsToHide['civicrm_value_contribution__15'] = ['delete'];
-      $fieldsToHide['civicrm_value_contribution__19'] = ['delete'];
-    }
-    if ($object instanceof CRM_Chreports_Form_Report_GLSummaryReport) {
-      $fieldsToHide = [
-        'civicrm_contribution' => [
-          'sort_name',
-          'receive_date',
-          'credit_card_type_id',
-          'trxn_date',
-          'id',
-        ],
-        'civicrm_contact' => [
-          'exposed_id',
-        ],
-      ];
-    }
     if ($object instanceof CRM_Report_Form_Activity) {
       $fieldsToHide = [
         'civicrm_activity' => [
@@ -472,90 +408,6 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
       ];
       unset($var['civicrm_address']['order_bys']['street_name']);
       unset($var['civicrm_address']['order_bys']['street_number']);
-    }
-    if ($object instanceof CRM_Report_Form_Grant_Detail) {
-      $fieldsToHide = [
-        'civicrm_contact' => [
-          'sort_name',
-          'email_greeting_display',
-          'do_not_mail',
-          'middle_name',
-          'suffix_id',
-          'job_title',
-          'preferred_language',
-          'preferred_communication_method',
-          'addressee_display',
-          'do_not_sms',
-          'last_name',
-          'gender_id',
-          'employer_id',
-          'external_identifier',
-          'do_not_email',
-          'is_opt_out',
-          'nick_name',
-          'birth_date',
-          'postal_greeting_display',
-          'do_not_phone',
-          'first_name',
-          'prefix_id',
-          'age',
-          'expposed_id'
-        ],
-        'civicrm_grant' => [
-          'rationale',
-          'money_transfer_date',
-          'grant_report_received'
-        ],
-        'civicrm_address' => [
-          'address_name',
-          'street_number',
-          'street_name',
-          'street_address',
-          'supplemental_address_1',
-          'supplemental_address_2',
-          'supplemental_address_3',
-          'city',
-          'street_unit',
-          'postal_code',
-          'state_province_id',
-          'postal_code_suffix',
-          'county_id',
-          'country_id',
-        ],
-        'civicrm_value_mailchimp_details' => ['delete'],
-        'civicrm_value_summary_field_7' => ['delete'],
-        'civicrm_value_email_consent_5' => ['delete'],
-      ];
-      unset($var['civicrm_address']['filters']);
-      unset($var['civicrm_contact']['filters']);
-      unset($var['civicrm_grant']['filters']['money_transfer_date']);
-      unset($var['civicrm_grant']['group_bys']['money_transfer_date']);
-      unset($var['civicrm_grant']['order_bys']['money_transfer_date']);
-
-      if($varType == 'columns') {
-        $labels = [
-          'civicrm_contact' => [
-            'display_name' => 'Prospect',
-          ],
-          'civicrm_grant' => [
-            'amount_total' => 'Opportunity Amount',
-            'application_received_date' => 'Application Deadline',
-            'decision_date' => 'Decision Date',
-            'grant_due_date' => 'Report Due',
-            'amount_granted' => 'Amount Received',
-          ]
-        ];
-        foreach($labels as $table => $label) {
-          foreach ($label as $elementName => $title) {
-            if (array_key_exists($elementName, $var[$table]['fields'])) {
-              $var[$table]['fields'][$elementName]['title'] = ts($title);
-            }
-            if (is_array($var[$table]['filters']) && array_key_exists($elementName, $var[$table]['filters'])) {
-              $var[$table]['filters'][$elementName]['title'] = ts($title);
-            }
-          }
-        }
-      }
     }
     if($object instanceof CRM_Report_Form_Contact_Relationship) {
       $fieldsToHide = [
@@ -598,118 +450,12 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
       }
     }
   }
-  if ($object instanceof CRM_Report_Form_Contribute_Lybunt) {
-    $object->setVar('_charts', []);
-    if ($varType == 'rows') {
-      foreach ($var as $rowNum => $row) {
-        //Convert Display name into link
-        if (array_key_exists('civicrm_contact_sort_name', $row) &&
-          array_key_exists('civicrm_contribution_contact_id', $row)
-        ) {
-          $url = CRM_Utils_System::url("civicrm/contact/view",
-            'reset=1&cid=' . $row['civicrm_contribution_contact_id'],
-            $object->getVar('_absoluteUrl')
-          );
-          $var[$rowNum]['civicrm_contact_sort_name_link'] = $url;
-          $var[$rowNum]['civicrm_contact_sort_name_hover'] = ts("View contact");
-        }
-      }
-    }
-  }
-  if ($object instanceof CRM_Report_Form_Contribute_Summary || $object instanceof CRM_Chreports_Form_Report_ExtendSummary || $object instanceof CRM_Chreports_Form_Report_ExtendMonthlyYearly) {
-    $tablename = E::getTableNameByName('Campaign_Information');
-    if ($varType == 'columns') {
-      if ($object instanceof CRM_Chreports_Form_Report_ExtendSummary) {
-        unset($var['civicrm_contribution']['fields']['total_amount']['statistics']['avg']);
-      }
-      $var['civicrm_contribution']['fields']['total_amount']['statistics'] =  ['count' => ts('Number of Contributions'), 'sum' => ts('Total Amount')];
-
-      $var['civicrm_contribution']['filters']['payment_instrument_id'] = [
-        'title' => ts('Payment Method'),
-        'type' => CRM_Utils_Type::T_INT,
-        'operatorType' => CRM_Report_Form::OP_MULTISELECT,
-        'options' => CRM_Core_OptionGroup::values('payment_instrument'),
-      ];
-      if (!empty($tablename) && ($object instanceof CRM_Chreports_Form_Report_ExtendSummary)) {
-        if ($columnName = E::getColumnNameByName('Campaign_Type')) {
-          $optionGroupName = E::getOptionGroupNameByColumnName($columnName);
-          $var['civicrm_contribution']['filters']['campaign_type'] = [
-            'title' => ts('Contribution Page Type'),
-            'type' => CRM_Utils_Type::T_STRING,
-            'operatorType' => CRM_Report_Form::OP_MULTISELECT,
-            'options' => CRM_Core_OptionGroup::values($optionGroupName),
-            'dbAlias' => "ct.{$columnName}",
-          ];
-        }
-      }
-      $var['civicrm_contribution']['group_bys']['campaign_id'] = ['title' => ts('Campaign')];
-      $var['civicrm_contribution']['order_bys']['campaign_id'] = ['title' => ts('Campaign'), 'dbAlias' => 'campaign.title'];
-      $var['civicrm_contribution']['fields']['campaign_id'] = ['title' => ts('Campaign')];
-      $var['civicrm_contribution']['group_bys']['payment_instrument_id'] = ['title' => ts('Payment Method')];
-      $var['civicrm_contribution']['fields']['contribution_page_id']['type'] = CRM_Utils_Type::T_STRING;
-      $object->campaigns = CRM_Campaign_BAO_Campaign::getPermissionedCampaigns(NULL, NULL, FALSE, FALSE)['campaigns'];
-      $var['civicrm_contribution']['filters']['contribution_page_id']['options'] = CRM_Contribute_PseudoConstant::contributionPage(NULL, TRUE);
-      $var['civicrm_contribution']['order_bys']['contribution_page_id'] = ['title' => ts('Contribution Page')];
-    }
-    if ($varType == 'sql' && !($object instanceof CRM_Chreports_Form_Report_ExtendSummary)) {
-      $from = $var->getVar('_from');
-      $tablename = E::getTableNameByName('Campaign_Information');
-      if (!empty($tableName)) {
-        $from .= "
-        LEFT JOIN $tableName ct ON ct.entity_id = contribution_civireport.contribution_page_id
-        ";
-      }
-      $var->setVar('_from', $from);
-    }
-    if ($varType == 'rows') {
-      foreach (['civicrm_contribution_contribution_page_id', 'civicrm_contribution_campaign_id', 'civicrm_financial_type_financial_type'] as $column) {
-        if (!empty($var[0]) && array_key_exists($column, $var[0])) {
-            foreach ($var as $rowNum => $row) {
-            if (empty($var[$rowNum]['civicrm_contribution_currency'])) {
-              $var[$rowNum]['civicrm_contribution_total_amount_count'] = 0;
-            }
-          }
-        }
-      }
-      // reorder column headers for summary report
-      $columnHeaders = [];
-      foreach ([
-        'civicrm_contribution_campaign_id',
-        'civicrm_contribution_financial_type_id',
-        'civicrm_contribution_campaign_type',
-        'civicrm_contribution_source',
-        'civicrm_contribution_payment_instrument_id',
-      ] as $name) {
-        if (array_key_exists($name, $object->_columnHeaders)) {
-          $columnHeaders[$name] = $object->_columnHeaders[$name];
-          unset($object->_columnHeaders[$name]);
-        }
-      }
-      $object->_columnHeaders = array_merge($columnHeaders, $object->_columnHeaders);
-    }
-  }
-  elseif ($object instanceof CRM_Report_Form_Contribute_Bookkeeping) {
-    if ($varType == 'columns') {
-      $var['civicrm_financial_account']['order_bys']['credit_name'] = [
-        'title' => ts('Financial Account Name - Credit'),
-        'name' => 'name',
-        'alias' => 'financial_account_civireport_credit',
-        'dbAlias' => 'civicrm_financial_account_credit_name',
-      ];
-    }
-  }
-  elseif ($object instanceof CRM_Report_Form_Contact_Summary && $varType == 'rows') {
+  if ($object instanceof CRM_Report_Form_Contact_Summary && $varType == 'rows') {
     foreach ($var as $rowNum => $row) {
       if (!empty($var[$rowNum]['civicrm_contact_sort_name'])) {
         $url = CRM_Utils_System::url('dms/contact/view', 'reset=1&cid=' . $row['civicrm_contact_id']);
         $var[$rowNum]['civicrm_contact_sort_name'] = sprintf('<a href="%s" target="_blank">%s</a>', $url, $var[$rowNum]['civicrm_contact_sort_name']);
       }
-    }
-  }
-  elseif ($object instanceof CRM_Report_Form_Grant_Detail && $varType == 'rows') {
-    foreach ($var as $rowNum => $row) {
-      // Add link to Prospect name
-      $var[$rowNum]['civicrm_contact_display_name_link'] = $var[$rowNum]['civicrm_contact_id_link'];
     }
   }
   elseif ($object instanceof CRM_Report_Form_Contact_Relationship && $varType == 'rows') {
@@ -731,7 +477,7 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
  * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_preProcess
  */
 function chreports_civicrm_preProcess($formName, &$form) {
-  if($formName == "CRM_Chreports_Form_Report_ExtendSummary" || $formName == "CRM_Chreports_Form_Report_GLSummaryReport" || $formName == "CRM_Chreports_Form_Report_ExtendedDetail" || $formName == "CRM_Chreports_Form_Report_ExtendLYBUNT")
+  if($formName == "CRM_Chreports_Form_Report_ExtendSummary" || $formName == "CRM_Chreports_Form_Report_ExtendedDetail")
   {
     //hide empty custom fields based filter sections on filter tab
     $reportInstance = $form->getReportInstance();

@@ -176,7 +176,6 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
             "second_total_contribution_count" => "COUNT(civicrm_contribution_secondset.id)",
             $fieldName => "SUM(civicrm_contribution_secondset.total_amount)"
           ];
-        //  $selectedCalculatedStatement = "COUNT(civicrm_contribution_secondset.id) AS  ,SUM(civicrm_contribution_secondset.total_amount)";
           break;
         case 'age':
           $statements = [ 
@@ -275,94 +274,7 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
 
       //common from clause for summary and detailed reports
       $this->getCommonFromClause($from);
-      // move to BaseReport::getCommonFromClause
-
-
-      // if($this->isGLAccountandPaymentMethodReconciliationReport())
-      // {
-      //   //join condition for credit_name field
-      //   $from[] = "LEFT JOIN ".$this->getEntityTable('entity_financial_trxn')." as ".$this->getEntityTable('entity_financial_trxn')."_report
-      //   ON (".$this->getEntityTable().".id = ".$this->getEntityTable('entity_financial_trxn')."_report.entity_id AND
-      //   ".$this->getEntityTable('entity_financial_trxn')."_report.entity_table = 'civicrm_contribution')";
-      //   $from[] = "LEFT JOIN ".$this->getEntityTable('financial_trxn')." as ".$this->getEntityTable('financial_trxn')."_report
-      //   ON ".$this->getEntityTable('financial_trxn')."_report.id = ".$this->getEntityTable('entity_financial_trxn')."_report.financial_trxn_id";
-      //   $from[] = "LEFT JOIN ".$this->getEntityTable('financial_account')." as ".$this->getEntityTable('financial_account')."_credit ON ".$this->getEntityTable('financial_account')."_credit.id = ".$this->getEntityTable('financial_trxn')."_report.from_financial_account_id";
-      //   //join condition for debit_name field
-      //   $from[] = "LEFT JOIN ".$this->getEntityTable('financial_account')." as ".$this->getEntityTable('financial_account')."_debit ON ".$this->getEntityTable('financial_account')."_debit.id = ".$this->getEntityTable('financial_trxn')."_report.to_financial_account_id";
-      // }
-//temporary commented code start
-      // Add columns joins (if needed)
-      // foreach($fieldsForFromClauses as $fieldName => $nodata) {
-      //   switch ($fieldName) {
-         
-      //     case 'contribution_page_id': //campaign
-      //     case 'campaign_id': //campaign group
-      //     case 'financial_type_id': //Fund
-      //       $fieldEntity = str_replace("_id", "", $fieldName);
-      //       $from[] = $this->getSQLJoinForField($fieldName, $this->getEntityTable($fieldEntity), $this->getEntityTable('contribution'));
-      //       break;
-      //     case 'gl_account': // fund_13
-      //       $from[] = " LEFT JOIN ".$this->getEntityTable('line_item')." 
-      //       ON ".$this->getEntityTable('line_item').".contribution_id = ".$this->getEntityTable().".id";
-
-      //       $from[] = " LEFT JOIN (
-      //         SELECT financial_account_id,entity_id,entity_table 
-      //         FROM ".$this->getEntityTable('financial_item')."  
-      //         GROUP BY entity_id,financial_account_id HAVING SUM(amount)>0
-      //       ) ".$this->getEntityTable('financial_item')." 
-      //       ON ( ".$this->getEntityTable('financial_item').".entity_table = 'civicrm_line_item' 
-      //       AND ".$this->getEntityTable('financial_item').".entity_id = ".$this->getEntityTable('line_item').".id) ";
-
-      //       $from[] = " INNER JOIN ".$this->getEntityTable('financial_account')." 
-      //       ON ".$this->getEntityTable('financial_item').".financial_account_id = ".$this->getEntityTable('financial_account').".id";
-      //       break;
-      //     case 'account_type':          // Account Type
-      //       $from[] = $this->getSQLJoinForOptionValue("financial_account_type","financial_account_type_id",$this->getEntityTable('financial_account'),$fieldName);
-      //       break;
-      //     case 'payment_instrument_id':  // Payment Method
-      //     case 'grant_type_id': //opportunity type
-      //     case 'status_id': //opportunity status
-      //     case 'contribution_status_id': //opportunity status
-          
-      //       if ($fieldName == "payment_instrument_id")     $groupName = 'payment_instrument';                // financial_type_id
-      //       else if ($fieldName == "grant_type_id")  $groupName = 'grant_type'; 
-      //       else if ($fieldName == "status_id")  $groupName = 'grant_status'; 
-      //       else if ($fieldName == "contribution_status_id")  $groupName = 'contribution_status'; 
-      //       $from[] = $this->getSQLJoinForOptionValue($groupName,$fieldName,$this->getEntityTable(),$fieldName);
-      //       break;
-      //     case 'probability':
-      //       $columnName =  E::getColumnNameByName('probability');
-      //       $customTablename = EU::getTableNameByName('Grant');
-      //       $optionGroupName = E::getOptionGroupNameByColumnName($columnName);
-      //       $from[] = $this->getSQLJoinForOptionValue($optionGroupName,$columnName,$customTablename,$fieldName);
-      //       break;
-      //     case 'phone':
-      //     case 'email':
-      //       $from[] = $this->getSQLJoinForField('id', $this->getEntityTable($fieldName), $this->getEntityTable('contact'),'contact_id');
-      //       break;
-      //     case 'credit_contact_id':
-      //       $from[] = "LEFT JOIN ".$this->getEntityTable('contact')." as civicrm_contact_credit ON civicrm_contact_credit.id = ".$this->getEntityTable('financial_account')."_credit.contact_id";
-      //       break;
-      //     case 'debit_contact_id':
-      //       $from[] = "LEFT JOIN ".$this->getEntityTable('contact')." as civicrm_contact_debit ON civicrm_contact_debit.id = ".$this->getEntityTable('financial_account')."_debit.contact_id";
-      //       break;
-      //     case 'card_type_id': //credit card type
-      //       $from[] = $this->getSQLJoinForOptionValue("accept_creditcard",$fieldName,$this->getEntityTable('financial_trxn_report'),$fieldName);
-      //       break;
-      //     case 'range_one_stat':
-      //       $from[] = "LEFT JOIN ".$this->getEntityTable('contribution')." as civicrm_contribution_primaryset ON ".$this->getEntityTable('contribution').".id = civicrm_contribution_primaryset.id";
-      //       $filterFieldName = 'repeat_contri_initial_date_range';
-      //       $from[] = " AND ( civicrm_contribution_primaryset.receive_date >= 20220101000000) 
-      //       AND ( civicrm_contribution_primaryset.receive_date <= 20221231235959)";
-      //       break;
-      //     case 'range_two_stat':
-      //       $from[] = "LEFT JOIN ".$this->getEntityTable('contribution')." as civicrm_contribution_secondset ON ".$this->getEntityTable('contribution').".id = civicrm_contribution_secondset.id";
-      //       $from[] = " AND ( civicrm_contribution_primaryset.receive_date >= 20230101000000) 
-      //       AND ( civicrm_contribution_primaryset.receive_date <= 20231231235959)";
-      //       break;
-      //   }
-      // }
-      //temporary commented code ends
+    
       if(parent::isRecurringContributionReport()){
         list($tablename,$columnName) = $this->getCustomTableNameColumnName('SG_Flag');
         $from[] = " LEFT JOIN {$tablename} ON {$tablename}.entity_id =  ".$this->getEntityTable('contribution').".id 
@@ -384,10 +296,6 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
     
     } 
 
-    public function getOptionValueFundName($tableName,$fieldName)
-    {
-      return CRM_Core_DAO::singlevalueQuery("SELECT name FROM $tableName WHERE title = 'Fund'");
-    }
 }
 
 ?>
