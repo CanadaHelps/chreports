@@ -285,7 +285,7 @@ class CRM_Chreports_Reports_ReportConfiguration {
         $optionsListings = CRM_Core_DAO::executeQuery('SELECT DISTINCT '.$tableName_value.'.value,'.$tableName_value.'.label FROM '.$fieldTable.' '.$subselectClause)->fetchAll();
       
         foreach($optionsListings as $optionsListing) {
-          if($optionsListing) {
+            if(count(array_filter($optionsListing)) > 0) {
             
                 $optionValue[$optionsListing['value']] = $optionsListing['label'];
             }
