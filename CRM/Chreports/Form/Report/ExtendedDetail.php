@@ -270,7 +270,7 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
       foreach ($this->_reportInstance->getFilters() as $fieldName => $fieldInfo) {
         switch ($fieldName) {
           case 'total_range':
-          case 'yid': // fund_13
+          case 'yid':
             break;
           case 'ch_fund': // fund_13
             $clauses[] = $this->generateFilterClause($fieldInfo, $fieldInfo['name']);
