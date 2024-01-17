@@ -552,7 +552,7 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
 
     // Stop here as we couldn't create the templates
     if ( count($errors) > 0 ) {
-      watchdog("report_migration", "Could not create the report templates. Errors: <pre>" . print_r($errors, true). "</pre>", [], WATCHDOG_ERROR);
+      watchdog("reporting", "Could not create the report templates. Errors: <pre>" . print_r($errors, true). "</pre>", [], WATCHDOG_ERROR);
       return FALSE;
     }
     
@@ -712,9 +712,8 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
 
       $query = "UPDATE civicrm_report_instance SET `name` = '".$newName."',`report_id` = '".$newTemplateID."', `title`= '".$newtitle."', `form_values` = NULL, created_id = NULL
       WHERE `name` = '".$existingName."' LIMIT 1";
-      watchdog("debug", $newName . " -> " . $query);
       CRM_Core_DAO::executeQuery($query);
-      watchdog("reporting", "Migrated: ".$existingName . " -> ".$newTemplateID . "", [], WATCHDOG_DEBUG);
+      watchdog("reporting", "Migrating: ".$existingName . " -> ".$newTemplateID . "", [], WATCHDOG_DEBUG);
             
     }
 
@@ -901,7 +900,7 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
     foreach($unwantedReportInstance as $reportInstance) {
       $query = "DELETE FROM civicrm_report_instance WHERE `name` = '".$reportInstance."' AND `created_id` IS NULL";
       CRM_Core_DAO::executeQuery($query);
-      watchdog("reporting", "Deleted: ".$reportInstance . "", [], WATCHDOG_DEBUG);
+      watchdog("reporting", "Deleting: ".$reportInstance . "", [], WATCHDOG_DEBUG);
     }
     return TRUE;
   }
@@ -969,7 +968,7 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
   }
 
   public function upgrade_102007() {
-    $this->ctx->log->info('Reporting: re-organize reports as per new requirements');
+    $this->ctx->log->info('Reporting v1.2: re-organize reports as per new requirements');
     $result = civicrm_api3('Job', 'updatesections');
     return TRUE;
   }
