@@ -1374,6 +1374,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                         }
                         $url = CRM_Report_Utils_Report::getNextUrl('instance/'.$latestContribReport['id'],
                         "reset=1&force=1&receive_date_from={$dateStart}&receive_date_to={$dateEnd}");
+                        $rows[$rowNum]['receive_date_start'] = date("F Y",strtotime($row['receive_date_start']));
                         $rows[$rowNum][$fieldName. "_link"] = $url;
                         $rows[$rowNum][$fieldName. "_hover"] = ts('View Details for this date');
                     }
