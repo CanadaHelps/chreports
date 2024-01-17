@@ -9,58 +9,8 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
   // By convention, functions that look like "function upgrade_NNNN()" are
   // upgrade tasks. They are executed in order (like Drupal's hook_update_N).
 
-  /**
-   * Example: Run an external SQL script when the module is installed.
-   *
-  public function install() {
-    $this->executeSqlFile('sql/myinstall.sql');
-  }
 
-  /**
-   * Example: Work with entities usually not available during the install step.
-   *
-   * This method can be used for any post-install tasks. For example, if a step
-   * of your installation depends on accessing an entity that is itself
-   * created during the installation (e.g., a setting or a managed entity), do
-   * so here to avoid order of operation problems.
-   *
-  public function postInstall() {
-    $customFieldId = civicrm_api3('CustomField', 'getvalue', array(
-      'return' => array("id"),
-      'name' => "customFieldCreatedViaManagedHook",
-    ));
-    civicrm_api3('Setting', 'create', array(
-      'myWeirdFieldSetting' => array('id' => $customFieldId, 'weirdness' => 1),
-    ));
-  }
 
-  /**
-   * Example: Run an external SQL script when the module is uninstalled.
-   *
-  public function uninstall() {
-   $this->executeSqlFile('sql/myuninstall.sql');
-  }
-
-  /**
-   * Example: Run a simple query when a module is enabled.
-   *
-  public function enable() {
-    CRM_Core_DAO::executeQuery('UPDATE foo SET is_active = 1 WHERE bar = "whiz"');
-  }
-
-  /**
-   * Example: Run a simple query when a module is disabled.
-   *
-  public function disable() {
-    CRM_Core_DAO::executeQuery('UPDATE foo SET is_active = 0 WHERE bar = "whiz"');
-  }
-
-  /**
-   * Example: Run a couple simple queries.
-   *
-   * @return TRUE on success
-   * @throws Exception
-   */
   public function upgrade_1100() {
     $this->ctx->log->info('Applying update 1100: Update reports to used the extendedDetail report');
     $reportNames = [
@@ -85,14 +35,9 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
       }
     }
     return TRUE;
-  } // */
+  } 
 
-  /**
-   * Example: Run a couple simple queries.
-   *
-   * @return TRUE on success
-   * @throws Exception
-   */
+
   public function upgrade_1300() {
     $this->ctx->log->info('Applying update 1300: Update reports to used correct formvalues');
     $report = civicrm_api3('ReportInstance', 'get', ['name' => 'LYBNT']);
@@ -120,12 +65,7 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
     return TRUE;
   }
 
-  /**
-   * Example: Run a couple simple queries.
-   *
-   * @return TRUE on success
-   * @throws Exception
-   */
+
   public function upgrade_1400() {
     $this->ctx->log->info('Applying update 1400: Update LYBNT report to used correct instance');
     $report = civicrm_api3('ReportInstance', 'get', ['name' => 'LYBNT']);
@@ -142,12 +82,7 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
     return TRUE;
   }
 
-  /**
-   * Example: Run a couple simple queries.
-   *
-   * @return TRUE on success
-   * @throws Exception
-   */
+
   public function upgrade_1500() {
     $this->ctx->log->info('Applying update 1500: Update formvaluies for recurring summary report');
     $report = civicrm_api3('ReportInstance', 'get', ['name' => 'Recurring Contributions (Summary)']);
@@ -467,9 +402,14 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
     return TRUE;
   }
 
-  public function upgrade_2301() {
+  ### BELOW THIS POINT: use new format. ### 
+  ### Example: upgrade_102001 => Ext 1.2.x, upgrade function 001 ###
 
-    $this->ctx->log->info('Change template id in option_value table');
+  public function upgrade_102001() {
+
+    $this->ctx->log->info('Reporting v1.2 (#001): Create new report templates and migrate pre-configured reports');
+
+    $errors = [];
 
     $templateParams = [
       [
@@ -579,27 +519,41 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
     ];
     //Conditional check to prevent multiple report template id creation
     $reportTemplates = array();
-    $optionValues = civicrm_api4('OptionValue', 'get', [
-      'where' => [
-        ['option_group_id:name', '=', 'report_template'],
-      ],
-      'limit' => 0,
-    ]);
+    $optionValues = \Civi\Api4\OptionValue::get()
+    ->addSelect('value')
+    ->addWhere('option_group_id:name', '=', 'report_template')
+    ->execute();
     $reportTemplates = $optionValues->column('value'); 
-    foreach($templateParams as $templateId => $templateParam) {
+    foreach($templateParams as $templateParam) {
       if(!in_array($templateParam['report_id'],$reportTemplates)) {
-        $results = \Civi\Api4\OptionValue::create(TRUE)
-        ->addValue('option_group_id.name', 'report_template')
-        ->addValue('label', $templateParam['label'])
-        ->addValue('value', $templateParam['report_id'])
-        ->addValue('name', $templateParam['name'])
-        ->addValue('component_id:name', $templateParam['component'])
-        ->addValue('is_active', TRUE)
-        ->addValue('is_reserved', TRUE)
-        ->addValue('weight', $templateParam['weight'])
-        ->addValue('description', $templateParam['description'])
-        ->execute();
+        try {
+          $results = \Civi\Api4\OptionValue::create(TRUE)
+          ->addValue('option_group_id.name', 'report_template')
+          ->addValue('label', $templateParam['label'])
+          ->addValue('value', $templateParam['report_id'])
+          ->addValue('name', $templateParam['name'])
+          ->addValue('component_id:name', $templateParam['component'])
+          ->addValue('is_active', TRUE)
+          ->addValue('is_reserved', TRUE)
+          ->addValue('weight', $templateParam['weight'])
+          ->addValue('description', $templateParam['description'])
+          ->execute();
+        } catch (Exception $exception) {
+          $errors[] = "(".$templateParam['label'].") " . $exception->getMessage();
+          break;
+        }
+
+        if ( isset($results['error_message']) ) {
+          $errors[] = "(".$templateParam['name'].")" . $results['error_message'];
+          break;
+        }
       }
+    }
+
+    // Stop here as we couldn't create the templates
+    if ( count($errors) > 0 ) {
+      watchdog("report_migration", "Could not create the report templates. Errors: <pre>" . print_r($errors, true). "</pre>", [], WATCHDOG_ERROR);
+      return FALSE;
     }
     
     // $this->ctx->log->info('Change report name and form values through upgrader function');
@@ -755,39 +709,51 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
       $existingName = $reportParam['name'];
       $newTemplateID = $reportParam['report_id'];
       $newtitle = $reportParam['title'];
-      $sql = "UPDATE civicrm_report_instance SET `name` = '".$newName."',`report_id` = '".$newTemplateID."', `title`= '".$newtitle."', `form_values` = NULL, created_id = NULL
-      WHERE `name` = '".$existingName."' LIMIT 1";
 
-      CRM_Core_DAO::executeQuery($sql);
-      
+      $query = "UPDATE civicrm_report_instance SET `name` = '".$newName."',`report_id` = '".$newTemplateID."', `title`= '".$newtitle."', `form_values` = NULL, created_id = NULL
+      WHERE `name` = '".$existingName."' LIMIT 1";
+      watchdog("debug", $newName . " -> " . $query);
+      CRM_Core_DAO::executeQuery($query);
+      watchdog("reporting", "Migrated: ".$existingName . " -> ".$newTemplateID . "", [], WATCHDOG_DEBUG);
+            
     }
 
    
-      $instanceCreation = [
-        'contrib_period_compare'
-        ];
-  
-      foreach($instanceCreation as $test)
-      {
-        $reportInstanceCount = CRM_Core_DAO::singleValueQuery("SELECT count(*) from civicrm_report_instance where `name` = '$test'");
-        $domainID = CRM_Core_Config::domainID();
-        
-        if($reportInstanceCount < 1){
-        switch($test){
+    $reportsToCreate = [
+      'contrib_period_compare'
+    ];
+
+    foreach($reportsToCreate as $template) {
+      $reportInstanceCount = CRM_Core_DAO::singleValueQuery("SELECT count(*) from civicrm_report_instance where `name` = '$template'");
+      $domainID = CRM_Core_Config::domainID();
+      
+      if($reportInstanceCount < 1){
+        switch($template){
           case 'contrib_period_compare':
-                  $instanceCreate = "INSERT INTO civicrm_report_instance (`domain_id`, `title`, `report_id`, `name`, `description`,`form_values`, `permission`, `is_active`, `is_reserved`, `grouprole`)
+            $query = "INSERT INTO civicrm_report_instance (`domain_id`, `title`, `report_id`, `name`, `description`,`form_values`, `permission`, `is_active`, `is_reserved`, `grouprole`)
             VALUES ( $domainID,'Comparison Report', 'chreports/contrib_period_compare','contrib_period_compare','Comaprision Report for contributions',NULL,'access CiviReport',1,1,'authenticated user' )";
-              CRM_Core_DAO::executeQuery($instanceCreate);
+            CRM_Core_DAO::executeQuery($query);
             break;
-          }
         }
       }
+    }
       
     return TRUE;
   }
 
-  public function upgrade_2400() {
-    $this->ctx->log->info('Migrate Reports to a new template');
+
+  public function upgrade_102002() {
+    $this->ctx->log->info('Reporting v1.2 (#002): delete bad entries');
+
+    // Delete reports for which report_id value is numeric
+    $query = "DELETE FROM civicrm_report_instance WHERE report_id REGEXP '^[0-9]+$'";
+    CRM_Core_DAO::executeQuery($query);
+
+    return TRUE;
+  }
+
+  public function upgrade_102003() {
+    $this->ctx->log->info('Reporting v1.2 (#003): migrate saved reports to new templates');
     $non_migrated_templates = E::getNonMigratedReportTemplates();
 
     // Initiate Logger for migration
@@ -847,10 +813,12 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
               if($migrationStatus['success']) {
                 $stats['success'] += 1;
                 $logger->addStatus($logData, true);
+                watchdog("reporting", "Migrated: ".$report['id'] . " (".$report['report_id'] . ") -> ".$reportId . "", [], WATCHDOG_DEBUG);
               } else {
                 $stats['failed'] += 1;
                 $logData['errorMessage'] = $migrationStatus['error'];
                 $logger->addStatus($logData, false);
+                watchdog("reporting", "Failed: ".$report['id'] . " (".$report['report_id'] . ") -> ".$reportId . "", [], WATCHDOG_DEBUG);
               }
             }
           }
@@ -862,8 +830,8 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
   }
 
 
-  public function upgrade_2401() {
-    $this->ctx->log->info('remove unused / old report templates');
+  public function upgrade_102004() {
+    $this->ctx->log->info('Reporting v1.2 (#004): remove unused and old report templates');
     $unwantedtemplates = [
       'contribute/summary',
       'contribute/detail',
@@ -913,30 +881,33 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
     ];
     $checkReportID = "SELECT id FROM civicrm_option_group WHERE `name`='report_template'";
     $reportID = CRM_Core_DAO::singleValueQuery($checkReportID);
-      foreach($unwantedtemplates as $report_id) {
-        $sql = "UPDATE civicrm_option_value SET `is_active` = 0
-      WHERE `value` = '".$report_id."' AND `option_group_id`=$reportID";
-      CRM_Core_DAO::executeQuery($sql);
-      }
-      return TRUE;
-  }
-
-  public function upgrade_2402() {
-    $this->ctx->log->info('remove unused / old reports');
-    $unwantedReportInstance = [
-      'Contribution History by GL Account (Summary)[deprecated]',
-      'Contribution History by Fund (Detailed Contact)',
-    ];
-  
-    foreach($unwantedReportInstance as $reportInstance) {
-      $instanceDelete = "DELETE FROM civicrm_report_instance WHERE `name` = '".$reportInstance."' AND `created_id` IS NULL";
-      CRM_Core_DAO::executeQuery($instanceDelete);
+    foreach($unwantedtemplates as $report_id) {
+      $query = "UPDATE civicrm_option_value SET `is_active` = 0 WHERE `value` = '".$report_id."' AND `option_group_id`=$reportID";
+      CRM_Core_DAO::executeQuery($query);
+      watchdog("reporting", "Disabling Template: ".$report_id . "", [], WATCHDOG_DEBUG);
     }
     return TRUE;
   }
 
-  public function upgrade_2403() {
-    $this->ctx->log->info('Change Fiscal year to date and Last Year inc. Today report display dashlet layout');
+  public function upgrade_102005() {
+    $this->ctx->log->info('Reporting v1.2 (#005): remove unused and old reports');
+    $unwantedReportInstance = [
+      'Contribution History by GL Account (Summary)[deprecated]',
+      'Contribution History by Fund (Detailed Contact)',
+      'Contribution History by Recurring Contribution (Summary)',
+      '(Copy) Contribution History by Campaign (Detailed)'
+    ];
+  
+    foreach($unwantedReportInstance as $reportInstance) {
+      $query = "DELETE FROM civicrm_report_instance WHERE `name` = '".$reportInstance."' AND `created_id` IS NULL";
+      CRM_Core_DAO::executeQuery($query);
+      watchdog("reporting", "Deleted: ".$reportInstance . "", [], WATCHDOG_DEBUG);
+    }
+    return TRUE;
+  }
+
+  public function upgrade_102006() {
+    $this->ctx->log->info('Reporting v1.2 (#006): remove chart option for dashlets');
     $reportInstances = civicrm_api3('ReportInstance', 'get', [
       'sequential' => 1,
       'return' => ["id", "title", "name"],
@@ -997,71 +968,11 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
     return TRUE;
   }
 
-  public function upgrade_2404() {
-    $this->ctx->log->info('Execute updatesections API after adding records in report instance table through upgrade_2301');
+  public function upgrade_102007() {
+    $this->ctx->log->info('Reporting: re-organize reports as per new requirements');
     $result = civicrm_api3('Job', 'updatesections');
     return TRUE;
   }
-  /**
-   * Example: Run an external SQL script.
-   *
-   * @return TRUE on success
-   * @throws Exception
-  public function upgrade_4201() {
-    $this->ctx->log->info('Applying update 4201');
-    // this path is relative to the extension base dir
-    $this->executeSqlFile('sql/upgrade_4201.sql');
-    return TRUE;
-  } // */
 
-
-  /**
-   * Example: Run a slow upgrade process by breaking it up into smaller chunk.
-   *
-   * @return TRUE on success
-   * @throws Exception
-  public function upgrade_4202() {
-    $this->ctx->log->info('Planning update 4202'); // PEAR Log interface
-
-    $this->addTask(E::ts('Process first step'), 'processPart1', $arg1, $arg2);
-    $this->addTask(E::ts('Process second step'), 'processPart2', $arg3, $arg4);
-    $this->addTask(E::ts('Process second step'), 'processPart3', $arg5);
-    return TRUE;
-  }
-  public function processPart1($arg1, $arg2) { sleep(10); return TRUE; }
-  public function processPart2($arg3, $arg4) { sleep(10); return TRUE; }
-  public function processPart3($arg5) { sleep(10); return TRUE; }
-  // */
-
-
-  /**
-   * Example: Run an upgrade with a query that touches many (potentially
-   * millions) of records by breaking it up into smaller chunks.
-   *
-   * @return TRUE on success
-   * @throws Exception
-  public function upgrade_4203() {
-    $this->ctx->log->info('Planning update 4203'); // PEAR Log interface
-
-    $minId = CRM_Core_DAO::singleValueQuery('SELECT coalesce(min(id),0) FROM civicrm_contribution');
-    $maxId = CRM_Core_DAO::singleValueQuery('SELECT coalesce(max(id),0) FROM civicrm_contribution');
-    for ($startId = $minId; $startId <= $maxId; $startId += self::BATCH_SIZE) {
-      $endId = $startId + self::BATCH_SIZE - 1;
-      $title = E::ts('Upgrade Batch (%1 => %2)', array(
-        1 => $startId,
-        2 => $endId,
-      ));
-      $sql = '
-        UPDATE civicrm_contribution SET foobar = whiz(wonky()+wanker)
-        WHERE id BETWEEN %1 and %2
-      ';
-      $params = array(
-        1 => array($startId, 'Integer'),
-        2 => array($endId, 'Integer'),
-      );
-      $this->addTask($title, 'executeSql', $sql, $params);
-    }
-    return TRUE;
-  } // */
 
 }
