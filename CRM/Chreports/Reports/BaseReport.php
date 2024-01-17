@@ -1343,60 +1343,49 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
 
 
     private function fieldWithLink(string $fieldName,&$rows,$row,$rowNum){
-        $string = '';
         switch ($fieldName) {
             case 'display_name':
             case 'sort_name':
                 if (array_key_exists($fieldName, $row) &&!empty($rows[$rowNum][$fieldName]) && array_key_exists('civicrm_contact_id', $row)) {
-                    $separator = ($this->_outputMode !== 'csv') ? "<br/>" : ' ';
-                    $url = CRM_Utils_System::url("civicrm/contact/view",
-                    'reset=1&cid=' . $row['civicrm_contact_id'],
-                    $this->_absoluteUrl);
-                    $value = CRM_Utils_Array::value($fieldName, $row);
-                    $string = $string . ($string ? $separator : '') ."<a href='{$url}'>{$value}</a> ";
-                    $rows[$rowNum][$fieldName] = $string;
+                    $url = CRM_Utils_System::url("civicrm/contact/view", 'reset=1&cid=' . $row['civicrm_contact_id']);
+                    $rows[$rowNum][$fieldName. "_link"] = $url;
+                    $rows[$rowNum][$fieldName. "_hover"] = ts('View Contact Summary for this Contact');
+                    $rows[$rowNum][$fieldName. "_class"] = ''; 
                 }
                 break;
             case 'total_amount':
                 if($this->_settings['type'] == 'detailed' && $this->_settings['entity'] == 'contribution')
-                if ($value = CRM_Utils_Array::value('total_amount', $row)) {
-                    if (CRM_Core_Permission::check('access CiviContribute')) {
-                        $separator = ($this->_outputMode !== 'csv') ? "<br/>" : ' ';
-                        $url = CRM_Utils_System::url("civicrm/contact/view/contribution",
-                        [
-                            'reset' => 1,
-                            'id' => $row['civicrm_contribution_contribution_id'],
-                            'cid' => $row['civicrm_contact_id'],
-                            'action' => 'view',
-                            'context' => 'contribution',
-                            'selectedChild' => 'contribute',
-                        ],$this->_absoluteUrl);
-                        $string = $string . ($string ? $separator : '') .
-                        "<a href='{$url}'>".CRM_Utils_Money::format($value)."</a> ";
-                        $rows[$rowNum]['total_amount'] = $string;
-                    }
+                if (!empty($rows[$rowNum][$fieldName]) && !empty($rows[$rowNum]['civicrm_contribution_contribution_id']) && !empty($rows[$rowNum]['civicrm_contact_id']) && CRM_Core_Permission::check('access CiviContribute')) {
+                    $url = CRM_Utils_System::url("civicrm/contact/view/contribution",
+                    [
+                        'reset' => 1,
+                        'id' => $row['civicrm_contribution_contribution_id'],
+                        'cid' => $row['civicrm_contact_id'],
+                        'action' => 'view',
+                    ]);
+                    $rows[$rowNum][$fieldName. "_link"] = $url;
+                    $rows[$rowNum][$fieldName. "_hover"] = ts('View Details of this Contribution');
+                    $rows[$rowNum][$fieldName. "_class"] = ''; 
                 }
                 break;
             case 'receive_date_start':
                 if($this->isPeriodicDetailed()){
                     if(!in_array($row['receive_date_start'],['Yearly Subtotal','Grand Total'])){
-                    $latestContribReport = $this->getReportInstanceDetailsByName('contrib_latest_dashlet');
-                    $dateReformat=date("F Y",strtotime($row['receive_date_start']));
-                    if($this->hasMonthlyBreakdown ())
-                    {
-                        $dateStart = date('Ym01', strtotime($row['receive_date_start']));
-                        $dateEnd = date('Ymt', strtotime($row['receive_date_start']));
-                    }else{
-                        $year = date('Y', strtotime($row['receive_date_start']));
-                        $month = 3 * $row['quartername'] -2;
-                        $dateStart = date('Ym01', strtotime($year.'-'.$month.'-01'));
-                        $dateEnd = date("Ymd", mktime(0, 0, 0, $month + 3,1 - 1, $year));
-                    }
-                    $url = CRM_Report_Utils_Report::getNextUrl('instance/'.$latestContribReport['id'],
-                    "reset=1&force=1&receive_date_from={$dateStart}&receive_date_to={$dateEnd}");
-                        $string = $string . ($string ? $separator : '') .
-                        "<a href='{$url}'>".$dateReformat."</a> ";
-                        $rows[$rowNum]['receive_date_start'] = $string;
+                        $latestContribReport = $this->getReportInstanceDetailsByName('contrib_latest_dashlet');
+                        if ( $this->hasMonthlyBreakdown() ){
+                            $dateStart = date('Ym01', strtotime($row['receive_date_start']));
+                            $dateEnd = date('Ymt', strtotime($row['receive_date_start']));
+                        } else {
+                            $year = date('Y', strtotime($row['receive_date_start']));
+                            $month = 3 * $row['quartername'] -2;
+                            $dateStart = date('Ym01', strtotime($year.'-'.$month.'-01'));
+                            $dateEnd = date("Ymd", mktime(0, 0, 0, $month + 3,1 - 1, $year));
+                        }
+                        $url = CRM_Report_Utils_Report::getNextUrl('instance/'.$latestContribReport['id'],
+                        "reset=1&force=1&receive_date_from={$dateStart}&receive_date_to={$dateEnd}");
+                        $rows[$rowNum][$fieldName. "_link"] = $url;
+                        $rows[$rowNum][$fieldName. "_hover"] = ts('View Details for this date');
+                        $rows[$rowNum][$fieldName. "_class"] = ''; 
                     }
                 }
                 break;
