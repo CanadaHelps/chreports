@@ -135,14 +135,16 @@ function chreports_civicrm_entityTypes(&$entityTypes) {
 }
 
 function chreports_civicrm_buildForm($formName, &$form) {
-  if (in_array($formName, [
-    'CRM_Report_Form_Contact_Summary',
-    'CRM_Chreports_Form_Report_ExtendSummary',
-    'CRM_Chreports_Form_Report_ExtendedDetail'
+  $isRefactored = $formName == "CRM_Chreports_Form_Report_ExtendSummary" || $formName == "CRM_Chreports_Form_Report_ExtendedDetail";
+  
+  if ($isRefactored || in_array($formName, [
+    'CRM_Report_Form_Contact_Summary'
   ])) {
     //CRM-799 To solve the issue of report columns being cut-off, limit the "Print report" function 
     //to only be available when the selected report has 10 columns or less. If more than 10 columns are selected, hide "Print report" function
-    $columnFields = $form->getVar('_submitValues')['fields']?$form->getVar('_submitValues')['fields']:$form->getVar('_params')['fields'];
+    // @TODO this doesn't work for all scenarios, and is more a temp hack rather than a fix
+    $columnFields = isset($form->getVar('_submitValues')['fields']) ? $form->getVar('_submitValues')['fields'] : 
+      (isset($form->getVar('_params')['fields']) ? $form->getVar('_params')['fields'] : []);
     $selectedColumnFields = count($columnFields);
     if(isset($selectedColumnFields) && $selectedColumnFields > 10) {
       if (array_key_exists('task', $form->_elementIndex)) {
@@ -156,11 +158,9 @@ function chreports_civicrm_buildForm($formName, &$form) {
         }
       }
     }
-    
-   
-   
   }
-  if ($formName == 'CRM_Chreports_Form_Report_ExtendSummary' || $formName == 'CRM_Chreports_Form_Report_ExtendedDetail') {
+
+  if ($isRefactored) {
     //default pre-select the column and group by
     if (array_key_exists('fields', $form->_elementIndex)) {
       $reportInstance = $form->getReportInstance();
@@ -181,6 +181,7 @@ function chreports_civicrm_buildForm($formName, &$form) {
     }
 
   }
+
   if ($formName == 'CRM_Chreports_Form_Report_ExtendSummary' || $formName == 'CRM_Report_Form_Contact_Summary') {
    
     CRM_Core_Resources::singleton()->addScript(
@@ -193,32 +194,40 @@ function chreports_civicrm_buildForm($formName, &$form) {
           });
         });
       });");
-   }
-   if ($formName == 'CRM_Chreports_Form_Report_RetentionRate') {
-     CRM_Core_Resources::singleton()->addScript(
-       "CRM.$(function($) {
-         $('ul.ui-tabs-nav li:nth-child(1), ul.ui-tabs-nav li:nth-child(3), ul.ui-tabs-nav li:nth-child(5)').hide();
-         $('#report-tab-col-groups').hide();
-         $('.count-link').parent().css('text-align', 'right');
-         $('.reports-header').css('text-align', 'right');
-         $('.crm-report-instanceForm-form-block-is_navigation, .crm-report-instanceForm-form-block-permission, .crm-report-instanceForm-form-block-role, .crm-report-instanceForm-form-block-isReserved, .crm-report-instanceForm-form-block-report_header, .crm-report-instanceForm-form-block-report_footer').hide();
-       });");
+  }
+
+  if ($formName == 'CRM_Report_Form_Contact_Summary') {
+    if (!empty($_GET['id_value'])) {
+      $var['civicrm_contact']['filters']['id']['options'] = explode(',', $_GET['id_value']);
+      $form->setVar('_formValues', array_merge($form->getVar('_formValues'), ['id_value' => explode(',', $_GET['id_value'])]));
+      $form->setVar('_params', array_merge($form->getVar('_params'), ['id_value' => explode(',', $_GET['id_value'])]));
+      $form->setDefaults(['id_value' => explode(',', $_GET['id_value'])]);
     }
-    if ($formName == 'CRM_Report_Form_Contact_Summary') {
-      if (!empty($_GET['id_value'])) {
-        $var['civicrm_contact']['filters']['id']['options'] = explode(',', $_GET['id_value']);
-        $form->setVar('_formValues', array_merge($form->getVar('_formValues'), ['id_value' => explode(',', $_GET['id_value'])]));
-        $form->setVar('_params', array_merge($form->getVar('_params'), ['id_value' => explode(',', $_GET['id_value'])]));
-        $form->setDefaults(['id_value' => explode(',', $_GET['id_value'])]);
-      }
-    }
+  }
 }
 
 function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
+  $isRefactored = $object instanceof CRM_Chreports_Form_Report_ExtendSummary || $object instanceof CRM_Chreports_Form_Report_ExtendedDetail;
 
-  if ($object instanceof CRM_Chreports_Form_Report_ExtendSummary || $object instanceof CRM_Chreports_Form_Report_ExtendedDetail || $object instanceof CRM_Chreports_Form_Report_ExtendMonthlyYearly) {
+  if ($isRefactored) {
    
       $reportInstance = $object->getReportInstance();
+
+      // Fix missing args
+      if ($varType == 'outputhandlers') {
+        $columns = $object->getVar('_columns');
+        $customGroups = \Civi\Api4\CustomGroup::get()
+          ->addSelect('name', 'extends', 'title', 'table_name')
+          ->execute();
+          
+        foreach ($customGroups as $customGroup) {
+          if ( isset($columns[$customGroup['table_name']]) ) {
+            $columns[$customGroup['table_name']]['extends'] = '';//$customGroup['extends'];
+            $columns[$customGroup['table_name']]['group_title'] = $customGroup['title'];
+          }
+        }
+       $object->setVar('_columns', $columns);
+      }
 
       if ($varType == 'columns') {
         //manage columns, group bys, sorts, filters based on json config
@@ -252,9 +261,6 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
         $reportInstance->alterDisplayRows($var);
         return;
       }
-  }
-  if ($object instanceof CRM_Chreports_Form_Report_GLSummaryReport) {
-    return;
   }
 
   // anything BELOW, we should exclude
@@ -477,8 +483,11 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
  * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_preProcess
  */
 function chreports_civicrm_preProcess($formName, &$form) {
-  if($formName == "CRM_Chreports_Form_Report_ExtendSummary" || $formName == "CRM_Chreports_Form_Report_ExtendedDetail")
-  {
+
+  
+  $isRefactored = $formName == "CRM_Chreports_Form_Report_ExtendSummary" || $formName == "CRM_Chreports_Form_Report_ExtendedDetail";
+  
+  if ($isRefactored) {
     //hide empty custom fields based filter sections on filter tab
     $reportInstance = $form->getReportInstance();
     $filters = $form->getVar('_filters');

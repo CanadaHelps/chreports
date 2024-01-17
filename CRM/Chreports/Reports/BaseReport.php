@@ -667,7 +667,10 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
             if(!in_array($fieldName,$calculatedFieldsKeyVal) && !in_array($value['type'],[CRM_Utils_Type::T_MONEY,CRM_Utils_Type::T_INT,CRM_Utils_TYPE::T_DATE + CRM_Utils_Type::T_TIME])) {
                 $columnHeaders[$fieldName] = ['title' => $value['title'],'type'=> CRM_Utils_Type::T_STRING];
             }
-            elseif(!in_array($fieldName,$calculatedFieldsKeyVal) && in_array($value['type'],[CRM_Utils_Type::T_INT]) && ($fieldInfo['select_name'] === 'option_value' ||!preg_match('/id$/', $fieldInfo['select_name']) )) {
+            elseif(!in_array($fieldName,$calculatedFieldsKeyVal) 
+                && in_array($value['type'],[CRM_Utils_Type::T_INT]) 
+                && ( isset($fieldInfo['select_name']) && ($fieldInfo['select_name'] === 'option_value' || !preg_match('/id$/', $fieldInfo['select_name']) )
+            )) {
                 $columnHeaders[$fieldName] = ['title' => $value['title'],'type'=> CRM_Utils_Type::T_STRING];
             }
         }
@@ -855,10 +858,8 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         if($this->isPeriodicDetailed()){
             $rollupTotalRow = ['receive_date_start' => 'Grand Total'];
             $resultingRow = [];
-            foreach($rows as $rowNum => $row)
-            {
-                if($this->hasQuarterlyBreakdown())
-                {
+            foreach($rows as $rowNum => $row) {
+                if($this->hasQuarterlyBreakdown()) {
                     $year = date('Y', strtotime($row['receive_date_start']));
                     $resultingRow[$year][] = $row;
                 }
@@ -867,16 +868,14 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
             }
             if($this->hasQuarterlyBreakdown()){
                 $finalDisplay = [];
-                foreach($resultingRow as $key => $rowValue)
-                {
+                foreach($resultingRow as $key => $rowValue) {
                     $subTotal = ['receive_date_start' => 'Yearly Subtotal'];
-                    foreach($rowValue as $k=>$result)
-                    {
+                    foreach($rowValue as $k=>$result) {
                         $subTotal['total_contribution_sum'] += $result['total_contribution_sum'];
                         $subTotal['total_count'] += $result['total_count'];
                         $finalDisplay[] = $result;
                     }
-                $finalDisplay[] = $subTotal;
+                    $finalDisplay[] = $subTotal;
                 }
                 $rows = $finalDisplay;
             }
@@ -885,15 +884,12 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         if($this->_settings['name'] == "SYBNT"){ //to do later
             $rollupTotalRow = ['exposed_id' => 'Grand Total'];
            
-            foreach($rows as $rowNum => $row)
-            {
-                foreach($row as $key=>$value)
-            {
-                if($key == 'civicrm_life_time_total' || $key == 'last_year_total_amount' || $key == 'last_four_year_total_amount' || $key == 'last_three_year_total_amount' || $key == 'last_two_year_total_amount')
-                {
-                    $rollupTotalRow[$key] += $row[$key];
+            foreach($rows as $rowNum => $row) {
+                foreach($row as $key=>$value) {
+                    if($key == 'civicrm_life_time_total' || $key == 'last_year_total_amount' || $key == 'last_four_year_total_amount' || $key == 'last_three_year_total_amount' || $key == 'last_two_year_total_amount') {
+                        $rollupTotalRow[$key] += $row[$key];
+                    }
                 }
-            }
             }
             $rows[] = $rollupTotalRow;
         }
@@ -914,13 +910,11 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         if($reportType == 'summary') {
             $unassignedDataFields = array_filter(array_unique( array_merge($unassignedDataFields, array_keys($this->_columns))));
         }
-         //CRM-2063 - Use "Unassigned" as value in summary/Detailed  reports for NULL values
+        
+        //CRM-2063 - Use "Unassigned" as value in summary/Detailed  reports for NULL values
         foreach ($rows as $rowNum => $row) {
-           
-            foreach($this->_columns as $key=>$value)
-            {
-                if (array_key_exists($key, $row) && in_array($key,$unassignedDataFields))
-                {
+            foreach($this->_columns as $key=>$value) {
+                if (array_key_exists($key, $row) && in_array($key,$unassignedDataFields)) {
                     $fieldNameKey = ($row[$key]!= NULL)? $row[$key] : 'Unassigned';
                     $rows[$rowNum][$key] = $fieldNameKey;
                     //create function to convert field name to link for detailed report for sort_name and total_amount field
@@ -930,52 +924,46 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         }
         //change rows to display report results of monthly/yearly reports accordingly
         if($this->isPeriodicSummary()){
-        $resultingRow = [];
-        $finalDisplay = [];
-        $fieldName = array_key_first($this->_columns);
-        //Roll up row to be appended in the end
-        $rollupTotalRow = [$fieldName => 'Grand Total'];
-        //filtering out resulting rows by the column filedname key
-         foreach($rows as $rowNum => $row)
-         {
-            $fieldNameKey = ($row[$fieldName]!= NULL)? $row[$fieldName] : 'Unassigned';
-            $resultingRow[$fieldNameKey][] = $row;
-         }
-         foreach($resultingRow as $key => $rowValue)
-         {
-            $count = $total_amount = 0;
-            $columnHeaderValue = [];
-            //fieldName grouped by month/year
-            foreach($rowValue as $k=>$result)
-            {
-                //
-                $count += $result['total_count'];
-                $total_amount += $result['total_contribution_sum'];
-                $rollupTotalRow['total_contribution_sum'] += $result['total_contribution_sum'];
-                if($this->hasYearlyBreakdown())
-                {
-                    $columnHeaderValue['total_amount_'.$result['year']] = $result['total_contribution_sum'];
-                    $rollupTotalRow['total_amount_'.$result['year']] += $result['total_contribution_sum'];
-                    
-                }else if($this->hasMonthlyBreakdown())
-                {
-                    $columnHeaderValue['total_amount_'.$result['month'].'_'.$result['year']] = $result['total_contribution_sum'];
-                    $rollupTotalRow['total_amount_'.$result['month'].'_'.$result['year']] += $result['total_contribution_sum'];
-                }
-                
+            $resultingRow = [];
+            $finalDisplay = [];
+            $fieldName = array_key_first($this->_columns);
+            //Roll up row to be appended in the end
+            $rollupTotalRow = [$fieldName => 'Grand Total'];
+            //filtering out resulting rows by the column filedname key
+            foreach($rows as $rowNum => $row) {
+                $fieldNameKey = ($row[$fieldName]!= NULL)? $row[$fieldName] : 'Unassigned';
+                $resultingRow[$fieldNameKey][] = $row;
             }
-            $displayRows = [
-                $fieldName => $key,
-                'total_count' => $count,
-                'total_contribution_sum' => $total_amount,
-              ];
-            $finalDisplay[] = array_merge($displayRows,$columnHeaderValue);
-         }
-         //Adding rollup row to Displayrow
-         $finalDisplay[] = $rollupTotalRow;
-         $rows = $finalDisplay;
+            foreach($resultingRow as $key => $rowValue) {
+                $count = $total_amount = 0;
+                $columnHeaderValue = [];
+                //fieldName grouped by month/year
+                foreach($rowValue as $k=>$result) {
+                    //
+                    $count += $result['total_count'];
+                    $total_amount += $result['total_contribution_sum'];
+                    $rollupTotalRow['total_contribution_sum'] += $result['total_contribution_sum'];
+                    if($this->hasYearlyBreakdown()) {
+                        $columnHeaderValue['total_amount_'.$result['year']] = $result['total_contribution_sum'];
+                        $rollupTotalRow['total_amount_'.$result['year']] += $result['total_contribution_sum'];
+                        
+                    }else if($this->hasMonthlyBreakdown()) {
+                        $columnHeaderValue['total_amount_'.$result['month'].'_'.$result['year']] = $result['total_contribution_sum'];
+                        $rollupTotalRow['total_amount_'.$result['month'].'_'.$result['year']] += $result['total_contribution_sum'];
+                    }
+                }
+                $displayRows = [
+                    $fieldName => $key,
+                    'total_count' => $count,
+                    'total_contribution_sum' => $total_amount,
+                ];
+                $finalDisplay[] = array_merge($displayRows,$columnHeaderValue);
+            }
+            //Adding rollup row to Displayrow
+            $finalDisplay[] = $rollupTotalRow;
+            $rows = $finalDisplay;
         }
-      }
+    }
 
     /**
      * 
@@ -994,6 +982,9 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         // Check if we have multiple currencies
         $groupByCurrency = false;
         foreach ($rows as $rowNum => $row) {
+            if (empty($row['currency'])) {
+                $row['currency'] = "CAD";
+            }
             if (count(explode(',', $row['currency'])) > 1) {
                 $groupByCurrency = true;
                 break;
@@ -1343,6 +1334,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
 
 
     private function fieldWithLink(string $fieldName,&$rows,$row,$rowNum){
+        $rows[$rowNum][$fieldName. "_class"] = ''; 
         switch ($fieldName) {
             case 'display_name':
             case 'sort_name':
@@ -1350,7 +1342,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                     $url = CRM_Utils_System::url("civicrm/contact/view", 'reset=1&cid=' . $row['civicrm_contact_id']);
                     $rows[$rowNum][$fieldName. "_link"] = $url;
                     $rows[$rowNum][$fieldName. "_hover"] = ts('View Contact Summary for this Contact');
-                    $rows[$rowNum][$fieldName. "_class"] = ''; 
+                    
                 }
                 break;
             case 'total_amount':
@@ -1365,7 +1357,6 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                     ]);
                     $rows[$rowNum][$fieldName. "_link"] = $url;
                     $rows[$rowNum][$fieldName. "_hover"] = ts('View Details of this Contribution');
-                    $rows[$rowNum][$fieldName. "_class"] = ''; 
                 }
                 break;
             case 'receive_date_start':
@@ -1385,7 +1376,6 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                         "reset=1&force=1&receive_date_from={$dateStart}&receive_date_to={$dateEnd}");
                         $rows[$rowNum][$fieldName. "_link"] = $url;
                         $rows[$rowNum][$fieldName. "_hover"] = ts('View Details for this date');
-                        $rows[$rowNum][$fieldName. "_class"] = ''; 
                     }
                 }
                 break;
@@ -1660,6 +1650,9 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
             $actualTable = $fieldInfo['table_alias'] ?? $entityName;
             $groupName = $this->getGroupNameField($fieldName);
 
+            $fieldInfo['join_entity'] = $fieldInfo['join_entity'] ?? FALSE;
+            $fieldInfo['custom'] = $fieldInfo['custom'] ?? FALSE;
+
             $alreadyIncluded = false;
             // option value always need a join
             if ( isset($fieldInfo['select_name']) && $fieldInfo['select_name'] === 'option_value' ) {
@@ -1903,25 +1896,27 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     }
     //This function will fetch report name and ID for report instance
     // Will fetch only report name for template
-    static function getReportDetail( $reportPath ): array {
-        $reportId = end(explode('/', $reportPath));
-            if (strpos($reportPath,'instance') !== false) {
-                $reportInfo = CRM_Chreports_Reports_BaseReport::getReportInstanceDetails($reportId);
-                $reportName = $reportInfo['name'] ?? $reportInfo['title'];
-            } else {
-                switch($reportId){
-                    case 'contrib_glaccount':
-                        $reportName = 'contrib_glaccount_payment_reconciliation';
-                        break;
-                    case 'contrib_period_detailed':
-                        $reportName = 'contrib_quarterly_past_year';
-                        break;
-                    default:
-                        $reportName = $reportId;
-                        break;
-                }
-                $reportId = NULL;
+    public static function getReportDetail( string $reportPath ): array {
+        $reportPathArr = explode('/', $reportPath);
+        $reportId = end($reportPathArr);
+        
+        if (strpos($reportPath,'instance') !== false) {
+            $reportInfo = CRM_Chreports_Reports_BaseReport::getReportInstanceDetails($reportId);
+            $reportName = $reportInfo['name'] ?? $reportInfo['title'];
+        } else {
+            switch($reportId){
+                case 'contrib_glaccount':
+                    $reportName = 'contrib_glaccount_payment_reconciliation';
+                    break;
+                case 'contrib_period_detailed':
+                    $reportName = 'contrib_quarterly_past_year';
+                    break;
+                default:
+                    $reportName = $reportId;
+                    break;
             }
+            $reportId = NULL;
+        }
         return [$reportId , $reportName];
     }
 }

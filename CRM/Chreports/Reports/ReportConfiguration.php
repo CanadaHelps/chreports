@@ -13,7 +13,7 @@ class CRM_Chreports_Reports_ReportConfiguration {
 
     public function __construct($id = NULL, string $name) {
         if($id)
-        $this->_id = $id;
+            $this->_id = $id;
         $this->loadMappings();
         // For base templates where JSON file is present but no report_instance in the DB
         if(in_array($name, E::getOnlyBaseTemplates())) {
@@ -302,6 +302,7 @@ class CRM_Chreports_Reports_ReportConfiguration {
      */
     private function _fetchConfigSettings($reportInstanceDetails) {
         $filePath = $this->getFilePath($reportInstanceDetails);
+        
         if (is_file($filePath['source'])) {
             return json_decode(file_get_contents($filePath['source']),true);
         }
@@ -574,6 +575,7 @@ class CRM_Chreports_Reports_ReportConfiguration {
     public static function getFilePath(array $reportDetails, $action = 'save'): array {
         if(!empty($reportDetails['name']))
             $report_id = self::escapeFileName($reportDetails['name']);
+        
         if($action == 'copy' || $action == 'migrate' || !empty($reportDetails['created_id'])) {
             $filePath['base'] = CRM_Core_Config::singleton()->uploadDir.'reports/saved/';
             if(isset($report_id))
