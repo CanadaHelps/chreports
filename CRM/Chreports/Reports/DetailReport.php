@@ -228,7 +228,8 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
       $orderBys = [];
       if (!empty($this->_params['order_bys']) && is_array($this->_params['order_bys'])) 
       {
-      if($this->getReportName() == 'contrib_sybunt' || $this->getReportName() == 'contrib_lybunt')
+      //Conditional check to apply following order by clause only if exposed_id column field is checked for lybnt , sybunt report
+      if(($this->getReportName() == 'contrib_sybunt' || $this->getReportName() == 'contrib_lybunt') && in_array('exposed_id',array_keys($this->_columns)))
       {
         $orderBys[] = "ISNULL(exposed_id)";
       }

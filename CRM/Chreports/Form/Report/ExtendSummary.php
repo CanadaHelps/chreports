@@ -158,7 +158,7 @@ class CRM_Chreports_Form_Report_ExtendSummary extends CRM_Report_Form_Contribute
         }
       }
     }
-    return $clauses;
+    return array_filter($clauses);
   }
 
   public function groupBy() {

@@ -282,7 +282,7 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
         }
       }
     }
-    return $clauses;
+    return array_filter($clauses);
   }
 
   public function from() {
