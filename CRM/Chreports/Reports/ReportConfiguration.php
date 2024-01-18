@@ -307,6 +307,7 @@ class CRM_Chreports_Reports_ReportConfiguration {
         }
         // In case of missing JSON file
         // Redirect to the Report List Page
+        watchdog('reporting', 'Missing JSON File for Report ID:'. $this->_id, NULL, WATCHDOG_ERROR);
         CRM_Core_Session::setStatus('Missing Configuration file. Unable to load report.', 'Error' ,'error');
         CRM_Utils_System::redirect('/dms/report/list?reset=1');
     }
