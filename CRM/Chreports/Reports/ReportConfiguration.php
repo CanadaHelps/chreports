@@ -351,11 +351,20 @@ class CRM_Chreports_Reports_ReportConfiguration {
                 if($vOrder['column'] == '-') {
                     continue;
                 }
-                $config['order_bys'][$vOrder['column']] = $vOrder;
-                if(isset($vOrder['section'])) {
-                    //Rename Section -> Header instead
-                    $config['order_bys'][$vOrder['column']]['header'] = $vOrder['section'];
-                    unset($config['order_bys'][$vOrder['column']]['section']);
+                // Check for custom field
+                // if it's a custom field, get the key value from mapping.json
+                $orderByKey = $vOrder['column'];
+                if(strpos($orderByKey, 'custom_') === 0) {
+                    $orderByKey = $this->getCustomFieldFromMappingJson($orderByKey);
+                    unset($vOrder['column']);
+                }
+                if(!empty($orderByKey)) {
+                    $config['order_bys'][$orderByKey] = $vOrder;
+                    if(isset($vOrder['section'])) {
+                        //Rename Section -> Header instead
+                        $config['order_bys'][$vOrder['column']]['header'] = $vOrder['section'];
+                        unset($config['order_bys'][$vOrder['column']]['section']);
+                    }
                 }
             }
         }
@@ -380,6 +389,7 @@ class CRM_Chreports_Reports_ReportConfiguration {
                 $config['filters'][$filterKey] = $filterValue;
             }
         }
+
 
         // Copy rest of the leftover settings if applicable
         foreach($baseTemplateSettings as $k => $v) {
@@ -609,6 +619,32 @@ class CRM_Chreports_Reports_ReportConfiguration {
             }
         }
         return $filePath;
+    }
+
+    /**
+     *
+     * Take the field name and if it's a custom field name
+     * return the value of corresponding field from mapping.json file
+     *
+     * @return string
+     */
+
+    private function getCustomFieldFromMappingJson($fieldName): string {
+        $customFieldId = preg_replace("/[^0-9]/", "", $fieldName);
+        if(is_numeric($customFieldId)) {
+            $field = CRM_Core_BAO_CustomField::getNameFromID($customFieldId);
+            if($field) {
+                // Not using getFieldMapping() method as it requires entity information to fetch the result
+                if(!empty($this->_mappings)) {
+                    $inputField = reset($field)['field_name'];
+                    $matches = array_filter($this->_mappings, function ($value) use ($inputField) {
+                        return isset($value['custom_fieldName']) && $value['custom_fieldName'] === $inputField;
+                    });
+                    return reset(array_keys($matches));
+                }
+            }
+        }
+        return '';
     }
 }
 ?>

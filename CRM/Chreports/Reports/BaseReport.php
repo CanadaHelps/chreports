@@ -451,10 +451,21 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
 
                 case 'nll':
                     $filterNames[$fieldName] = ['nll' => (int) 1];
+                    // In case of relative, change the format that matches the base configuration file
+                    if(isset($matches[2])) {
+                        if($matches[2] == 'relative') {
+                            $filterNames[$fieldName] = ['relative' => 'nll'];
+                        }
+                    }
                     break;
 
                 case 'nnll':
                     $filterNames[$fieldName] = ['nnll' => (int) 1];
+                    if(isset($matches[2])) {
+                        if($matches[2] == 'relative') {
+                            $filterNames[$fieldName] = ['relative' => 'nnll'];
+                        }
+                    }
                     break;
 
                 default:
