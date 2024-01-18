@@ -369,6 +369,8 @@ class CRM_Chreports_Reports_ReportConfiguration {
                         $config['order_bys'][$vOrder['column']]['header'] = $vOrder['section'];
                         unset($config['order_bys'][$vOrder['column']]['section']);
                     }
+            } else {
+                    watchdog("reporting", "Failed to map field: ".$orderByKey . " -> ".$config['title'] . "", [], WATCHDOG_DEBUG);            
                 }
             }
         }
