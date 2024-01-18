@@ -302,10 +302,13 @@ class CRM_Chreports_Reports_ReportConfiguration {
      */
     private function _fetchConfigSettings($reportInstanceDetails) {
         $filePath = $this->getFilePath($reportInstanceDetails);
-        
         if (is_file($filePath['source'])) {
             return json_decode(file_get_contents($filePath['source']),true);
         }
+        // In case of missing JSON file
+        // Redirect to the Report List Page
+        CRM_Core_Session::setStatus('Missing Configuration file. Unable to load report.', 'Error' ,'error');
+        CRM_Utils_System::redirect('/dms/report/list?reset=1');
     }
 
 
