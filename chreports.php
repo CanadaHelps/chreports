@@ -227,7 +227,7 @@ function chreports_civicrm_alterReportVar($varType, &$var, &$object) {
         foreach ($customGroups as $customGroup) {
           if ( isset($columns[$customGroup['table_name']]) ) {
             $columns[$customGroup['table_name']]['extends'] = '';//$customGroup['extends'];
-            $columns[$customGroup['table_name']]['group_title'] = $customGroup['title'];
+            //$columns[$customGroup['table_name']]['group_title'] = $customGroup['title'];
           }
         }
        $object->setVar('_columns', $columns);
