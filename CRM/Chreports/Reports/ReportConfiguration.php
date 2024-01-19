@@ -355,15 +355,19 @@ class CRM_Chreports_Reports_ReportConfiguration {
                 if($vOrder['column'] == '-') {
                     continue;
                 }
-                // Check for custom field
-                // if it's a custom field, get the key value from mapping.json
-                $orderByKey = $vOrder['column'];
-                if(strpos($orderByKey, 'custom_') === 0) {
-                    $orderByKey = $this->getCustomFieldFromMappingJson($orderByKey);
-                    unset($vOrder['column']);
+                // check whether the field is part of from mapping.json
+                $orderByField = $this->getFieldFromMappingJson($vOrder['column']);
+                if(empty($orderByField)) {
+                    watchdog("reporting", "Failed to map field: ".$vOrder['column'] . " -> ".$config['title'] . "", [], WATCHDOG_DEBUG);
+                    $config['log_messages'][] = 'Unable to port OrderBy Field "'. $vOrder['column'] . '", no mapping found';
                 }
-                if(!empty($orderByKey)) {
-                    $config['order_bys'][$orderByKey] = $vOrder;
+
+                // Unset Column, it's not used
+                if(isset($vOrder['column']))
+                    unset($vOrder['column']);
+
+                if(!empty($orderByField)) {
+                    $config['order_bys'][$orderByField] = $vOrder;
                     if(isset($vOrder['section'])) {
                         //Rename Section -> Header instead
                         $config['order_bys'][$vOrder['column']]['header'] = $vOrder['section'];
@@ -458,6 +462,13 @@ class CRM_Chreports_Reports_ReportConfiguration {
             mkdir($pathDir, 0775, true);
         }
 
+        // Unset Log message (if present)
+        if(isset($config['log_messages'])) {
+            // Save it to a variable to use it for future context
+            $logMessages = $config['log_messages'];
+            unset($config['log_messages']);
+        }
+
         // Encode the $config array as JSON
         $jsonConfig = json_encode($config, JSON_PRETTY_PRINT);
 
@@ -527,13 +538,21 @@ class CRM_Chreports_Reports_ReportConfiguration {
 
         // Encode the $config array as JSON
         $config['name'] = $instance->name;
+
+        // Unset Log message (if present)
+        if(isset($config['log_messages'])) {
+            // Save it to a variable to use it for future context
+            $logMessages = $config['log_messages'];
+            unset($config['log_messages']);
+        }
+
         $jsonConfig = json_encode($config, JSON_PRETTY_PRINT);
 
         // Write the JSON data to the file
         if (file_put_contents($filePath['source'], $jsonConfig) !== false) {
             // Log success message
             watchdog('report_migration', 'Successfully migrated report'. $instance->id, NULL, WATCHDOG_INFO);
-            return ['success' => true];
+            return ['success' => true, 'log_messages' => $logMessages ?? ''];
         } else {
             // Log Error writing the file
             watchdog('report_migration', 'Error Writing the file', NULL, WATCHDOG_ERROR);
@@ -635,18 +654,26 @@ class CRM_Chreports_Reports_ReportConfiguration {
      * @return string
      */
 
-    private function getCustomFieldFromMappingJson($fieldName): string {
-        $customFieldId = preg_replace("/[^0-9]/", "", $fieldName);
-        if(is_numeric($customFieldId)) {
-            $field = CRM_Core_BAO_CustomField::getNameFromID($customFieldId);
-            if($field) {
-                // Not using getFieldMapping() method as it requires entity information to fetch the result
-                if(!empty($this->_mappings)) {
-                    $inputField = reset($field)['field_name'];
-                    $matches = array_filter($this->_mappings, function ($value) use ($inputField) {
-                        return isset($value['custom_fieldName']) && $value['custom_fieldName'] === $inputField;
-                    });
-                    return reset(array_keys($matches));
+    private function getFieldFromMappingJson($fieldName): string {
+        if(strpos($fieldName, 'custom_') === 0) {
+            $customFieldId = preg_replace("/[^0-9]/", "", $fieldName);
+            if(is_numeric($customFieldId)) {
+                $cutomFieldValue = CRM_Core_BAO_CustomField::getNameFromID($customFieldId);
+                if($cutomFieldValue) {
+                    // Not using getFieldMapping() method as it requires entity information to fetch the result
+                    if(!empty($this->_mappings)) {
+                        $inputField = reset($cutomFieldValue)['field_name'];
+                        $matches = array_filter($this->_mappings, function ($value) use ($inputField) {
+                            return isset($value['custom_fieldName']) && $value['custom_fieldName'] === $inputField;
+                        });
+                        return reset(array_keys($matches));
+                    }
+                }
+            }
+        } else {
+            if(!empty($this->_mappings)) {
+                if(in_array($fieldName, array_keys($this->_mappings))) {
+                    return $fieldName;
                 }
             }
         }
