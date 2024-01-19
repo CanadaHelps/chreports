@@ -23,6 +23,17 @@ class CRM_Utils_Report_Migration_Logger {
                 $this->instance,
                 $isSuccess ? 'Success' : 'Failed',
             ];
+
+            // Add log Message to the last Column (if present)
+            // Convert to string if it's an array
+            if(isset($logData['logMessages'])) {
+                if(!empty($logData['logMessages'])) {
+                    if(is_array($logData['logMessages'])) {
+                        $logData['logMessages'] = implode(" | ", $logData['logMessages']);
+                    }
+                }
+            }
+
             $data = array_merge($data, array_values($logData));
 
             // Write to CSV
