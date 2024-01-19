@@ -711,7 +711,7 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
       $newtitle = $reportParam['title'];
 
       $query = "UPDATE civicrm_report_instance SET `name` = '".$newName."',`report_id` = '".$newTemplateID."', `title`= '".$newtitle."', `form_values` = NULL, created_id = NULL
-      WHERE `name` = '".$existingName."' LIMIT 1";
+      WHERE `name` = '".$existingName."' ORDER BY `id` ASC LIMIT 1";
       CRM_Core_DAO::executeQuery($query);
       watchdog("reporting", "Migrating: ".$existingName . " -> ".$newTemplateID . "", [], WATCHDOG_DEBUG);
             
