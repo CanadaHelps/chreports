@@ -826,6 +826,12 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
               $migrationStatus = $reportConfiguration->writeMigrateConfigFile();
               if($migrationStatus['success']) {
                 $stats['success'] += 1;
+                // Add Log Message if present
+                if(isset($migrationStatus['log_messages'])) {
+                  if(!empty($migrationStatus['log_messages'])) {
+                    $logData['logMessages'] = $migrationStatus['log_messages'];
+                  }
+                }
                 $logger->addStatus($logData, true);
                 watchdog("reporting", "Migrated: ".$report['id'] . " (".$report['report_id'] . ") -> ".$reportId . "", [], WATCHDOG_DEBUG);
               } else {
