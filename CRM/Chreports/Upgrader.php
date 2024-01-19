@@ -702,20 +702,35 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
         'name'=>'Retention Rate Report (Dashlet)',
         'report_id'=>'chreports/contrib_retention',
         'title' => 'Retention Rate Report (Dashlet)'
-      ]
+      ],
     ];
    
+    $errors = [];
     foreach($newReportParams as $newName => $reportParam) {
       $existingName = $reportParam['name'];
       $newTemplateID = $reportParam['report_id'];
       $newtitle = $reportParam['title'];
 
-      $query = "UPDATE civicrm_report_instance SET `name` = '".$newName."',`report_id` = '".$newTemplateID."', `title`= '".$newtitle."', `form_values` = NULL, created_id = NULL
-      WHERE `name` = '".$existingName."' ORDER BY `id` ASC LIMIT 1";
-      CRM_Core_DAO::executeQuery($query);
-      watchdog("reporting", "Migrating: ".$existingName . " -> ".$newTemplateID . "", [], WATCHDOG_DEBUG);
+      $query = "UPDATE civicrm_report_instance SET 
+        `name` = '".$newName."',
+        `report_id` = '".$newTemplateID."', 
+        `title`= '".$newtitle."', 
+        `form_values` = NULL, created_id = NULL, is_active = 1
+        WHERE `name` = '".$existingName."' ORDER BY `id` ASC LIMIT 1";
+      $result = CRM_Core_DAO::executeQuery($query);
+      
+      if ($result->affectedRows() === 1) {
+        watchdog("reporting", "Migrated: ".$existingName . " -> ".$newTemplateID . "", [], WATCHDOG_DEBUG);
+      } else {
+        $errors[] = "$existingName -> $newTemplateID ";
+        watchdog("reporting", "Failed: ".$existingName . " -> ".$newTemplateID . "", [], WATCHDOG_ERROR);
+      }
             
     }
+
+    // Do not proceed if there are errors.
+    if ( count($errors) > 0 )
+      return FALSE;
 
    
     $reportsToCreate = [
@@ -882,8 +897,13 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
     $reportID = CRM_Core_DAO::singleValueQuery($checkReportID);
     foreach($unwantedtemplates as $report_id) {
       $query = "UPDATE civicrm_option_value SET `is_active` = 0 WHERE `value` = '".$report_id."' AND `option_group_id`=$reportID";
-      CRM_Core_DAO::executeQuery($query);
-      watchdog("reporting", "Disabling Template: ".$report_id . "", [], WATCHDOG_DEBUG);
+      $result = CRM_Core_DAO::executeQuery($query);
+      if ($result->affectedRows() === 1) {
+        watchdog("reporting", "Disabled Template: ".$report_id . "", [], WATCHDOG_DEBUG);
+      } else {
+        // this should not prevent upgrader from continuing
+        watchdog("reporting", "Failed: Cound not find existing template ".$report_id, [], WATCHDOG_WARNING);
+      }
     }
     return TRUE;
   }
@@ -899,8 +919,13 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
   
     foreach($unwantedReportInstance as $reportInstance) {
       $query = "DELETE FROM civicrm_report_instance WHERE `name` = '".$reportInstance."' AND `created_id` IS NULL";
-      CRM_Core_DAO::executeQuery($query);
-      watchdog("reporting", "Deleting: ".$reportInstance . "", [], WATCHDOG_DEBUG);
+      $result = CRM_Core_DAO::executeQuery($query);
+      if ($result->affectedRows() === 1) {
+        watchdog("reporting", "Deleted: ".$reportInstance . "", [], WATCHDOG_DEBUG);
+      } else {
+        // this should not prevent upgrader from continuing
+        watchdog("reporting", "Failed: Cound not find existing report ".$reportInstance, [], WATCHDOG_WARNING);
+      }
     }
     return TRUE;
   }
