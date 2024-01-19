@@ -307,6 +307,7 @@ class CRM_Chreports_Reports_ReportConfiguration {
         }
         // In case of missing JSON file
         // Redirect to the Report List Page
+        watchdog('reporting', 'Missing JSON File for Report ID:'. $this->_id, NULL, WATCHDOG_ERROR);
         CRM_Core_Session::setStatus('Missing Configuration file. Unable to load report.', 'Error' ,'error');
         CRM_Utils_System::redirect('/dms/report/list?reset=1');
     }
@@ -357,6 +358,7 @@ class CRM_Chreports_Reports_ReportConfiguration {
                 // check whether the field is part of from mapping.json
                 $orderByField = $this->getFieldFromMappingJson($vOrder['column']);
                 if(empty($orderByField)) {
+                    watchdog("reporting", "Failed to map field: ".$vOrder['column'] . " -> ".$config['title'] . "", [], WATCHDOG_DEBUG);
                     $config['log_messages'][] = 'Unable to port OrderBy Field "'. $vOrder['column'] . '", no mapping found';
                 }
 
