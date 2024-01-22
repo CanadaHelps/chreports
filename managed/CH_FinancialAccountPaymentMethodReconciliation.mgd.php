@@ -11,7 +11,7 @@ return array(
       'title' => ts('GL Account & Payment Method Reconciliation Report (Full)'),
       'name' => 'contrib_glaccount_payment_reconciliation',
       "description" => "Shows Bookkeeping Transactions Report",
-      'permission' => 'administer Reports',
+      'permission' => 'access Reports',
       'is_active' => 1,
       "form_values" => NULL,
       'is_reserved' =>  0,

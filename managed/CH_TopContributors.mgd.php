@@ -3,7 +3,7 @@ return array(
   array(
     'module' => 'biz.jmaconsulting.chreports',
     'name' => 'Top contributors',
-    'update' => 'always',
+    'update' => 'never',
     'entity' => 'ReportInstance',
     'params' => array(
       'version' => 3,
@@ -11,7 +11,7 @@ return array(
       'name' => 'contact_top_donors',
       'title' => ts('Top Contributors'),
       "description" => "Top contributors",
-      'permission' => 'administer Reports',
+      'permission' => 'access Reports',
       'is_active' => 1,
       "form_values" => NULL,
     ),

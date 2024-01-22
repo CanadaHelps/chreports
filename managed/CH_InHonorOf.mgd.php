@@ -11,7 +11,7 @@ return array(
       'title' => ts('In Honour of'),
       'name' => 'contrib_detailed_inhonour',
       "description" => "All contributions made In Honour Of",
-      'permission' => 'administer Reports',
+      'permission' => 'access Reports',
       'is_active' => 1,
       "form_values" => NULL,
       'is_reserved' =>  0,

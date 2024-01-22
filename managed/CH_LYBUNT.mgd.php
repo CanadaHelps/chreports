@@ -11,7 +11,7 @@ return array(
       'title' => ts('LYBNT'),
       'name' => 'contrib_lybunt',
       "description" => "Contributors who gave 'Last Year, But Not This'",
-      'permission' => 'administer Reports',
+      'permission' => 'access Reports',
       'is_active' => 1,
       'form_values' => NULL,
       'is_reserved' =>  0,
