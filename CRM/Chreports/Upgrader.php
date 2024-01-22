@@ -704,28 +704,42 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
         'title' => 'Retention Rate Report (Dashlet)'
       ],
     ];
-   
-    $errors = [];
-    foreach($newReportParams as $newName => $reportParam) {
-      $existingName = $reportParam['name'];
-      $newTemplateID = $reportParam['report_id'];
-      $newtitle = $reportParam['title'];
 
-      $query = "UPDATE civicrm_report_instance SET 
-        `name` = '".$newName."',
-        `report_id` = '".$newTemplateID."', 
-        `title`= '".$newtitle."', 
-        `form_values` = NULL, created_id = NULL, is_active = 1
-        WHERE `name` = '".$existingName."' ORDER BY `id` ASC LIMIT 1";
-      $result = CRM_Core_DAO::executeQuery($query);
-      
-      if ($result->affectedRows() === 1) {
-        watchdog("reporting", "Migrated: ".$existingName . " -> ".$newTemplateID . "", [], WATCHDOG_DEBUG);
-      } else {
-        $errors[] = "$existingName -> $newTemplateID ";
-        watchdog("reporting", "Failed: ".$existingName . " -> ".$newTemplateID . "", [], WATCHDOG_ERROR);
+    $oldNames = array_column($newReportParams, 'name'); 
+    $query = "SELECT id, name FROM civicrm_report_instance WHERE `name` IN ('".implode("', '", $oldNames)."') AND created_id IS NULL";
+    $result = CRM_Core_DAO::executeQuery($query);
+    $ids = array_column($result->fetchAll(), 'id');
+    
+    $errors = [];
+
+    // Only proceed if we found reports to migrate
+    // Helps prevent issue where reports have already been updated via managed files during clear cache
+    if ( count($ids) > 0 ) {
+      foreach($newReportParams as $newName => $reportParam) {
+        $existingName = $reportParam['name'];
+        $newTemplateID = $reportParam['report_id'];
+        $newtitle = $reportParam['title'];
+  
+        $query = "UPDATE civicrm_report_instance SET 
+          `name` = '".$newName."',
+          `report_id` = '".$newTemplateID."', 
+          `title`= '".$newtitle."', 
+          `form_values` = NULL, created_id = NULL, is_active = 1
+          WHERE `name` = '".$existingName."' ORDER BY `id` ASC LIMIT 1";
+        $result = CRM_Core_DAO::executeQuery($query);
+        
+        if ($result->affectedRows() === 1) {
+          watchdog("reporting", "Migrated: ".$existingName . " -> ".$newTemplateID . "", [], WATCHDOG_DEBUG);
+        
+        } else {
+          $errors[] = "$existingName | $newtitle -> $newTemplateID ";
+          watchdog("reporting", "Failed: ".$existingName . " $newtitle -> ".$newTemplateID . " --> $query", [], WATCHDOG_ERROR);
+        }
+              
       }
-            
+
+    } else {
+      watchdog("reporting", "No reports to migrate", [], WATCHDOG_DEBUG);
     }
 
     // Do not proceed if there are errors.

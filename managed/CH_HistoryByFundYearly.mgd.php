@@ -3,7 +3,7 @@ return array(
   array(
     'module' => 'biz.jmaconsulting.chreports',
     'name' => 'Contribution History by Fund (Yearly)',
-    'update' => 'always',
+    'update' => 'never',
     'entity' => 'ReportInstance',
     'params' => array(
       'version' => 3,

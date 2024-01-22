@@ -11,7 +11,7 @@ return array(
       'title' => ts('In Memory of'),
       'name' => 'contrib_detailed_inmemory',
       "description" => "All contributions made In Memory Of",
-      'permission' => 'administer Reports',
+      'permission' => 'access Reports',
       'is_active' => 1,
       "form_values" => NULL,
       'is_reserved' =>  0,

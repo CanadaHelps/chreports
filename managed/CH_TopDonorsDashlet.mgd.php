@@ -3,7 +3,7 @@ return array(
   array(
     'module' => 'biz.jmaconsulting.chreports',
     'name' => 'Top Donors (Dashlet)',
-    'update' => 'always',
+    'update' => 'never',
     'entity' => 'ReportInstance',
     'params' => array(
       'version' => 3,
