@@ -190,7 +190,7 @@ class CRM_Chreports_Reports_ReportConfiguration {
         $fieldTable = $this->getEntityTableFromField($fieldName,true);
        
         // option values being created for custom fields such as ch_fund
-        if(isset($fieldInfo['custom']) && $fieldInfo['custom'] === true && !is_bool($fieldInfo['field_type']) ){
+        if(isset($fieldInfo['custom']) && $fieldInfo['custom'] === true && ($fieldInfo['field_type'] !== 'boolean')){
             
             $columnName = E::getColumnNameByName($fieldInfo['custom_fieldName']);
             $optionGroupName = E::getOptionGroupNameByColumnName($columnName);
@@ -203,7 +203,7 @@ class CRM_Chreports_Reports_ReportConfiguration {
             $options =   $this->getOptionsListForOptionGroup($fieldNameVal,$fieldTable,$groupName);
 
         // option values for boolean fields
-        } else if (isset($fieldInfo['field_type']) && is_bool($fieldInfo['field_type'])){ 
+        } else if (isset($fieldInfo['field_type']) && ($fieldInfo['field_type'] === 'boolean')){ 
             
             $options =   [
               '' => ts('Any'),
