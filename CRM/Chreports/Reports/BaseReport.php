@@ -937,6 +937,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         if($this->isPeriodicSummary()){
             $resultingRow = [];
             $finalDisplay = [];
+            $currencies = [];
             $fieldName = array_key_first($this->_columns);
             //Roll up row to be appended in the end
             $rollupTotalRow = [$fieldName => 'Grand Total'];
@@ -944,6 +945,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
             foreach($rows as $rowNum => $row) {
                 $fieldNameKey = ($row[$fieldName]!= NULL)? $row[$fieldName] : 'Unassigned';
                 $resultingRow[$fieldNameKey][] = $row;
+                $currencies[$row['currency']] = $row['currency'];
             }
             foreach($resultingRow as $key => $rowValue) {
                 $count = $total_amount = 0;
@@ -963,10 +965,18 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                         $rollupTotalRow['total_amount_'.$result['month'].'_'.$result['year']] += $result['total_contribution_sum'];
                     }
                 }
+                //If any of the monthly/yearly contribution supports multiple currencies, pass currency parameter in row
+                $multiple_currency = ''; 
+                foreach($currencies as $currency){
+                    if (count(explode(',', $currency)) > 1) {
+                        $multiple_currency = $currency;
+                    }
+                }
                 $displayRows = [
                     $fieldName => $key,
                     'total_count' => $count,
                     'total_contribution_sum' => $total_amount,
+                    'currency' => $multiple_currency
                 ];
                 $finalDisplay[] = array_merge($displayRows,$columnHeaderValue);
             }
