@@ -121,10 +121,6 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
           ];
           break;
         case 'last_month_amount':
-          // $statements = [ 
-          //   $fieldName => "SUM((CASE WHEN 
-          // YEAR(".$this->getEntityTable('contribution').".receive_date) = YEAR((SELECT MAX(".$this->getEntityTable('contribution').".receive_date) FROM ".$this->getEntityTable('contribution').")) AND MONTH(".$this->getEntityTable('contribution').".receive_date) = MONTH((SELECT MAX(".$this->getEntityTable('contribution').".receive_date) FROM ".$this->getEntityTable('contribution').")) THEN ".$this->getEntityTable('contribution').".total_amount ELSE 0
-          // END))"];
           $statements = [ 
             $fieldName => "SUM((CASE WHEN 
           YEAR(".$this->getEntityTable('contribution').".receive_date) = YEAR(max_receive_date.receive_date) AND MONTH(".$this->getEntityTable('contribution').".receive_date) = MONTH(max_receive_date.receive_date) THEN ".$this->getEntityTable('contribution').".total_amount ELSE 0
