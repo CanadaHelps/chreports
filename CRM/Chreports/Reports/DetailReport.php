@@ -280,7 +280,7 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
         list($tablename,$columnName) = $this->getCustomTableNameColumnName('SG_Flag');
         $from[] = " LEFT JOIN {$tablename} ON {$tablename}.entity_id =  ".$this->getEntityTable('contribution').".id 
         AND ".$tablename.".".$columnName." = 1";
-        $from[] = " LEFT JOIN (SELECT MAX(".$this->getEntityTable('contribution').".receive_date) as receive_date FROM ".$this->getEntityTable('contribution').") AS max_receive_date ON ".$this->getEntityTable('contribution').".receive_date = max_receive_date.receive_date ";
+        $from[] = " LEFT JOIN (SELECT MAX(receive_date) as receive_date, contact_id FROM ".$this->getEntityTable('contribution')." group by contact_id) AS max_receive_date ON ".$this->getEntityTable('contribution').".contact_id = max_receive_date.contact_id ";
       }
       
       // Add filter joins (if needed)
