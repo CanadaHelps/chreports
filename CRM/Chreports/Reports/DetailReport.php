@@ -109,10 +109,10 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
       switch($fieldName){
         case 'recurring_contribution_total_amount':
           $statements = [ 
-            $fieldName => "IFNULL((CASE WHEN 
+            $fieldName => "SUM((CASE WHEN 
               YEAR(".$this->getEntityTable('contribution').".receive_date) = YEAR(NOW()) AND MONTH(".$this->getEntityTable('contribution').".receive_date) = MONTH(NOW()) 
-              THEN SUM(".$this->getEntityTable('contribution').".total_amount) 
-              END),0)"
+              THEN ".$this->getEntityTable('contribution').".total_amount ELSE 0
+              END))"
           ];
           break;
         case 'completed_contributions':
@@ -122,9 +122,9 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
           break;
         case 'last_month_amount':
           $statements = [ 
-            $fieldName => "IFNULL((CASE WHEN 
-          YEAR(".$this->getEntityTable('contribution').".receive_date) = YEAR(MAX(".$this->getEntityTable('contribution').".receive_date)) AND MONTH(".$this->getEntityTable('contribution').".receive_date) = MONTH(MAX(".$this->getEntityTable('contribution').".receive_date)) THEN SUM(".$this->getEntityTable('contribution').".total_amount) 
-          END),0)"];
+            $fieldName => "SUM((CASE WHEN 
+          YEAR(".$this->getEntityTable('contribution').".receive_date) = YEAR((SELECT MAX(".$this->getEntityTable('contribution').".receive_date) FROM ".$this->getEntityTable('contribution').")) AND MONTH(".$this->getEntityTable('contribution').".receive_date) = MONTH((SELECT MAX(".$this->getEntityTable('contribution').".receive_date) FROM ".$this->getEntityTable('contribution').")) THEN ".$this->getEntityTable('contribution').".total_amount ELSE 0
+          END))"];
           break;
         case 'recurring_contribution_start_date':
           $statements = [ 
