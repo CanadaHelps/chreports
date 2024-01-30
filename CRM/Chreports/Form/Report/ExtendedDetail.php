@@ -246,7 +246,7 @@ class CRM_Chreports_Form_Report_ExtendedDetail extends CRM_Report_Form_Contribut
       
     if($this->_reportInstance->isRecurringContributionReport()) {
         list($customTablename,$columnName) = $this->_reportInstance->getCustomTableNameColumnName('SG_Flag');
-        $clauses[] = 'IF('.$this->_reportInstance->getEntityTable('contribution').'.contribution_recur_id IS NOT NULL, 1, IF('.$customTablename.'.'.$columnName.' IS NOT NULL, 1, 0)) = 1';
+        $clauses[] = '(IFNULL('.$this->_reportInstance->getEntityTable('contribution').'.contribution_recur_id , 0) > 0 OR IFNULL('.$customTablename.'.'.$columnName.' , 0) = 1)';
       $clauses[] = $this->_reportInstance->getEntityTable('contribution').'.contribution_status_id = 1';
     }
 
