@@ -121,9 +121,13 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
           ];
           break;
         case 'last_month_amount':
+          // $statements = [ 
+          //   $fieldName => "SUM((CASE WHEN 
+          // YEAR(".$this->getEntityTable('contribution').".receive_date) = YEAR((SELECT MAX(".$this->getEntityTable('contribution').".receive_date) FROM ".$this->getEntityTable('contribution').")) AND MONTH(".$this->getEntityTable('contribution').".receive_date) = MONTH((SELECT MAX(".$this->getEntityTable('contribution').".receive_date) FROM ".$this->getEntityTable('contribution').")) THEN ".$this->getEntityTable('contribution').".total_amount ELSE 0
+          // END))"];
           $statements = [ 
             $fieldName => "SUM((CASE WHEN 
-          YEAR(".$this->getEntityTable('contribution').".receive_date) = YEAR((SELECT MAX(".$this->getEntityTable('contribution').".receive_date) FROM ".$this->getEntityTable('contribution').")) AND MONTH(".$this->getEntityTable('contribution').".receive_date) = MONTH((SELECT MAX(".$this->getEntityTable('contribution').".receive_date) FROM ".$this->getEntityTable('contribution').")) THEN ".$this->getEntityTable('contribution').".total_amount ELSE 0
+          YEAR(".$this->getEntityTable('contribution').".receive_date) = YEAR(max_receive_date.receive_date) AND MONTH(".$this->getEntityTable('contribution').".receive_date) = MONTH(max_receive_date.receive_date) THEN ".$this->getEntityTable('contribution').".total_amount ELSE 0
           END))"];
           break;
         case 'recurring_contribution_start_date':
@@ -280,6 +284,7 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
         list($tablename,$columnName) = $this->getCustomTableNameColumnName('SG_Flag');
         $from[] = " LEFT JOIN {$tablename} ON {$tablename}.entity_id =  ".$this->getEntityTable('contribution').".id 
         AND ".$tablename.".".$columnName." = 1";
+        $from[] = " LEFT JOIN (SELECT MAX(".$this->getEntityTable('contribution').".receive_date) as receive_date FROM ".$this->getEntityTable('contribution').") AS max_receive_date ON ".$this->getEntityTable('contribution').".receive_date = max_receive_date.receive_date ";
       }
       
       // Add filter joins (if needed)
