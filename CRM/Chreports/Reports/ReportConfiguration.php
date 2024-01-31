@@ -377,6 +377,15 @@ class CRM_Chreports_Reports_ReportConfiguration {
             }
         }
 
+        // First Convert the custom fields to the parsed field names from mapping.json
+        $entity = $this->getEntity();
+        foreach($fields as $fieldIndex => $fieldValue) {
+            $newFieldIndex = $this->parseFieldNameFormValue($fieldIndex, $entity);
+            if($newFieldIndex) {
+                $fields[$newFieldIndex] = $fieldValue;
+            }
+        }
+
         // Copy Columns with preSelected and Default Values
         foreach ($baseTemplateSettings['fields'] as $fieldKey => $fieldValue) {
             if(isset($fieldValue['default'])) {
@@ -676,6 +685,28 @@ class CRM_Chreports_Reports_ReportConfiguration {
             }
         }
         return '';
+    }
+
+    /**
+     *
+     * Take the field name and parse the correct corresponding name
+     * For customField the value of corresponding field from mapping.json file
+     *
+     * @return string
+     */
+
+    private function parseFieldNameFormValue($fieldName, $entity = 'contribution'): string {
+        $fieldNameCorrection = [
+            'civicrm_contact_display_name' => 'sort_name',
+            'email_email' => 'email',
+            'exposed_id' => 'contact_id',
+            'source' => $entity.'_source',
+        ];
+        if(strpos($fieldName, 'custom_') === 0)
+            return $this->getFieldFromMappingJson($fieldName);
+        if(in_array($fieldName, array_keys($fieldNameCorrection)))
+            return $fieldNameCorrection[$fieldName];
+        return $fieldName;
     }
 }
 ?>
