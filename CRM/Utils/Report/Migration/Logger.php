@@ -13,6 +13,10 @@ class CRM_Utils_Report_Migration_Logger {
         $this->instance = $instance;
     }
 
+    public function getInstance () {
+        return $this->instance;
+    }
+
     public function addStatus($logData, $isSuccess): bool {
         // Open the CSV file or create it if it doesn't exist
         $file = fopen($this->csvFilePath, 'a');
@@ -52,6 +56,13 @@ class CRM_Utils_Report_Migration_Logger {
             $file = fopen($this->csvFilePath, 'a');
             if ($file) {
                 fputcsv($file, []);
+                $instance = $this->getInstance();
+                if($instance) {
+                    $data = [
+                        "Charity: ", $instance
+                    ];
+                    fputcsv($file, $data);
+                }
                 $data = [
                     "Total Custom Reports:", $stats['total_custom_reports'], 
                     "Eligible for migration:", $stats['success'] + $stats['failed']
