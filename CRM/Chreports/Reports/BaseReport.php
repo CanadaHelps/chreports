@@ -1049,7 +1049,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                 $range_one_statistics = $range_two_statistics = $range_one_avg =$range_two_avg = $range_one_total_contribution_count = $range_two_total_contribution_count =  [];
             }
             
-            if($this->getReportName() == 'recurring_contributions_summary') {
+            if($this->getReportName() == 'contrib_recurring') {
                 $showRecurringContributionStats = true;
                 $recurringContribThisMonthStats =  $recurringContribLastMonthStats = [];
             }
