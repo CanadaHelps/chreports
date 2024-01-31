@@ -1013,9 +1013,28 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
   }
 
   public function upgrade_102007() {
-    $this->ctx->log->info('Reporting v1.2: re-organize reports as per new requirements');
+    $this->ctx->log->info('Reporting v1.2 (#007): re-organize reports as per new requirements');
     $result = civicrm_api3('Job', 'updatesections');
     return TRUE;
+  }
+
+  public function upgrade_102008() {
+    $this->ctx->log->info('Reporting v1.2 (#008): deleting old managed files');
+    $extensionDir = dirname(__DIR__, 2);
+
+    // can't do this before, as we need those files for migration
+    $filesToDelete = [
+      "managed/4E_DonationHistoryByFundDonorInfoDetailed.mgd.php",
+      "managed/5C_DonationHistoryByFinancialAccountSummary.mgd.php"
+    ];
+
+    foreach ($filesToDelete as $file) {
+      if ( file_exists($extensionDir . "/" . $file) ) {
+        unlink($extensionDir . "/" . $file);
+      }
+    }
+
+    return FALSE;
   }
 
 
