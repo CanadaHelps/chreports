@@ -961,7 +961,7 @@
         "calculated_field": true
     },
     "last_month_amount":{
-        "title": "Last Month Amount",
+        "title": "Previous Month Amount",
         "field_type": "money",
         "calculated_field": true
     },

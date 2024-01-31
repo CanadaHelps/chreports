@@ -123,7 +123,7 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
         case 'last_month_amount':
           $statements = [ 
             $fieldName => "SUM((CASE WHEN 
-          YEAR(".$this->getEntityTable('contribution').".receive_date) = YEAR(max_receive_date.receive_date) AND MONTH(".$this->getEntityTable('contribution').".receive_date) = MONTH(max_receive_date.receive_date) THEN ".$this->getEntityTable('contribution').".total_amount ELSE 0
+          YEAR(".$this->getEntityTable('contribution').".receive_date) = YEAR(NOW() - INTERVAL 1 MONTH) AND MONTH(".$this->getEntityTable('contribution').".receive_date) = MONTH(NOW() - INTERVAL 1 MONTH) THEN ".$this->getEntityTable('contribution').".total_amount ELSE 0
           END))"];
           break;
         case 'recurring_contribution_start_date':
@@ -280,7 +280,6 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
         list($tablename,$columnName) = $this->getCustomTableNameColumnName('SG_Flag');
         $from[] = " LEFT JOIN {$tablename} ON {$tablename}.entity_id =  ".$this->getEntityTable('contribution').".id 
         AND ".$tablename.".".$columnName." = 1";
-        $from[] = " LEFT JOIN (SELECT MAX(receive_date) as receive_date, contact_id FROM ".$this->getEntityTable('contribution')." group by contact_id) AS max_receive_date ON ".$this->getEntityTable('contribution').".contact_id = max_receive_date.contact_id ";
       }
       
       // Add filter joins (if needed)
