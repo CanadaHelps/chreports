@@ -1034,7 +1034,7 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
       }
     }
 
-    return FALSE;
+    return TRUE;
   }
 
 
