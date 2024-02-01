@@ -1025,7 +1025,8 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
     // can't do this before, as we need those files for migration
     $filesToDelete = [
       "managed/4E_DonationHistoryByFundDonorInfoDetailed.mgd.php",
-      "managed/5C_DonationHistoryByFinancialAccountSummary.mgd.php"
+      "managed/5C_DonationHistoryByFinancialAccountSummary.mgd.php",
+      "managed/6B_RecurringSummary.mgd.php"
     ];
 
     foreach ($filesToDelete as $file) {
