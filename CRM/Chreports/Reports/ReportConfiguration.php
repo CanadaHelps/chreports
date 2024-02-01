@@ -93,6 +93,12 @@ class CRM_Chreports_Reports_ReportConfiguration {
             'return' => ["name", "title", "created_id", "report_id", "description", "form_values"],
             'id' => $id,
             ]);
+        
+        if ($result['count'] == 0) {
+            watchdog("reporting", "Could not load report #" . $id, [], WATCHDOG_ERROR);
+            return [];
+        }
+
         return $result['values'][0];
 
         // todo: use API4 after upgrade
