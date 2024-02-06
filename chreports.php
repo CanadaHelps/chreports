@@ -148,14 +148,17 @@ function chreports_civicrm_buildForm($formName, &$form) {
     $selectedColumnFields = count($columnFields);
     if(isset($selectedColumnFields) && $selectedColumnFields > 10) {
       if (array_key_exists('task', $form->_elementIndex)) {
-        $optionsField = $form->getElement('task')->_options;
-        foreach($optionsField as $key=>$value) {
-          foreach($value['attr'] as $k=>$v) {
-            if($v === 'report_instance.print') {
-              unset($form->getElement('task')->_options[$key]);
-            }
-          }
-        }
+        //CRM-2199 Hiding "Print Report" option rather than unsetting, unsetting that option is impacting "Export as CSV" option as well
+        CRM_Core_Resources::singleton()->addScript(
+          "CRM.$(function($) {
+            $('#task-section option').each(function() {
+              var actionOptions = $(this).val();
+              if(actionOptions === 'report_instance.print'){
+                $(this).closest('option').remove();
+              }
+            });
+          });"
+        );
       }
     }
   }
