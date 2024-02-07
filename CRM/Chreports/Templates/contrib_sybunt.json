@@ -46,7 +46,7 @@
         "do_not_mail": {},
         "is_opt_out": {},
         "yid": {
-            "calendar": 2023
+            "calendar": "current_year"
         }
     },
     "groupByClause" : false
