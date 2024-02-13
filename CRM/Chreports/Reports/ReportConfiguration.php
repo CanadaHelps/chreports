@@ -404,13 +404,12 @@ class CRM_Chreports_Reports_ReportConfiguration {
             }
         }
 
-        // Copy leftover filterValues those are not part of base template but present in formValues
+        // Copy leftover field Values those are not part of base template but present in formValues ($params['fields'])
         foreach($fields as $fieldKey => $fieldValue) {
             if(!empty($fieldValue) && !isset($config['fields'][$fieldKey]['default'])) {
                 $config['fields'][$fieldKey] = ['selected' => true];
             }
         }
-
 
         //Get BaseTemplate Filters
         $baseTemplateFilters = $this->getReportingFilters();
@@ -428,7 +427,7 @@ class CRM_Chreports_Reports_ReportConfiguration {
         }
 
         // Copy leftover filter Values (if applicable)
-        // Note: this will also overwrite the filter value of baseTemplate to the one coming from Params (formValues)
+        // Note: this will also overwrite the filter value of baseTemplate to the one coming from FormValues
         foreach($filters as $filterKey => $filterValue) {
             if(!empty($filterValue)) {
                 $config['filters'][$filterKey] = $filterValue;
