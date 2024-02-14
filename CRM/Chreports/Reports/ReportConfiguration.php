@@ -354,6 +354,9 @@ class CRM_Chreports_Reports_ReportConfiguration {
         $baseTemplateSettings = $this->_settings;
         $config['name'] = $params['name'];
         $config['title'] = $params['title'];
+
+        // Get entity
+        $entity = $this->getEntity();
         
         //Set sorting if applicable
         if(isset($params['order_bys'])) {
@@ -362,7 +365,7 @@ class CRM_Chreports_Reports_ReportConfiguration {
                     continue;
                 }
                 // check whether the field is part of from mapping.json
-                $orderByField = $this->getFieldFromMappingJson($vOrder['column']);
+                $orderByField = $this->getFieldFromMappingJson($vOrder['column'], $entity);
                 if(empty($orderByField)) {
                     watchdog("reporting", "Failed to map field: ".$vOrder['column'] . " -> ".$config['title'] . "", [], WATCHDOG_DEBUG);
                     $config['log_messages'][] = 'Unable to port OrderBy Field "'. $vOrder['column'] . '", no mapping found';
@@ -380,18 +383,14 @@ class CRM_Chreports_Reports_ReportConfiguration {
                         unset($config['order_bys'][$vOrder['column']]['section']);
                     }
             } else {
-                    watchdog("reporting", "Failed to map field: ".$orderByKey . " -> ".$config['title'] . "", [], WATCHDOG_DEBUG);            
+                    watchdog("reporting", "Failed to map field: ".$orderByKey . " -> ".$config['title'] . "", [], WATCHDOG_DEBUG);
                 }
             }
         }
 
-        // First Convert the custom fields to the parsed field names from mapping.json
-        $entity = $this->getEntity();
-        foreach($fields as $fieldIndex => $fieldValue) {
-            $newFieldIndex = $this->parseFieldNameFormValue($fieldIndex, $entity);
-            if($newFieldIndex) {
-                $fields[$newFieldIndex] = $fieldValue;
-            }
+        // First Convert the fields to the parsed field names from mapping.json
+        if (!empty($fields)) {
+            $fields = $this->parseFieldNameFormValue($fields, $entity);
         }
 
         // Copy Columns with preSelected and Default Values
@@ -405,8 +404,20 @@ class CRM_Chreports_Reports_ReportConfiguration {
             }
         }
 
-        // Copy Filters
+        // Copy leftover field Values those are not part of base template but present in formValues ($params['fields'])
+        foreach($fields as $fieldKey => $fieldValue) {
+            if(!empty($fieldValue) && !isset($config['fields'][$fieldKey]['default'])) {
+                $config['fields'][$fieldKey] = ['selected' => true];
+            }
+        }
+
+        //Get BaseTemplate Filters
         $baseTemplateFilters = $this->getReportingFilters();
+
+        // Convert the filters to the parsed field names from mapping.json
+        if(!empty($filters)) {
+            $filters = $this->parseFieldNameFormValue($filters, $entity);
+        }
         foreach ($baseTemplateFilters as $filterKey => $filterValue) {
             if(isset($filters[$filterKey])) {
                 $config['filters'][$filterKey] = $filters[$filterKey];
@@ -415,6 +426,13 @@ class CRM_Chreports_Reports_ReportConfiguration {
             }
         }
 
+        // Copy leftover filter Values (if applicable)
+        // Note: this will also overwrite the filter value of baseTemplate to the one coming from FormValues
+        foreach($filters as $filterKey => $filterValue) {
+            if(!empty($filterValue)) {
+                $config['filters'][$filterKey] = $filterValue;
+            }
+        }
 
         // Copy rest of the leftover settings if applicable
         foreach($baseTemplateSettings as $k => $v) {
@@ -669,7 +687,7 @@ class CRM_Chreports_Reports_ReportConfiguration {
      * @return string
      */
 
-    private function getFieldFromMappingJson($fieldName): string {
+    private function getFieldFromMappingJson($fieldName, $entity = 'contribution'): string {
         if(strpos($fieldName, 'custom_') === 0) {
             $customFieldId = preg_replace("/[^0-9]/", "", $fieldName);
             if(is_numeric($customFieldId)) {
@@ -690,31 +708,51 @@ class CRM_Chreports_Reports_ReportConfiguration {
                 if(in_array($fieldName, array_keys($this->_mappings))) {
                     return $fieldName;
                 }
+                // if still not found, check for fieldName and entity type pair
+                foreach ($this->_mappings as $key => $object) {
+                    if (isset($object['field_name']) && 
+                        isset($object['entity']) && 
+                        $object['field_name'] == $fieldName && 
+                        $object['entity'] == $entity
+                    ) {
+                        return $key;
+                    }
+                }
             }
         }
+        watchdog("reporting", "Failed to map field:  -> ". $fieldName . "", [], WATCHDOG_DEBUG);
         return '';
     }
 
     /**
      *
-     * Take the field name and parse the correct corresponding name
+     * Take the field names and as an array and parse the correct corresponding name
      * For customField the value of corresponding field from mapping.json file
      *
-     * @return string
+     * @return array
      */
 
-    private function parseFieldNameFormValue($fieldName, $entity = 'contribution'): string {
-        $fieldNameCorrection = [
-            'civicrm_contact_display_name' => 'sort_name',
-            'email_email' => 'email',
-            'exposed_id' => 'contact_id',
-            'source' => $entity.'_source',
-        ];
-        if(strpos($fieldName, 'custom_') === 0)
-            return $this->getFieldFromMappingJson($fieldName);
-        if(in_array($fieldName, array_keys($fieldNameCorrection)))
-            return $fieldNameCorrection[$fieldName];
-        return $fieldName;
+    private function parseFieldNameFormValue(array $fields, $entity = 'contribution'): array {
+        $newFields = [];
+        foreach ($fields as $fieldName => $fieldValue) {
+            $fieldNameCorrection = [
+                'civicrm_contact_display_name' => 'sort_name',
+                'display_name' => 'contact_name',
+                'email_email' => 'email',
+                'exposed_id' => 'contact_id',
+                'source' => $entity.'_source',
+            ];
+
+            $newFieldIndex = $this->getFieldFromMappingJson($fieldName, $entity);
+            if($newFieldIndex) {
+                $newFields[$newFieldIndex] = $fieldValue;
+            }
+            // check for field Name corection
+            if(in_array($fieldName, array_keys($fieldNameCorrection))) {
+                $newFields[$fieldNameCorrection[$fieldName]] = $fieldValue;
+            }
+        }
+        return $newFields;
     }
 }
 ?>

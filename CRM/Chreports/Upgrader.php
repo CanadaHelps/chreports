@@ -1038,5 +1038,87 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
     return TRUE;
   }
 
+  public function upgrade_102009() {
+    $this->ctx->log->info('Reporting v1.2.2 (#009): migrate leftover custom saved reports to new templates');
+    $non_migrated_templates = E::getNonMigratedReportTemplates();
+
+    // Initiate Logger for migration
+    $civicrm_root = Civi::paths()->getPath("[civicrm.root]/.");
+    $env = strpos($civicrm_root, 'civicrm-dev') !== false ? 'dev' : ((strpos($civicrm_root, 'civicrm-staging') !== false) ? 'staging' : 'production');
+    $base_dir = '/var/aegir/migration/'. $env;
+    $csvFilePath = $base_dir.'/report.csv';
+    if (!is_dir($base_dir)) {
+      mkdir($base_dir, 0775, true);
+    }
+    $logger = new CRM_Utils_Report_Migration_Logger($csvFilePath);
+    $logger->setInstance(parse_url(CRM_Utils_System::baseURL(), PHP_URL_HOST));
+
+    //Set up Stats Variable for logger (pre migration)
+    $stats['total_custom_reports'] = civicrm_api3('ReportInstance', 'getcount', [
+      'created_id' => ['IS NOT NULL' => 1],
+      'form_values' => ['IS NOT NULL' => 1],
+    ]);
+    $stats['success'] = 0;
+    $stats['failed'] = 0;
+
+    // Fetch all the reports
+    $reportInstances = civicrm_api3('ReportInstance', 'get', [
+      'sequential' => 1,
+      'options' => ['limit' => 0],
+    ]);
+    if($reportInstances) {
+      // Iterate through all the reports
+      foreach($reportInstances['values'] as $report) {
+        if(!empty($report['created_id']) && !empty($report['form_values'])) {
+          if(!in_array($report['report_id'], $non_migrated_templates)) {
+            // Extract form Values and clean up the data
+            $report['form_values'] = unserialize(preg_replace_callback ( '!s:(\d+):"(.*?)";!', function($match) {
+              return ($match[1] == strlen($match[2])) ? $match[0] : 's:' . strlen($match[2]) . ':"' . $match[2] . '";';
+            }, $report['form_values']));
+            // Identify reportId and Base template
+            $baseTemplate = E::getBaseTemplate($report);
+            if($baseTemplate) {
+              if(count($baseTemplate['values']) > 1) {
+                // Edge Case Scenario:: where there are multiple entries with the same name and empty (form_values & created_id)
+                // return the first entry in the array
+                $baseTemplate['id'] = reset($baseTemplate['values'])['id'];
+                $reportId = reset($baseTemplate['values'])['name'];
+              } else {
+                $reportId = $baseTemplate['values'][$baseTemplate['id']]['name'];
+              }
+              $logData = [
+                'id' => $report['id'],
+                'reportTitle' => $report['title'] ?? $report['name'],
+                'migratedFrom' => $report['report_id'],
+                'migratedTo' => $reportId,
+              ];
+              $reportConfiguration = new CRM_Chreports_Reports_BaseReport($baseTemplate['entity'], $baseTemplate['id'], $reportId);
+              $reportConfiguration->setParamsForMigration($report, $baseTemplate['values'][$baseTemplate['id']]['report_id'], $baseTemplate['values'][$baseTemplate['id']]['name']);
+              $reportConfiguration->buildJsonConfigSettings();
+              $migrationStatus = $reportConfiguration->writeMigrateConfigFile();
+              if($migrationStatus['success']) {
+                $stats['success'] += 1;
+                // Add Log Message if present
+                if(isset($migrationStatus['log_messages'])) {
+                  if(!empty($migrationStatus['log_messages'])) {
+                    $logData['logMessages'] = $migrationStatus['log_messages'];
+                  }
+                }
+                $logger->addStatus($logData, true);
+                watchdog("reporting", "Migrated: ".$report['id'] . " (".$report['report_id'] . ") -> ".$reportId . "", [], WATCHDOG_DEBUG);
+              } else {
+                $stats['failed'] += 1;
+                $logData['errorMessage'] = $migrationStatus['error'];
+                $logger->addStatus($logData, false);
+                watchdog("reporting", "Failed: ".$report['id'] . " (".$report['report_id'] . ") -> ".$reportId . "", [], WATCHDOG_DEBUG);
+              }
+            }
+          }
+        }
+      }
+      $logger->addStats($stats);
+    }
+    return TRUE;
+  }
 
 }
