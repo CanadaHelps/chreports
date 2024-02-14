@@ -458,7 +458,9 @@ class CRM_Chreports_Reports_ReportConfiguration {
      * @return void
      */
     public function writeJsonConfigFile($redirect = 'true'): void {
+
         $config = $this->_settings;
+
         if(empty($config)) {
             CRM_Core_Session::setStatus(ts("Cannot Create Report. No Settings Found."), ts('Report Save Error'), 'error');
             return;
@@ -480,6 +482,7 @@ class CRM_Chreports_Reports_ReportConfiguration {
 
         //Set Report ID
         $params['report_id'] = CRM_Report_Utils_Report::getValueFromUrl($this->_id);
+        
         //CRM-2219 copy action suggests new report creation
         if ($this->_action == 'copy') {
             $isNewReport = true;
