@@ -151,7 +151,10 @@ class CRM_Chreports_ExtensionUtil {
         }
       }
       if($match) {
-        $base_report_name = $migratedTemplate['sub_templates'][$match]['name'];
+        $base_report_name = $migratedTemplate['name'];
+        if(isset($migratedTemplate['sub_templates'][$match]['name'])) {
+          $base_report_name = $migratedTemplate['sub_templates'][$match]['name'];
+        }
       } else {
         // Step 4: Assign base/common template for the corresponding report_id
         // catch-all templates
@@ -207,9 +210,6 @@ class CRM_Chreports_ExtensionUtil {
           'sub_templates' => [
             'fund' => [
               'name' => 'contrib_detailed_fund',
-            ],
-            'source' => [
-              'name' => 'contrib_detailed_source',
             ],
             'campaign' => [
               'name' => 'contrib_detailed_campaign',
@@ -298,7 +298,7 @@ class CRM_Chreports_ExtensionUtil {
         $template = [
           'name' => 'contrib_lybunt',
           'report_id' => 'chreports/contrib_lybunt',
-          'entity' => 'contribution',
+          'entity' => 'contact',
         ];
       break;
       case 'chreports/extendlybunt' :
@@ -306,7 +306,7 @@ class CRM_Chreports_ExtensionUtil {
         $template =  [
           'name' => 'contrib_sybunt',
           'report_id' => 'chreports/contrib_sybunt',
-          'entity' => 'contribution',
+          'entity' => 'contact',
         ];
       break;
       case 'biz.jmaconsulting.chreports/recursummary' :
@@ -325,7 +325,7 @@ class CRM_Chreports_ExtensionUtil {
         $template = [
           'name' => 'opportunity_detailed',
           'report_id' => 'chreports/opportunity_detailed',
-          'entity' => 'contribution',
+          'entity' => 'grant',
         ];
       break;
       case 'contribute/repeat' :
@@ -372,7 +372,7 @@ class CRM_Chreports_ExtensionUtil {
         $template = [
           'name' => 'contact_top_donors',
           'report_id' => 'chreports/contact_top_donors',
-          'entity' => 'contribution',
+          'entity' => 'contact',
         ];
       break;
       case 'contribute/bookkeeping' :
