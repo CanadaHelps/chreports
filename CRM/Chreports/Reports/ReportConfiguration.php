@@ -8,6 +8,19 @@ class CRM_Chreports_Reports_ReportConfiguration {
     protected $_settings = [];
     protected $_mappings = [];
 
+    protected $_extraFieldNames = [
+        'civicrm_contact_display_name' => 'sort_name',
+        'civicrm_contact_contact_id' => 'contact_id',
+        'display_name' => 'contact_name',
+        'email_email' => 'email',
+        'exposed_id' => 'contact_id',
+        'contribution_receive_date' => 'contact_id',
+        'contribution_payment_instrument_id' => 'payment_instrument_id',
+        'contribution_total_amount' => 'total_amount',
+        'contribution_receive_date' => 'receive_date',
+        'contribution_contribution_status_id' => 'contribution_status_id',
+    ];
+
     // Default Action is to View Report
     protected $_action = "view";
 
@@ -313,7 +326,7 @@ class CRM_Chreports_Reports_ReportConfiguration {
         }
         // In case of missing JSON file
         // Redirect to the Report List Page
-        watchdog('reporting', 'Missing JSON File for Report ID:'. $this->_id, NULL, WATCHDOG_ERROR);
+        watchdog('reporting', 'Missing JSON File for Report ID: '. $this->_id, NULL, WATCHDOG_ERROR);
         CRM_Core_Session::setStatus('Missing Configuration file. Unable to load report.', 'Error' ,'error');
         CRM_Utils_System::redirect('/dms/report/list?reset=1');
     }
@@ -364,26 +377,28 @@ class CRM_Chreports_Reports_ReportConfiguration {
                 if($vOrder['column'] == '-') {
                     continue;
                 }
-                // check whether the field is part of from mapping.json
-                $orderByField = $this->getFieldFromMappingJson($vOrder['column'], $entity);
-                if(empty($orderByField)) {
-                    watchdog("reporting", "Failed to map field: ".$vOrder['column'] . " -> ".$config['title'] . "", [], WATCHDOG_DEBUG);
+
+                // check whether the field is part of mapping.json
+                $orderByField = $this->parseFieldNameFormValue([$vOrder['column'] => true], $entity);
+                
+                // Skip field and log
+                if (empty($orderByField)) {
+                    $orderByFieldName = $vOrder['column'];
                     $config['log_messages'][] = 'Unable to port OrderBy Field "'. $vOrder['column'] . '", no mapping found';
+                    watchdog("reporting", "Failed to map order by field: ".$orderByFieldName . " -> ".$config['title'] . "", [], WATCHDOG_DEBUG);
+                    continue;
                 }
 
                 // Unset Column, it's not used
                 if(isset($vOrder['column']))
                     unset($vOrder['column']);
 
-                if(!empty($orderByField)) {
-                    $config['order_bys'][$orderByField] = $vOrder;
-                    if(isset($vOrder['section'])) {
-                        //Rename Section -> Header instead
-                        $config['order_bys'][$vOrder['column']]['header'] = $vOrder['section'];
-                        unset($config['order_bys'][$vOrder['column']]['section']);
-                    }
-            } else {
-                    watchdog("reporting", "Failed to map field: ".$orderByKey . " -> ".$config['title'] . "", [], WATCHDOG_DEBUG);
+                $orderByFieldName = array_key_first($orderByField);
+                $config['order_bys'][$orderByFieldName] = $vOrder;
+                if(isset($vOrder['section'])) {
+                    //Rename Section -> Header instead
+                    $config['order_bys'][$vOrder['column']]['header'] = $vOrder['section'];
+                    unset($config['order_bys'][$vOrder['column']]['section']);
                 }
             }
         }
@@ -579,12 +594,12 @@ class CRM_Chreports_Reports_ReportConfiguration {
             unset($config['log_messages']);
         }
 
-        $jsonConfig = json_encode($config, JSON_PRETTY_PRINT);
+        $jsonConfig = json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 
         // Write the JSON data to the file
         if (file_put_contents($filePath['source'], $jsonConfig) !== false) {
             // Log success message
-            watchdog('report_migration', 'Successfully migrated report'. $instance->id, NULL, WATCHDOG_INFO);
+            watchdog('report_migration', 'Successfully migrated report '. $instance->id, NULL, WATCHDOG_INFO);
             return ['success' => true, 'log_messages' => $logMessages ?? ''];
         } else {
             // Log Error writing the file
@@ -720,7 +735,7 @@ class CRM_Chreports_Reports_ReportConfiguration {
                 }
             }
         }
-        watchdog("reporting", "Failed to map field:  -> ". $fieldName . "", [], WATCHDOG_DEBUG);
+        watchdog("reporting", "Failed to map field: ". $fieldName . "", [], WATCHDOG_DEBUG);
         return '';
     }
 
@@ -734,22 +749,21 @@ class CRM_Chreports_Reports_ReportConfiguration {
 
     private function parseFieldNameFormValue(array $fields, $entity = 'contribution'): array {
         $newFields = [];
+        $fieldNameCorrection = $this->_extraFieldNames;
+        $fieldNameCorrection['source']      = $entity.'_source';
+        $fieldNameCorrection['status_id']   = $entity.'_status_id';
+        $fieldNameCorrectionKeys = array_keys($fieldNameCorrection);
+
         foreach ($fields as $fieldName => $fieldValue) {
-            $fieldNameCorrection = [
-                'civicrm_contact_display_name' => 'sort_name',
-                'display_name' => 'contact_name',
-                'email_email' => 'email',
-                'exposed_id' => 'contact_id',
-                'source' => $entity.'_source',
-            ];
+            
+            // check for field Name corection
+            if(in_array($fieldName, $fieldNameCorrectionKeys)) {
+                $fieldName = $fieldNameCorrection[$fieldName];
+            }
 
             $newFieldIndex = $this->getFieldFromMappingJson($fieldName, $entity);
             if($newFieldIndex) {
                 $newFields[$newFieldIndex] = $fieldValue;
-            }
-            // check for field Name corection
-            if(in_array($fieldName, array_keys($fieldNameCorrection))) {
-                $newFields[$fieldNameCorrection[$fieldName]] = $fieldValue;
             }
         }
         return $newFields;
