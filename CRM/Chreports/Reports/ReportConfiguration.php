@@ -472,7 +472,7 @@ class CRM_Chreports_Reports_ReportConfiguration {
      * @return void
      */
     public function writeJsonConfigFile($redirect = 'true'): void {
-        
+
         $config = $this->_settings;
 
         if(empty($config)) {
@@ -496,7 +496,15 @@ class CRM_Chreports_Reports_ReportConfiguration {
 
         //Set Report ID
         $params['report_id'] = CRM_Report_Utils_Report::getValueFromUrl($this->_id);
-
+        
+        //CRM-2219 copy action suggests new report creation
+        if ($this->_action == 'copy') {
+            $isNewReport = true;
+        }
+        // If instance id is present and report action is save, updating existing instance
+        if ($this->_id && $this->_action == 'save') {
+            $params['instance_id'] = $this->_id;
+        }
         // Create the report
         $instance = CRM_Report_BAO_ReportInstance::create($params);
 
@@ -521,16 +529,18 @@ class CRM_Chreports_Reports_ReportConfiguration {
 
         // Write the JSON data to the file
         if (file_put_contents($filePath['source'], $jsonConfig) !== false) {
-            if($this->_action == 'copy') {
-                // Set status, check for _createNew param to identify new report
+
+            if ($this->_id && !$isNewReport) {
+                // updating existing instance
+                $statusMsg = ts('"%1" report has been updated.', [1 => $instance->title]);
+            }
+            elseif ($this->_id && $isNewReport) {
                 $statusMsg = ts('Your report has been successfully copied as "%1". You are currently viewing the new copy.', [1 => $instance->title]);
-                CRM_Core_Session::setStatus($statusMsg, '', 'success');
             }
-            if($this->_action == 'save') {
-                // Set status, check for _createNew param to identify new report
-                $statusMsg = ts('Your report has been successfully created as "%1". You are currently viewing the new report.', [1 => $instance->title]);
-                CRM_Core_Session::setStatus($statusMsg, '', 'success');
+            else {
+                $statusMsg = ts('Your report has been successfully created as "%1". You are currently viewing the new report instance.', [1 => $instance->title]);
             }
+            CRM_Core_Session::setStatus($statusMsg, '', 'success');
             // Redirect to the new report
             if($redirect) {
                 $urlParams = ['reset' => 1, 'force' => 1];

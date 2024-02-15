@@ -595,6 +595,12 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
 
             //check if filter value needs to be pre set
             if(count($fieldInfo) > 0) { 
+                // For "This year" filter set value to current year as pre set for LYBNT, SYBNT Report 
+                if($fieldName === 'yid'){
+                    $currentYearIndex = array_search('current_year', $fieldInfo);
+                    if($currentYearIndex !== false)
+                     $fieldInfo[$currentYearIndex] = date("Y");
+                 }
                 $this->_preselected_filter[$fieldName] = $fieldInfo;
             }
             $fieldInfo = array_merge( $fieldInfo, $this->getFieldInfo($fieldName) );

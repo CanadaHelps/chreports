@@ -136,29 +136,6 @@ function chreports_civicrm_entityTypes(&$entityTypes) {
 
 function chreports_civicrm_buildForm($formName, &$form) {
   $isRefactored = $formName == "CRM_Chreports_Form_Report_ExtendSummary" || $formName == "CRM_Chreports_Form_Report_ExtendedDetail";
-  
-  if ($isRefactored || in_array($formName, [
-    'CRM_Report_Form_Contact_Summary'
-  ])) {
-    //CRM-799 To solve the issue of report columns being cut-off, limit the "Print report" function 
-    //to only be available when the selected report has 10 columns or less. If more than 10 columns are selected, hide "Print report" function
-    // @TODO this doesn't work for all scenarios, and is more a temp hack rather than a fix
-    $columnFields = isset($form->getVar('_submitValues')['fields']) ? $form->getVar('_submitValues')['fields'] : 
-      (isset($form->getVar('_params')['fields']) ? $form->getVar('_params')['fields'] : []);
-    $selectedColumnFields = count($columnFields);
-    if(isset($selectedColumnFields) && $selectedColumnFields > 10) {
-      if (array_key_exists('task', $form->_elementIndex)) {
-        $optionsField = $form->getElement('task')->_options;
-        foreach($optionsField as $key=>$value) {
-          foreach($value['attr'] as $k=>$v) {
-            if($v === 'report_instance.print') {
-              unset($form->getElement('task')->_options[$key]);
-            }
-          }
-        }
-      }
-    }
-  }
 
   if ($isRefactored) {
     //default pre-select the column and group by
