@@ -14,7 +14,6 @@ class CRM_Chreports_Reports_ReportConfiguration {
         'display_name' => 'contact_name',
         'email_email' => 'email',
         'exposed_id' => 'contact_id',
-        'contribution_receive_date' => 'contact_id',
         'contribution_payment_instrument_id' => 'payment_instrument_id',
         'contribution_total_amount' => 'total_amount',
         'contribution_receive_date' => 'receive_date',
