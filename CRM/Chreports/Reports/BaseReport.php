@@ -847,7 +847,12 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                 $primaryRetentionRateData[$rowNum]['year'] = $row['year'];
                 $primaryRetentionRateData[$rowNum]['retained_donors_'.$row['year']] = $row['retained_donors'];
                 $primaryRetentionRateData[$rowNum]['new_donor_'.$row['year']] = $row['new_donor'];
-                $primaryRetentionRateData[$rowNum]['retention_'.$row['year']] = $row['retention'];
+                if($rowNum == 0){
+                    $retentionRate = '-'; 
+                }else{
+                    $retentionRate = round($row['retained_donors'] / $rows[$rowNum-1]['all_donors'] * 100, 2).'%';
+                }
+                $primaryRetentionRateData[$rowNum]['retention_'.$row['year']] = $retentionRate;
             }
             $retentionRowsDisplay = [
             'retained_donors'=> 'Repeat Donors',
