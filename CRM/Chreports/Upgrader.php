@@ -1121,4 +1121,49 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
     return TRUE;
   }
 
+  public function upgrade_102010() {
+    $this->ctx->log->info('Reporting v1.2.3 (#010): Add "Batch Name" Filter to Report Filter list & Template Columns');
+    $non_migrated_templates = E::getNonMigratedReportTemplates();
+    // Fetch all saved reports
+    $reportInstances = civicrm_api3('ReportInstance', 'get', [
+      'sequential' => 1,
+      'created_id' => ['IS NOT NULL' => 1],
+    ]);
+    if($reportInstances) {
+      // Iterate through all the reports
+      foreach($reportInstances['values'] as $report) {
+        if(!empty($report['created_id'])) {
+          if(!in_array($report['report_id'], $non_migrated_templates)) {
+            $filePath = CRM_Chreports_Reports_ReportConfiguration ::getFilePath($report);
+            if (is_file($filePath['source'])) {
+              $status = false;
+              $formValues = json_decode(file_get_contents($filePath['source']),true);
+              //check if 'batch_id' field is available in filter list
+              if(!in_array('batch_id',$formValues['filters'])){
+                $formValues['filters']['batch_id'] = array();
+                $status = true;
+              }
+              //check if 'batch_id' field is available in fields list for contribution (Detailed) report
+              if($formValues['name'] == 'contrib_detailed'){
+                $formValues['fields']['batch_id'] = array();
+                $status = true;
+              }
+              if($status){
+                $jsonConfig = json_encode($formValues, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+                if (file_put_contents($filePath['source'], $jsonConfig) !== false) {
+                  // Log success message
+                  watchdog('reportingUpdate', 'Successfully added batch_id to report '. $report['id'], NULL, WATCHDOG_INFO);
+                } else {
+                  // Log Error writing the file
+                  watchdog('reportingUpdate', 'Error Writing the file while adding batch_id', NULL, WATCHDOG_ERROR);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    return TRUE;
+  }
+
 }

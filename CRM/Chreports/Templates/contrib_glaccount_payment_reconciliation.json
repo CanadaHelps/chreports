@@ -70,7 +70,8 @@
                 "1"
             ]
         },
-        "card_type_id":{}
+        "card_type_id":{},
+        "batch_id": {}
     },
     "groupByClause" : false
 }

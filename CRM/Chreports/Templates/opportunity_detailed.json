@@ -41,7 +41,8 @@
         "application_submitted":{},
         "probability":{},
         "Opportunity_Name":{},
-        "Opportunity_Owner":{}
+        "Opportunity_Owner":{},
+        "batch_id": {}
     },
     "groupByClause" : false
 }
