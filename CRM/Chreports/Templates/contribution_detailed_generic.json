@@ -252,7 +252,8 @@
         "ch_fund":{},
         "tagid":{},
 
-        "entity_financial_trxn_amount":{}
+        "entity_financial_trxn_amount":{},
+        "batch_id": {}
 
     },
     "groupByClause" : false
