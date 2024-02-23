@@ -1844,6 +1844,8 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                     }
                     
                     if ($fieldInfo['custom'] !== true && isset($fieldInfo['join_entity']) && isset($fieldInfo['join_field_name'])) {
+                        //Adding this left joint for fields which has join with option value table but also has join_entity defined without being a custom field
+                        $from[] = $this->getSQLJoinForField($fieldInfo['join_field_name'], $entityName, $this->getEntityTable($fieldInfo['join_entity']),'id');
                         $from[] = $this->getSQLJoinForOptionValue($groupName,$fieldInfo['join_field_name'],$this->getEntityTable($fieldInfo['join_entity']),$fieldName);
                     } else {
                         $entityField = $this->getEntityField($fieldName);
