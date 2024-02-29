@@ -396,8 +396,8 @@ class CRM_Chreports_Reports_ReportConfiguration {
                 $config['order_bys'][$orderByFieldName] = $vOrder;
                 if(isset($vOrder['section'])) {
                     //Rename Section -> Header instead
-                    $config['order_bys'][$vOrder['column']]['header'] = $vOrder['section'];
-                    unset($config['order_bys'][$vOrder['column']]['section']);
+                    $config['order_bys'][$orderByFieldName]['header'] = $vOrder['section'];
+                    unset($config['order_bys'][$orderByFieldName]['section']);
                 }
             }
         }
