@@ -1137,7 +1137,7 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
           $updateReport = false;
           $formValues = json_decode(file_get_contents($filePath['source']),true);
           //check if 'batch_id' field is available in filter list
-          if(!in_array('batch_id',$formValues['filters'])){
+          if(!in_array('batch_id',$formValues['filters']) && $formValues['name'] !== 'opportunity_detailed'){
             $formValues['filters']['batch_id'] = array();
             $updateReport = true;
           }
