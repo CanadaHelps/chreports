@@ -749,7 +749,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
             foreach ($var as $rowId => $row) {
                 //To prevent previous years before base_year to be added to resulting report
                 if($row['year'] < $base_year)
-                continue;
+                    continue;
                 $columnTitle = $row['year'];
                 $columnKey = $row['year'];
                 $columnHeaders[$columnKey] = ['title' => $columnTitle,'type'=> CRM_Utils_Type::T_INT];
@@ -848,6 +848,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         if($this->isContribRetentionReport()) {
             $primaryRetentionRateData = [];
             $columnHeaderValue = [];
+            //get base_year filter value from filters
             $filters = $this->getCustomFilterValues();
             $base_year = array_values($filters['base_year'])[0];
             $allDonorsData = [];
@@ -857,7 +858,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                 $allDonorsData[$yearVal] = explode(",", $rows[$yearIndex]['contact_ids']);
                 //unsetting rows for years prior to base_year
                 if($yearVal < $base_year)
-                unset($rows[$yearIndex]);
+                    unset($rows[$yearIndex]);
             }
             $rows = array_values($rows);
             $compareSet = [];
@@ -869,7 +870,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                 //compare data with previous years contactIds only
                 foreach($allDonorsData as $year => $donorIds) {
                     if( $row['year'] > $year)
-                    $compareSet[$year] = $allDonorsData[$year];
+                        $compareSet[$year] = $allDonorsData[$year];
                 }
                 $newDonors = 0;
                 foreach($allUserContactIDS as $contact_id){
