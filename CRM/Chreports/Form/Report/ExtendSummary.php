@@ -146,6 +146,9 @@ class CRM_Chreports_Form_Report_ExtendSummary extends CRM_Report_Form_Contribute
           case 'ch_fund': // fund_13
             $clauses[] = $this->generateFilterClause($fieldInfo, $fieldInfo['name']);
             break;
+          case 'base_year': // BaseYear
+            $fieldInfo['dbAlias'] = "YEAR(".$fieldInfo['dbAlias'].")";
+            break;
           default:
           if ( !in_array($fieldInfo['dbAlias'], $havingClauseKeyVal) )
             $clauses[] = $this->generateFilterClause($fieldInfo, $fieldName);
