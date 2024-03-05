@@ -744,8 +744,12 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
 
         //CRM-2157
         if($this->isContribRetentionReport()){
+            $filters = $this->getCustomFilterValues();
+            $base_year = array_values($filters['base_year'])[0];
             foreach ($var as $rowId => $row) {
-
+                //To prevent previous years before base_year to be added to resulting report
+                if($row['year'] < $base_year)
+                    continue;
                 $columnTitle = $row['year'];
                 $columnKey = $row['year'];
                 $columnHeaders[$columnKey] = ['title' => $columnTitle,'type'=> CRM_Utils_Type::T_INT];
@@ -756,6 +760,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
             unset($columnHeaders['new_donor']);
             unset($columnHeaders['retained_donors']);
             unset($columnHeaders['retention']);
+            unset($columnHeaders['contact_ids']);
         }
     }
    /**
@@ -843,11 +848,49 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         if($this->isContribRetentionReport()) {
             $primaryRetentionRateData = [];
             $columnHeaderValue = [];
+            //get base_year filter value from filters
+            $filters = $this->getCustomFilterValues();
+            $base_year = array_values($filters['base_year'])[0];
+            $allDonorsData = [];
+            $yearData = array_column($rows, 'year');
+            //creating allDonors array which contains list of donor contact_ids segregated by years 
+            foreach($yearData as $yearIndex => $yearVal) {
+                $allDonorsData[$yearVal] = explode(",", $rows[$yearIndex]['contact_ids']);
+                //unsetting rows for years prior to base_year
+                if($yearVal < $base_year)
+                    unset($rows[$yearIndex]);
+            }
+            $rows = array_values($rows);
+            $compareSet = [];
             foreach($rows as $rowNum => $row) {
                 $primaryRetentionRateData[$rowNum]['year'] = $row['year'];
                 $primaryRetentionRateData[$rowNum]['retained_donors_'.$row['year']] = $row['retained_donors'];
-                $primaryRetentionRateData[$rowNum]['new_donor_'.$row['year']] = $row['new_donor'];
-                $primaryRetentionRateData[$rowNum]['retention_'.$row['year']] = $row['retention'];
+                //newDonors Calculation
+                $allUserContactIDS = explode(",", $row['contact_ids']);
+                //compare data with previous years contactIds only
+                foreach($allDonorsData as $year => $donorIds) {
+                    if( $row['year'] > $year)
+                        $compareSet[$year] = $allDonorsData[$year];
+                }
+                $newDonors = 0;
+                foreach($allUserContactIDS as $contact_id){
+                    $matchFound = 0;
+                    foreach($compareSet as $yearVal => $allDonors) {
+                        if(in_array($contact_id,$allDonors)){
+                            $matchFound = 1;
+                            break;  
+                        }
+                    }
+                    if(!$matchFound)
+                        $newDonors++;
+                }
+                $primaryRetentionRateData[$rowNum]['new_donor_'.$row['year']] = $newDonors;
+                if($rowNum == 0){
+                    $retentionRate = '-'; 
+                }else{
+                    $retentionRate = round($row['retained_donors'] / $rows[$rowNum-1]['all_donors'] * 100, 2).'%';
+                }
+                $primaryRetentionRateData[$rowNum]['retention_'.$row['year']] = $retentionRate;
             }
             $retentionRowsDisplay = [
             'retained_donors'=> 'Repeat Donors',
@@ -1839,6 +1882,8 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                     }
                     
                     if ($fieldInfo['custom'] !== true && isset($fieldInfo['join_entity']) && isset($fieldInfo['join_field_name'])) {
+                        //Adding this left joint for fields which has join with option value table but also has join_entity defined without being a custom field
+                        $from[] = $this->getSQLJoinForField($fieldInfo['join_field_name'], $entityName, $this->getEntityTable($fieldInfo['join_entity']),'id');
                         $from[] = $this->getSQLJoinForOptionValue($groupName,$fieldInfo['join_field_name'],$this->getEntityTable($fieldInfo['join_entity']),$fieldName);
                     } else {
                         $entityField = $this->getEntityField($fieldName);

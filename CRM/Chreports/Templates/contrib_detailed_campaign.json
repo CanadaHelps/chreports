@@ -52,7 +52,8 @@
         },
         "payment_instrument_id":{},
         "campaign_type":{},
-        "ch_fund":{}
+        "ch_fund":{},
+        "batch_id": {}
     },
     "groupByClause" : false
 }

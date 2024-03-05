@@ -61,7 +61,8 @@
         "in_memory_of":{
             "eq":1
         },
-        "in_honour_of":{}
+        "in_honour_of":{},
+        "batch_id": {}
     },
     "groupByClause" : false
 }

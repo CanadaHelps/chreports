@@ -65,7 +65,8 @@
                 "1"
             ]
         },
-        "per_change":{}
+        "per_change":{},
+        "batch_id": {}
     },
     "groupByClause" : false
 }

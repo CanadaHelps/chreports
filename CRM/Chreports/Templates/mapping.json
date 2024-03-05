@@ -479,7 +479,7 @@
     },
     "grant_type_id": {
         "title": "Opportunity Type",
-        "field_name": "id",
+        "field_name": "grant_type_id",
         "entity": "grant",
         "options": true,
         "group_name": "grant_type",

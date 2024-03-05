@@ -148,8 +148,6 @@ class CRM_Chreports_Form_Report_ExtendSummary extends CRM_Report_Form_Contribute
             break;
           case 'base_year': // BaseYear
             $fieldInfo['dbAlias'] = "YEAR(".$fieldInfo['dbAlias'].")";
-            $defaultCompareOperator =(strpos( $this->generateFilterClause($fieldInfo, $fieldName), 'LIKE' ) !== false) ? 'LIKE' : '=';
-            $clauses[] = str_replace($defaultCompareOperator, ">=", $this->generateFilterClause($fieldInfo, $fieldName)) ;
             break;
           default:
           if ( !in_array($fieldInfo['dbAlias'], $havingClauseKeyVal) )

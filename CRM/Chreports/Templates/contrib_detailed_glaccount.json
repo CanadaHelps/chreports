@@ -41,7 +41,8 @@
         "payment_instrument_id":{},
         "card_type_id":{},
         "receipted_amount":{},
-        "disbursment_date":{}
+        "disbursment_date":{},
+        "batch_id": {}
     },
     "groupByClause" : false
 }

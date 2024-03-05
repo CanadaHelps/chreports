@@ -1121,4 +1121,45 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
     return TRUE;
   }
 
+  public function upgrade_103001() {
+    $this->ctx->log->info('Reporting v1.3 (#001): Add "Batch Name" Filter to Report Filter list & Template Columns');
+    // Fetch all saved reports
+    $reportInstances = civicrm_api3('ReportInstance', 'get', [
+      'sequential' => 1,
+      'created_id' => ['IS NOT NULL' => 1],
+      'report_id' => ['LIKE' => "chreports/%"],
+    ]);
+    if($reportInstances) {
+      // Iterate through all the reports
+      foreach($reportInstances['values'] as $report) {
+        $filePath = CRM_Chreports_Reports_ReportConfiguration ::getFilePath($report);
+        if (is_file($filePath['source'])) {
+          $updateReport = false;
+          $formValues = json_decode(file_get_contents($filePath['source']),true);
+          //check if 'batch_id' field is available in filter list
+          if(!in_array('batch_id',$formValues['filters']) && $formValues['name'] !== 'opportunity_detailed'){
+            $formValues['filters']['batch_id'] = array();
+            $updateReport = true;
+          }
+          //check if 'batch_id' field is available in fields list for contribution (Detailed) report
+          if($formValues['name'] == 'contrib_detailed'){
+            $formValues['fields']['batch_id'] = array();
+            $updateReport = true;
+          }
+          if($updateReport){
+            $jsonConfig = json_encode($formValues, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+            if (file_put_contents($filePath['source'], $jsonConfig) !== false) {
+              // Log success message
+              watchdog("reporting", "Updated: ".$report['id'] . " (".$report['report_id'] . ") -> added batch_id", [], WATCHDOG_DEBUG);
+            } else {
+              // Log Error writing the file
+              watchdog("reporting", "Error: ".$report['id'] . " (".$report['report_id'] . ") -> could not write changes to file", [], WATCHDOG_DEBUG);
+            }
+          }
+        }
+      }
+    }
+    return TRUE;
+  }
+
 }

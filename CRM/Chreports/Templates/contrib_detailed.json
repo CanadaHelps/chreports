@@ -104,7 +104,8 @@
         "count_of_contributions":{},
         "custom_question":{},
         "custom_answer":{},
-        "ch_fund":{}
+        "ch_fund":{},
+        "batch_id": {}
     },
     "use_default_filters" : false,
     "filters":{
@@ -197,7 +198,8 @@
         "custom_question":{},
         "custom_answer":{},
         "ch_fund":{},
-        "tagid":{}
+        "tagid":{},
+        "batch_id": {}
     },
     "groupByDisplay" : false
 }

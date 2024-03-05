@@ -47,7 +47,8 @@
         "is_opt_out": {},
         "yid": {
             "calendar": "current_year"
-        }
+        },
+        "batch_id": {}
     },
     "groupByClause" : false
 }
