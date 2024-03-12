@@ -47,7 +47,8 @@
         "date_of_last_contribution":{},
         "date_of_first_contribution":{},
         "largest_contribution":{},
-        "count_of_contributions":{}
+        "count_of_contributions":{},
+        "batch_id": {}
     },
     "groupByClause" : false
 }

@@ -23,6 +23,7 @@
         },
         "receive_date": {
             "relative": "ending.year"
-        }
+        },
+        "batch_id": {}
     }
 }

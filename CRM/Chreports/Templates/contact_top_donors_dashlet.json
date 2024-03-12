@@ -53,7 +53,8 @@
         "disbursement_date":{},
         "gid":{},
         "on_hold":{},
-        "ch_fund":{}
+        "ch_fund":{},
+        "batch_id": {}
     },
     "groupByClause" : false
 }

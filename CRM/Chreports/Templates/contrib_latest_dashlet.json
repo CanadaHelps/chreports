@@ -70,7 +70,8 @@
         "contribution_note":{},
         "tagid":{},
         "gid":{},
-        "is_recurring":{}
+        "is_recurring":{},
+        "batch_id": {}
 
 
     },

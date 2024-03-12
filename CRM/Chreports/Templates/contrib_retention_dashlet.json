@@ -22,6 +22,7 @@
         "gid":{},
         "contact_type" : {},
         "contact_sub_type" :{},
-        "base_year":{ "calendar": 2017}
+        "base_year":{ "calendar": 2017},
+        "batch_id": {}
     }
 }

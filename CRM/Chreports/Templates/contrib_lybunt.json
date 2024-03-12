@@ -44,7 +44,8 @@
             "calendar": "current_year"
         },
         "tagid":{},
-        "gid":{}
+        "gid":{},
+        "batch_id": {}
     },
     "groupByClause" : false
 }

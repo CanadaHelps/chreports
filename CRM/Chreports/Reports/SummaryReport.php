@@ -44,10 +44,14 @@ class CRM_Chreports_Reports_SummaryReport extends CRM_Chreports_Reports_BaseRepo
         //calculation for repeat donors
         $select[] = "COUNT(DISTINCT future_contrib.`contact_id`) as retained_donors";
         $this->_columnHeaders['retained_donors']['title'] = 'Repeat Donors';
-        
+
         //Calculation for new donor
-        $select[] = "COUNT(DISTINCT ".$this->getEntityTable().".`contact_id`) as new_donor";
+        $select[] = "COUNT(DISTINCT ".$this->getEntityTable().".`contact_id`) as all_donors";
+        $this->_columnHeaders['all_donors']['title'] = 'All Donors';
+        $select[] = "COUNT(DISTINCT ".$this->getEntityTable().".`contact_id`) - COUNT(DISTINCT future_contrib.`contact_id`) as new_donor";
         $this->_columnHeaders['new_donor']['title'] = 'New Donors';
+        $select[] = "GROUP_CONCAT(DISTINCT ".$this->getEntityTable().".`contact_id`) as contact_ids";
+        $this->_columnHeaders['contact_ids']['title'] = 'Contact IDs';
         
         //calculation for retension rate
 

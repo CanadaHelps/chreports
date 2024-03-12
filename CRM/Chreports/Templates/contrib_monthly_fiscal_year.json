@@ -23,6 +23,7 @@
         },
         "receive_date": {
             "relative": "this.fiscal_year"
-        }
+        },
+        "batch_id": {}
     }
 }
