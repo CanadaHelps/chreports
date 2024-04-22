@@ -513,7 +513,7 @@ class CRM_Chreports_Reports_ReportConfiguration {
 
         // Ensure the directory exists, create it if necessary
         if (!is_dir($filePath['base'])) {
-            $pathDir = CRM_Core_Config::singleton()->uploadDir.'reports/saved/';
+            $pathDir = CRM_Core_Config::singleton()->customFileUploadDir.'reports/saved/';
             mkdir($pathDir, 0775, true);
         }
 
@@ -589,7 +589,7 @@ class CRM_Chreports_Reports_ReportConfiguration {
 
         // Ensure the directory exists, create it if necessary
         if (!is_dir($filePath['base'])) {
-            $pathDir = CRM_Core_Config::singleton()->uploadDir.'reports/saved/';
+            $pathDir = CRM_Core_Config::singleton()->customFileUploadDir.'reports/saved/';
             mkdir($pathDir, 0775, true);
         }
 
@@ -669,7 +669,7 @@ class CRM_Chreports_Reports_ReportConfiguration {
             $report_id = self::escapeFileName($reportDetails['name']);
         
         if($action == 'copy' || $action == 'migrate' || !empty($reportDetails['created_id'])) {
-            $filePath['base'] = CRM_Core_Config::singleton()->uploadDir.'reports/saved/';
+            $filePath['base'] = CRM_Core_Config::singleton()->customFileUploadDir.'reports/saved/';
             if(isset($report_id))
                 $filePath['source'] = $filePath['base']. $reportDetails['created_id']. '_' . $report_id . '_' . $reportDetails['id']. '.json';
             // For migration, possibilty is there that core template report instance is missing
@@ -694,7 +694,7 @@ class CRM_Chreports_Reports_ReportConfiguration {
                 $reportInstanceDetails = self::getReportInstanceDetails($reportDetails['id']);
                 if(!empty($reportInstanceDetails['name'])) {
                     if($reportInstanceDetails['name'] == $report_id && !empty($reportInstanceDetails['created_id'])) {
-                        $filePath['base'] = CRM_Core_Config::singleton()->uploadDir.'reports/saved/';
+                        $filePath['base'] = CRM_Core_Config::singleton()->customFileUploadDir.'reports/saved/';
                         $filePath['source'] = $filePath['base']. $reportInstanceDetails['created_id']. '_' . $report_id . '_' . $reportInstanceDetails['id']. '.json';
                     }
                 }
