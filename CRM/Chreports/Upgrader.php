@@ -519,7 +519,7 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
     ];
     //Conditional check to prevent multiple report template id creation
     $reportTemplates = array();
-    $optionValues = \Civi\Api4\OptionValue::get()
+    $optionValues = \Civi\Api4\OptionValue::get(FALSE)
     ->addSelect('value')
     ->addWhere('option_group_id:name', '=', 'report_template')
     ->execute();
@@ -527,7 +527,7 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
     foreach($templateParams as $templateParam) {
       if(!in_array($templateParam['report_id'],$reportTemplates)) {
         try {
-          $results = \Civi\Api4\OptionValue::create(TRUE)
+          $results = \Civi\Api4\OptionValue::create(FALSE)
           ->addValue('option_group_id.name', 'report_template')
           ->addValue('label', $templateParam['label'])
           ->addValue('value', $templateParam['report_id'])
