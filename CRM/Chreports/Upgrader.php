@@ -969,7 +969,7 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
           ->execute()
           ->first();
         if ($dashlet) {
-            $results = \Civi\Api4\Dashboard::create(FALSE)
+            $results = \Civi\Api4\Dashboard::update(FALSE)
               ->addValue('url', "civicrm/report/instance/".$report['id']."?reset=1&section=2&context=dashlet")
               ->addValue('fullscreen_url', "civicrm/report/instance/".$report['id']."?reset=1&section=2&context=dashletFullscreen")
               ->addValue('id', $dashlet['id'])
