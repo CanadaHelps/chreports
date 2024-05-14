@@ -732,7 +732,8 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
           watchdog("reporting", "Migrated: ".$existingName . " -> ".$newTemplateID . "", [], WATCHDOG_DEBUG);
         
         } else {
-          $errors[] = "$existingName | $newtitle -> $newTemplateID ";
+          $reportId = CRM_Core_DAO::singleValueQuery("SELECT id FROM civicrm_report_instance WHERE `name` = '$existingName' LIMIT 1");
+          if ($reportId) $errors[] = "$existingName | $newtitle -> $newTemplateID ";
           watchdog("reporting", "Failed: ".$existingName . " $newtitle -> ".$newTemplateID . " --> $query", [], WATCHDOG_ERROR);
         }
               
@@ -962,51 +963,43 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
       $reportInstanceDashlet = [];
       foreach($reportInstances['values'] as $report) {
         $report_name = 'report/'.$report['id'];
-        $dashlet = civicrm_api3('Dashboard', 'get', [
-          'sequential' => 1,
-          'name' => $report_name,
-        ]);
-        if(!empty($dashlet['values'][0])) {
-            civicrm_api3('Dashboard', 'create', [
-              'id' => $dashlet['values'][0]['id'],
-              'url' => "civicrm/report/instance/".$report['id']."?reset=1&section=2&context=dashlet",
-              'fullscreen_url' => "civicrm/report/instance/".$report['id']."?reset=1&section=2&context=dashletFullscreen",
-            ]);
+        $dashlet = \Civi\Api4\Dashboard::get(FALSE)
+          ->addSelect('id')
+          ->addWhere('name', '=', $report_name)
+          ->execute()
+          ->first();
+        if ($dashlet) {
+            $results = \Civi\Api4\Dashboard::create(FALSE)
+              ->addValue('url', "civicrm/report/instance/".$report['id']."?reset=1&section=2&context=dashlet")
+              ->addValue('fullscreen_url', "civicrm/report/instance/".$report['id']."?reset=1&section=2&context=dashletFullscreen")
+              ->addValue('id', $dashlet['id'])
+              ->execute();
         }
       }
     }
     //Check if other reports has charts
-    $dashboards = civicrm_api4('Dashboard', 'get', [
-      'select' => [
-        'url', 
-        'fullscreen_url',
-      ],
-      'where' => [
-        ['url', 'CONTAINS', 'charts'], 
-        ['fullscreen_url', 'CONTAINS', 'charts'],
-      ],
-    ]);
+    $dashboards = \Civi\Api4\Dashboard::get(FALSE)
+      ->addSelect('url', 'fullscreen_url')
+      ->addWhere('url', 'CONTAINS', 'charts')
+      ->addWhere('fullscreen_url', 'CONTAINS', 'charts')
+      ->execute();
   
     if($dashboards->rowCount > 0) {
   
-      foreach ($dashboards as $akey=>$avalue) {   
-        if( strpos( $avalue['url'], 'charts=barChart' ) !== false) {
-          $avalue['url']= str_replace("&section=1&charts=barChart", "&section=2", $avalue['url']);
-          $avalue['fullscreen_url']= str_replace("&section=1&charts=barChart", "&section=2", $avalue['fullscreen_url']);
-        }else if(strpos( $avalue['url'], 'charts=pieChart' ) !== false) {
-          $avalue['url']=str_replace("&section=1&charts=pieChart", "&section=2", $avalue['url']);
-          $avalue['fullscreen_url']=str_replace("&section=1&charts=pieChart", "&section=2", $avalue['fullscreen_url']);
+      foreach ($dashboards as $dashboard) {   
+        if( strpos( $dashboard['url'], 'charts=barChart' ) !== false) {
+          $dashboard['url']= str_replace("&section=1&charts=barChart", "&section=2", $dashboard['url']);
+          $dashboard['fullscreen_url']= str_replace("&section=1&charts=barChart", "&section=2", $dashboard['fullscreen_url']);
+        }else if(strpos( $dashboard['url'], 'charts=pieChart' ) !== false) {
+          $dashboard['url']=str_replace("&section=1&charts=pieChart", "&section=2", $dashboard['url']);
+          $dashboard['fullscreen_url']=str_replace("&section=1&charts=pieChart", "&section=2", $dashboard['fullscreen_url']);
         }
   
-        $results = civicrm_api4('Dashboard', 'update', [
-          'values' => [
-            'url' => $avalue['url'],
-            'fullscreen_url'=>$avalue['fullscreen_url']
-          ],
-          'where' => [
-            ['id', '=', $avalue['id']],
-          ],
-        ]);
+        $results = \Civi\Api4\Dashboard::update(FALSE)
+          ->addValue('url', $dashboard['url'])
+          ->addValue('fullscreen_url', $dashboard['fullscreen_url'])
+          ->addWhere('id', '=', $dashboard['id'])
+          ->execute();
       }
     }
     return TRUE;
