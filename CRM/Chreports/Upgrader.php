@@ -1007,7 +1007,7 @@ class CRM_Chreports_Upgrader extends CRM_Chreports_Upgrader_Base {
 
   public function upgrade_102007() {
     $this->ctx->log->info('Reporting v1.2 (#007): re-organize reports as per new requirements');
-    $result = civicrm_api3('Job', 'updatesections');
+    $result = civicrm_api3('Job', 'Updatesections');
     return TRUE;
   }
 
