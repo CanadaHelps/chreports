@@ -1255,8 +1255,9 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         ];
 
         // total contribution count
+        $totalCountLabel = ($this->getEntity() == 'grant') ? 'Total Opportunities' : 'Total Contributions';
         $statistics['counts']['total_count'] = [
-            'title' => ts('Total Contributions'),
+            'title' => ts($totalCountLabel),
             'value' => $totalCount,
         ];
 

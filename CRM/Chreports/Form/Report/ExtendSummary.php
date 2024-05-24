@@ -266,8 +266,9 @@ class CRM_Chreports_Form_Report_ExtendSummary extends CRM_Report_Form_Contribute
       'value' => implode(',  ', $totalAmount),
       'type' => CRM_Utils_Type::T_STRING,
     ];
+    $totalCountLabel = ($this->_reportInstance->getEntity() == 'grant') ? 'Total Opportunities' : 'Total Contributions';
     $statistics['counts']['count'] = [
-      'title' => ts('Total Contributions'),
+      'title' => ts($totalCountLabel),
       'value' => $count,
     ];
 
