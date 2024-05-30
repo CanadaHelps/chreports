@@ -1495,7 +1495,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         switch ($fieldName) {
             case 'contribution_page_id':
                 // TODO: deprecated
-                $filterData['options'] = CRM_Contribute_PseudoConstant::contributionPage(NULL, TRUE);
+                $filterData['options'] = CRM_Contribute_BAO_Contribution::buildOptions('contribution_page_id');
                 break;
         
         }
