@@ -1772,10 +1772,10 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                         if($this->_params[$filterFieldName.'_relative'])
                         $relative = $this->_params[$filterFieldName.'_relative'];
                         if($this->_params[$filterFieldName.'_from'])
-                        $from = $this->_params[$filterFieldName.'_from'];
+                        $fromDate = $this->_params[$filterFieldName.'_from'];
                         if($this->_params[$filterFieldName.'_to'])
-                        $to = $this->_params[$filterFieldName.'_to'];
-                        $intialFilterDateRange = CRM_Utils_Date::getFromTo($relative, $from, $to);
+                        $toDate = $this->_params[$filterFieldName.'_to'];
+                        $intialFilterDateRange = CRM_Utils_Date::getFromTo($relative, $fromDate, $toDate);
                         $firstDateRange = $intialFilterDateRange[0];
                         $secondDateRange = $intialFilterDateRange[1];
                         if(isset($firstDateRange) && isset($secondDateRange))
