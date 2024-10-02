@@ -589,7 +589,7 @@
         "join_field_name":"id",
         "join_entity":"grant",
         "select_name":"display_name",
-        "dependent_table_entity":"contact"
+        "dependent_table_entity":"contact_owner"
     },
     "amount_of_last_contribution": {
         "title": "Amount of last contribution",

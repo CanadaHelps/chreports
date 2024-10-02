@@ -96,7 +96,7 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         $entity = ($entity != NULL) ? $entity : $this->getEntity();
         
         // skip alias tables and other extensions related tables
-        if (in_array($entity, ["financial_account_debit", "financial_account_credit"]))
+        if (in_array($entity, ["financial_account_debit", "financial_account_credit","contact_owner"]))
             return $entity;
 
         return "civicrm_" . $entity;
@@ -1798,7 +1798,21 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                         $alreadyIncluded = true;
                     }
                         
-                        break;
+                    break;
+                case 'Opportunity_Owner':
+                    //CRM-2266: This field requires two joins 
+                    if(!in_array($entityName,$this->_fromEntity)){
+                        //As this join is mandatory for any field related to grant entity, in case user only selects this field, its necessary to have this join  
+                        $from[] = $this->getSQLJoinForField($fieldInfo['join_field_name'], $entityName, $this->getEntityTable($fieldInfo['join_entity']),'entity_id');
+                        $this->_fromEntity[] = $entityName;
+                    }       
+                    $entityField = $this->getEntityField($fieldName);
+                    //This join will output correct Opportunity owner name as it is going to be join between contact table and custom opportunity_owner field
+                    $from[] = "LEFT JOIN ".$this->getEntityTable('contact').
+                    " AS ".$fieldInfo['dependent_table_entity']." ON  ".$fieldInfo['dependent_table_entity'].".id = ".$entityName.".".$entityField;
+                    $alreadyIncluded = true;
+                    $this->_fromEntity[] = $fieldInfo['dependent_table_entity'];
+                    break;
             }
 
             //CRM-2157 pre-requision join for retentiion report
