@@ -1212,7 +1212,7 @@
         "custom": true,
         "group_name": "Contribution_Details",
         "field_type": "money",
-        "custom_fieldName": "Note",
+        "custom_fieldName": "receipted_amount",
         "join_field_name":"id",
         "join_entity":"contribution"
     },
