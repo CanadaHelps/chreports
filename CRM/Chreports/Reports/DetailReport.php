@@ -66,27 +66,27 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
 
       if($this->isTopDonorReport())
       {
-      $topDonorContribCountStatement = "COUNT(".$this->getEntityTable('contribution').".id) AS count";
-      $select[] = $topDonorContribCountStatement;
-      $this->_columnHeaders['count']['title'] = 'Donations';
-      $this->_columnHeaders['count']['type'] = CRM_Utils_Type::T_INT;
-      $this->_calculatedFields['count'] = [ 'count' => $topDonorContribCountStatement];
+        $topDonorContribCountStatement = "COUNT(".$this->getEntityTable('contribution').".id) AS count";
+        $select[] = $topDonorContribCountStatement;
+        $this->_columnHeaders['count']['title'] = 'Donations';
+        $this->_columnHeaders['count']['type'] = CRM_Utils_Type::T_INT;
+        $this->_calculatedFields['count'] = [ 'count' => $topDonorContribCountStatement];
 
-      $topDonorTotalAmountStatement = "SUM(".$this->getEntityTable('contribution').".`total_amount`) AS total_amount";
-      $select[] = $topDonorTotalAmountStatement;
-      $this->_columnHeaders['total_amount']['title'] = 'Amount';
-      $this->_columnHeaders['total_amount']['type'] = CRM_Utils_Type::T_MONEY;
-      $this->_calculatedFields['total_amount']= [ 'total_amount' => $topDonorTotalAmountStatement];
+        $topDonorTotalAmountStatement = "SUM(".$this->getEntityTable('contribution').".`total_amount`) AS total_amount";
+        $select[] = $topDonorTotalAmountStatement;
+        $this->_columnHeaders['total_amount']['title'] = 'Amount';
+        $this->_columnHeaders['total_amount']['type'] = CRM_Utils_Type::T_MONEY;
+        $this->_calculatedFields['total_amount']= [ 'total_amount' => $topDonorTotalAmountStatement];
 
-      $topDonorAvgAmountStatement = "ROUND(AVG(".$this->getEntityTable('contribution').".`total_amount`),2) AS avg_amount";
-      $select[] = $topDonorAvgAmountStatement;
-      $this->_columnHeaders['avg_amount']['title'] = 'Average';
-      $this->_columnHeaders['avg_amount']['type'] = CRM_Utils_Type::T_MONEY;
-      $this->_calculatedFields['avg_amount']= [ 'avg_amount' => $topDonorAvgAmountStatement];
+        $topDonorAvgAmountStatement = "ROUND(AVG(".$this->getEntityTable('contribution').".`total_amount`),2) AS avg_amount";
+        $select[] = $topDonorAvgAmountStatement;
+        $this->_columnHeaders['avg_amount']['title'] = 'Average';
+        $this->_columnHeaders['avg_amount']['type'] = CRM_Utils_Type::T_MONEY;
+        $this->_calculatedFields['avg_amount']= [ 'avg_amount' => $topDonorAvgAmountStatement];
 
-      $select[] = "GROUP_CONCAT(DISTINCT ".$this->getEntityTable('contribution').".currency) AS currency";
-      $this->_columnHeaders['currency']['title'] = 'Currency';
-      $this->_columnHeaders['currency']['type'] = CRM_Utils_Type::T_STRING;
+        $select[] = "GROUP_CONCAT(DISTINCT ".$this->getEntityTable('contribution').".currency) AS currency";
+        $this->_columnHeaders['currency']['title'] = 'Currency';
+        $this->_columnHeaders['currency']['type'] = CRM_Utils_Type::T_STRING;
 
       }
 
