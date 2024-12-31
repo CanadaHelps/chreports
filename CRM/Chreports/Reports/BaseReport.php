@@ -916,7 +916,11 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         }
         
         if($this->isPeriodicDetailed()){
-            $rollupTotalRow = ['receive_date_start' => 'Grand Total'];
+            $rollupTotalRow = [
+                'receive_date_start' => 'Grand Total', 
+                'total_contribution_sum' => 0, 
+                'total_count' => 0
+            ];
             $resultingRow = [];
             foreach($rows as $rowNum => $row) {
                 if($this->hasQuarterlyBreakdown()) {
@@ -1822,8 +1826,8 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
             }
 
             // adding financial_account_debit / credit
-            if ( $fieldInfo['entity'] == "financial_account" || $fieldInfo['entity'] == "financial_trxn" || 
-                (($fieldInfo['join_entity'] == "financial_account_debit" || $fieldInfo['join_entity'] == "financial_account_credit") 
+            if ( isset($fieldInfo['entity']) && ( $fieldInfo['entity'] == "financial_account" || $fieldInfo['entity'] == "financial_trxn" || 
+                (($fieldInfo['join_entity'] == "financial_account_debit" || $fieldInfo['join_entity'] == "financial_account_credit" ) ) 
                     && !in_array($fieldInfo['join_entity'],$this->_fromEntity)) || $entityName === 'civicrm_batch'){
 
                     // adding financial_trxn joins
@@ -1963,8 +1967,8 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                 ELSE ".$customTablename."_".$fieldName."_value.label
                 END";
             }
-          }else{
-            if ($fieldInfo['custom'] !== true && isset($fieldInfo['join_entity']) && isset($fieldInfo['join_field_name'])) 
+          } else {
+            if ( isset($fieldInfo['custom']) && $fieldInfo['custom'] !== true && isset($fieldInfo['join_entity']) && isset($fieldInfo['join_field_name'])) 
             $selectOption = $this->getEntityTable($fieldInfo['join_entity']).'_'.$fieldName.'_value.label';
                 else
             $selectOption = $this->getEntityTable($fieldInfo['entity']).'_'.$fieldName.'_value.label';
