@@ -773,33 +773,42 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
 
         $rearrangedDefaultColumns = [];
         $rearrangedCalculatedColumns = [];
+
+        $calculatedFieldKeys = array_keys($this->_calculatedFields);
+        $defaultColumnsValues = array_values($this->getDefaultColumns());
+        $rearrangedCalculatedColumnsKeys = array_keys($rearrangedCalculatedColumns);
   
         foreach($columnHeaders as $key=>$value)
         {
           //check columnheader for Money type
-          if(in_array($value['type'],[CRM_Utils_Type::T_MONEY]))
-          {
+          if( isset($value['type']) && in_array($value['type'],[CRM_Utils_Type::T_MONEY]) ) {
             $rearrangedCalculatedColumns[$key] = $columnHeaders[$key];
+            $rearrangedCalculatedColumnsKeys = array_keys($rearrangedCalculatedColumns);
             unset($columnHeaders[$key]);
           }
           //check columnheader for calculated fields
-          if(in_array($key,array_keys($this->_calculatedFields)) && !in_array($key,array_keys($rearrangedCalculatedColumns))){
+          if( in_array($key, $calculatedFieldKeys) && !in_array($key, $rearrangedCalculatedColumnsKeys) ){
             $rearrangedCalculatedColumns[$key] = $columnHeaders[$key];
+            $rearrangedCalculatedColumnsKeys = array_keys($rearrangedCalculatedColumns);
             unset($columnHeaders[$key]);
           }
           //check for default fields to add at the beginning of the columns
-          if(in_array($key,array_values($this->getDefaultColumns())) && !in_array($key,array_keys($rearrangedCalculatedColumns)) ){
+          if( in_array($key, $defaultColumnsValues) && !in_array($key, $rearrangedCalculatedColumnsKeys) ){
             $rearrangedDefaultColumns[$key] = $columnHeaders[$key];
+            $rearrangedCalculatedColumnsKeys = array_keys($rearrangedCalculatedColumns);
             unset($columnHeaders[$key]);
           }
   
         }
   
-        if($rearrangedDefaultColumns)
-        $columnHeaders = array_merge($rearrangedDefaultColumns, $columnHeaders); 
-        if($rearrangedCalculatedColumns)
-        $columnHeaders = array_merge($columnHeaders, $rearrangedCalculatedColumns);
-
+        if ( count($rearrangedDefaultColumns) > 0 ) {
+            $columnHeaders = array_merge($rearrangedDefaultColumns, $columnHeaders); 
+        }
+            
+        if ( count($rearrangedCalculatedColumns) > 0 ) {
+            $columnHeaders = array_merge($columnHeaders, $rearrangedCalculatedColumns);
+        }
+            
     }
 
     /**
