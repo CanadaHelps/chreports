@@ -697,11 +697,13 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         unset($columnHeaders['civicrm_contribution_contribution_id']);
         unset($columnHeaders['civicrm_contact_id']);
         //For calculated fields for sorting condition we are adding column header field in select ,so here at the time of display we are unsetting it.
-        foreach ($this->_params['order_bys'] as $orderBy) {
-            //if order by option is selected on the report
-            if($orderBy['column'] != '-') {
-                if(in_array($orderBy['column'],$calculatedFieldsKeyVal) && !in_array($orderBy['column'],$columnKeyVal)) {
-                    unset($columnHeaders[$orderBy['column']]);
+        if ( array_key_exists('order_bys', $this->_params) && is_array($this->_params['order_bys'])) {
+            foreach ($this->_params['order_bys'] as $orderBy) {
+                //if order by option is selected on the report
+                if($orderBy['column'] != '-') {
+                    if(in_array($orderBy['column'],$calculatedFieldsKeyVal) && !in_array($orderBy['column'],$columnKeyVal)) {
+                        unset($columnHeaders[$orderBy['column']]);
+                    }
                 }
             }
         }
@@ -959,18 +961,21 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         }
         $unassignedDataFields = [];
         $reportType = $this->getReportType();
-        foreach($this->_params['order_bys'] as $orderbyColumnKey=>$orderbyColumnValue) {
-            //For detail and summary report if Section Header / Group By is checked, for those fields null data will use "Unassigned" as value
-            if ( isset($orderbyColumnValue['section']) )
-                $unassignedDataFields[] = $orderbyColumnValue['column'];
-
-            //For default sorting fields
-            if(!empty($this->getDefaultColumns()) 
-            && in_array($orderbyColumnValue['column'],$this->getDefaultColumns())
-            && !in_array($orderbyColumnValue['column'],$unassignedDataFields)) {
-                $unassignedDataFields[] = $orderbyColumnValue['column'];
+        if ( array_key_exists('order_bys', $this->_params) && is_array($this->_params['order_bys'])) {
+            foreach($this->_params['order_bys'] as $orderbyColumnValue) {
+                //For detail and summary report if Section Header / Group By is checked, for those fields null data will use "Unassigned" as value
+                if ( isset($orderbyColumnValue['section']) )
+                    $unassignedDataFields[] = $orderbyColumnValue['column'];
+    
+                //For default sorting fields
+                if(!empty($this->getDefaultColumns()) 
+                && in_array($orderbyColumnValue['column'],$this->getDefaultColumns())
+                && !in_array($orderbyColumnValue['column'],$unassignedDataFields)) {
+                    $unassignedDataFields[] = $orderbyColumnValue['column'];
+                }
             }
         }
+        
         if($reportType == 'summary') {
             $unassignedDataFields = array_filter(array_unique( array_merge($unassignedDataFields, array_keys($this->_columns))));
         }
