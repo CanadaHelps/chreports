@@ -341,7 +341,7 @@ class CRM_Chreports_Reports_ReportConfiguration {
         if(isset($this->_preselected_filter)) {
             $defaultFilterParams = $this->createCustomFilterParams();
             foreach($defaultFilterParams as $k => $v) {
-                if(!$params[$k] && $v) {
+                if ($v && (!array_key_exists($k, $params) || !$params[$k])) {
                     $params[$k] = $v;
                 }
             }

@@ -29,7 +29,7 @@ class CRM_Chreports_Form_Report_ExtendSummary extends CRM_Report_Form_Contribute
     //CRM-2144 for precise "view results", filtering out preSelected fields 
     if($var->getVar('_force') == 1){
       //set column fields to params
-      $trueKeys =  array_keys($params['fields'],true);
+      $trueKeys =  isset($params['fields']) ? array_keys($params['fields'],true) : [];
       $params['fields'] = array_fill_keys($trueKeys, true);
       //set sort by fields to params
       $params =  $this->_reportInstance->setDefaultOptionSortBy($params);
@@ -39,7 +39,7 @@ class CRM_Chreports_Form_Report_ExtendSummary extends CRM_Report_Form_Contribute
     $this->_reportInstance->setFormParams($params);
     //TO DO need to make changes
     $settings = $this->_reportInstance->getDefaultColumns();
-    if(empty($params['fields'])) {
+    if(empty($params['fields']) && count($settings) > 0) {
       $params['fields'] = [
         $settings[0] => 1
       ];

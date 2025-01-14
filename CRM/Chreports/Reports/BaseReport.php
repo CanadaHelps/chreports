@@ -488,11 +488,13 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     
     //get field details from array
     public function getFieldMapping(string $fieldEntity, string $fieldName): array {
-        $entityTable = ($fieldEntity != NULL) ? $fieldEntity : $this->getEntity();
+        $entityTable = ($fieldEntity != NULL) ? $fieldEntity : $this->getEntityTable();
+            
         if ( !array_key_exists($entityTable, $this->_mapping) 
             || !array_key_exists($fieldName, $this->_mapping[$entityTable]['fields']) ) {
                 return ['name' => $fieldName, 'title' => $fieldName, 'table_name' => $entityTable];
-            }
+        }
+        
         return $this->_mapping[$entityTable]['fields'][$fieldName];
     }
 
@@ -697,11 +699,13 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         unset($columnHeaders['civicrm_contribution_contribution_id']);
         unset($columnHeaders['civicrm_contact_id']);
         //For calculated fields for sorting condition we are adding column header field in select ,so here at the time of display we are unsetting it.
-        foreach ($this->_params['order_bys'] as $orderBy) {
-            //if order by option is selected on the report
-            if($orderBy['column'] != '-') {
-                if(in_array($orderBy['column'],$calculatedFieldsKeyVal) && !in_array($orderBy['column'],$columnKeyVal)) {
-                    unset($columnHeaders[$orderBy['column']]);
+        if ( array_key_exists('order_bys', $this->_params) && is_array($this->_params['order_bys'])) {
+            foreach ($this->_params['order_bys'] as $orderBy) {
+                //if order by option is selected on the report
+                if($orderBy['column'] != '-') {
+                    if(in_array($orderBy['column'],$calculatedFieldsKeyVal) && !in_array($orderBy['column'],$columnKeyVal)) {
+                        unset($columnHeaders[$orderBy['column']]);
+                    }
                 }
             }
         }
@@ -771,33 +775,42 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
 
         $rearrangedDefaultColumns = [];
         $rearrangedCalculatedColumns = [];
+
+        $calculatedFieldKeys = array_keys($this->_calculatedFields);
+        $defaultColumnsValues = array_values($this->getDefaultColumns());
+        $rearrangedCalculatedColumnsKeys = array_keys($rearrangedCalculatedColumns);
   
         foreach($columnHeaders as $key=>$value)
         {
           //check columnheader for Money type
-          if(in_array($value['type'],[CRM_Utils_Type::T_MONEY]))
-          {
+          if( isset($value['type']) && in_array($value['type'],[CRM_Utils_Type::T_MONEY]) ) {
             $rearrangedCalculatedColumns[$key] = $columnHeaders[$key];
+            $rearrangedCalculatedColumnsKeys = array_keys($rearrangedCalculatedColumns);
             unset($columnHeaders[$key]);
           }
           //check columnheader for calculated fields
-          if(in_array($key,array_keys($this->_calculatedFields)) && !in_array($key,array_keys($rearrangedCalculatedColumns))){
+          if( in_array($key, $calculatedFieldKeys) && !in_array($key, $rearrangedCalculatedColumnsKeys) ){
             $rearrangedCalculatedColumns[$key] = $columnHeaders[$key];
+            $rearrangedCalculatedColumnsKeys = array_keys($rearrangedCalculatedColumns);
             unset($columnHeaders[$key]);
           }
           //check for default fields to add at the beginning of the columns
-          if(in_array($key,array_values($this->getDefaultColumns())) && !in_array($key,array_keys($rearrangedCalculatedColumns)) ){
+          if( in_array($key, $defaultColumnsValues) && !in_array($key, $rearrangedCalculatedColumnsKeys) ){
             $rearrangedDefaultColumns[$key] = $columnHeaders[$key];
+            $rearrangedCalculatedColumnsKeys = array_keys($rearrangedCalculatedColumns);
             unset($columnHeaders[$key]);
           }
   
         }
   
-        if($rearrangedDefaultColumns)
-        $columnHeaders = array_merge($rearrangedDefaultColumns, $columnHeaders); 
-        if($rearrangedCalculatedColumns)
-        $columnHeaders = array_merge($columnHeaders, $rearrangedCalculatedColumns);
-
+        if ( count($rearrangedDefaultColumns) > 0 ) {
+            $columnHeaders = array_merge($rearrangedDefaultColumns, $columnHeaders); 
+        }
+            
+        if ( count($rearrangedCalculatedColumns) > 0 ) {
+            $columnHeaders = array_merge($columnHeaders, $rearrangedCalculatedColumns);
+        }
+            
     }
 
     /**
@@ -916,7 +929,11 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         }
         
         if($this->isPeriodicDetailed()){
-            $rollupTotalRow = ['receive_date_start' => 'Grand Total'];
+            $rollupTotalRow = [
+                'receive_date_start' => 'Grand Total', 
+                'total_contribution_sum' => 0, 
+                'total_count' => 0
+            ];
             $resultingRow = [];
             foreach($rows as $rowNum => $row) {
                 if($this->hasQuarterlyBreakdown()) {
@@ -955,18 +972,21 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
         }
         $unassignedDataFields = [];
         $reportType = $this->getReportType();
-        foreach($this->_params['order_bys'] as $orderbyColumnKey=>$orderbyColumnValue) {
-            //For detail and summary report if Section Header / Group By is checked, for those fields null data will use "Unassigned" as value
-            if ( isset($orderbyColumnValue['section']) )
-                $unassignedDataFields[] = $orderbyColumnValue['column'];
-
-            //For default sorting fields
-            if(!empty($this->getDefaultColumns()) 
-            && in_array($orderbyColumnValue['column'],$this->getDefaultColumns())
-            && !in_array($orderbyColumnValue['column'],$unassignedDataFields)) {
-                $unassignedDataFields[] = $orderbyColumnValue['column'];
+        if ( array_key_exists('order_bys', $this->_params) && is_array($this->_params['order_bys'])) {
+            foreach($this->_params['order_bys'] as $orderbyColumnValue) {
+                //For detail and summary report if Section Header / Group By is checked, for those fields null data will use "Unassigned" as value
+                if ( isset($orderbyColumnValue['section']) )
+                    $unassignedDataFields[] = $orderbyColumnValue['column'];
+    
+                //For default sorting fields
+                if(!empty($this->getDefaultColumns()) 
+                && in_array($orderbyColumnValue['column'],$this->getDefaultColumns())
+                && !in_array($orderbyColumnValue['column'],$unassignedDataFields)) {
+                    $unassignedDataFields[] = $orderbyColumnValue['column'];
+                }
             }
         }
+        
         if($reportType == 'summary') {
             $unassignedDataFields = array_filter(array_unique( array_merge($unassignedDataFields, array_keys($this->_columns))));
         }
@@ -1619,20 +1639,22 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     //get entity table name using fieldName 
     public function getEntityTableFromField($fieldName,$select = NULL) : string {
         $fieldInfo = $this->getFieldInfo($fieldName);
-        if(isset($fieldInfo['custom'])){
+        if(isset($fieldInfo['custom'])) {
             $entityTableName = EU::getTableNameByName($fieldInfo['group_name']);
             if($select)
             {
                 $entityTableName = isset($fieldInfo['dependent_table_entity'])? $this->getEntityTable($fieldInfo['dependent_table_entity']): $entityTableName;
             }
-          }else{
+        } else if(isset($fieldInfo['entity'])) {
             $entityTableName = $this->getEntityTable($fieldInfo['entity']);
             if($select)
             {
                $entityTableName = isset($fieldInfo['dependent_table_entity'])? $this->getEntityTable($fieldInfo['dependent_table_entity']): $this->getEntityTable($fieldInfo['entity']);
-            }
-            
-          }
+            } 
+        } else {
+            //watchdog("debug", "Field doesn't have entity defined. ($fieldName)");
+            return '';
+        }
         return $entityTableName;
     }
     //get entity clause field through fieldName 'tablename.columnName'
@@ -1822,8 +1844,8 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
             }
 
             // adding financial_account_debit / credit
-            if ( $fieldInfo['entity'] == "financial_account" || $fieldInfo['entity'] == "financial_trxn" || 
-                (($fieldInfo['join_entity'] == "financial_account_debit" || $fieldInfo['join_entity'] == "financial_account_credit") 
+            if ( isset($fieldInfo['entity']) && ( $fieldInfo['entity'] == "financial_account" || $fieldInfo['entity'] == "financial_trxn" || 
+                (($fieldInfo['join_entity'] == "financial_account_debit" || $fieldInfo['join_entity'] == "financial_account_credit" ) ) 
                     && !in_array($fieldInfo['join_entity'],$this->_fromEntity)) || $entityName === 'civicrm_batch'){
 
                     // adding financial_trxn joins
@@ -1925,17 +1947,15 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                 // contribution and other entity fields
                 } else {
                     $recheckEntityName = $fieldInfo['table_alias'] ?? $entityName;
-                    if(!in_array($recheckEntityName,$this->_fromEntity))
-                    {
-
-    
-                    $joinFieldName = ( preg_match('/_id$/', $fieldInfo['join_field_name']) ) ? 'id' : $this->getEntityField($fieldName);    
-                    $from[] = "LEFT JOIN $entityName as $actualTable ON $actualTable." . $joinFieldName . " = " . $this->getEntityTable($fieldInfo['join_entity']) . "." . $fieldInfo['join_field_name'];
                     
-                    if ( isset($fieldInfo['join_extra']) ) {
-                        $from[] = "AND " . $fieldInfo['join_extra'];
-                    }
-                    $entityName = $actualTable; // so that we don;t include twice, but still include others with a different alias
+                    if(!in_array($recheckEntityName,$this->_fromEntity) && isset($fieldInfo['join_field_name']) ) {
+                        $joinFieldName = (  preg_match('/_id$/', $fieldInfo['join_field_name']) ) ? 'id' : $this->getEntityField($fieldName);    
+                        $from[] = "LEFT JOIN $entityName as $actualTable ON $actualTable." . $joinFieldName . " = " . $this->getEntityTable($fieldInfo['join_entity']) . "." . $fieldInfo['join_field_name'];
+                        
+                        if ( isset($fieldInfo['join_extra']) ) {
+                            $from[] = "AND " . $fieldInfo['join_extra'];
+                        }
+                        $entityName = $actualTable; // so that we don;t include twice, but still include others with a different alias
                     }
                   
                 }
@@ -1963,8 +1983,8 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                 ELSE ".$customTablename."_".$fieldName."_value.label
                 END";
             }
-          }else{
-            if ($fieldInfo['custom'] !== true && isset($fieldInfo['join_entity']) && isset($fieldInfo['join_field_name'])) 
+          } else {
+            if ( isset($fieldInfo['custom']) && $fieldInfo['custom'] !== true && isset($fieldInfo['join_entity']) && isset($fieldInfo['join_field_name'])) 
             $selectOption = $this->getEntityTable($fieldInfo['join_entity']).'_'.$fieldName.'_value.label';
                 else
             $selectOption = $this->getEntityTable($fieldInfo['entity']).'_'.$fieldName.'_value.label';
