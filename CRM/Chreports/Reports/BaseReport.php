@@ -488,11 +488,13 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     
     //get field details from array
     public function getFieldMapping(string $fieldEntity, string $fieldName): array {
-        $entityTable = ($fieldEntity != NULL) ? $fieldEntity : $this->getEntity();
+        $entityTable = ($fieldEntity != NULL) ? $fieldEntity : $this->getEntityTable();
+            
         if ( !array_key_exists($entityTable, $this->_mapping) 
             || !array_key_exists($fieldName, $this->_mapping[$entityTable]['fields']) ) {
                 return ['name' => $fieldName, 'title' => $fieldName, 'table_name' => $entityTable];
-            }
+        }
+        
         return $this->_mapping[$entityTable]['fields'][$fieldName];
     }
 
@@ -1637,20 +1639,22 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
     //get entity table name using fieldName 
     public function getEntityTableFromField($fieldName,$select = NULL) : string {
         $fieldInfo = $this->getFieldInfo($fieldName);
-        if(isset($fieldInfo['custom'])){
+        if(isset($fieldInfo['custom'])) {
             $entityTableName = EU::getTableNameByName($fieldInfo['group_name']);
             if($select)
             {
                 $entityTableName = isset($fieldInfo['dependent_table_entity'])? $this->getEntityTable($fieldInfo['dependent_table_entity']): $entityTableName;
             }
-          }else{
+        } else if(isset($fieldInfo['entity'])) {
             $entityTableName = $this->getEntityTable($fieldInfo['entity']);
             if($select)
             {
                $entityTableName = isset($fieldInfo['dependent_table_entity'])? $this->getEntityTable($fieldInfo['dependent_table_entity']): $this->getEntityTable($fieldInfo['entity']);
-            }
-            
-          }
+            } 
+        } else {
+            //watchdog("debug", "Field doesn't have entity defined. ($fieldName)");
+            return '';
+        }
         return $entityTableName;
     }
     //get entity clause field through fieldName 'tablename.columnName'
@@ -1943,17 +1947,15 @@ class CRM_Chreports_Reports_BaseReport extends CRM_Chreports_Reports_ReportConfi
                 // contribution and other entity fields
                 } else {
                     $recheckEntityName = $fieldInfo['table_alias'] ?? $entityName;
-                    if(!in_array($recheckEntityName,$this->_fromEntity))
-                    {
-
-    
-                    $joinFieldName = ( preg_match('/_id$/', $fieldInfo['join_field_name']) ) ? 'id' : $this->getEntityField($fieldName);    
-                    $from[] = "LEFT JOIN $entityName as $actualTable ON $actualTable." . $joinFieldName . " = " . $this->getEntityTable($fieldInfo['join_entity']) . "." . $fieldInfo['join_field_name'];
                     
-                    if ( isset($fieldInfo['join_extra']) ) {
-                        $from[] = "AND " . $fieldInfo['join_extra'];
-                    }
-                    $entityName = $actualTable; // so that we don;t include twice, but still include others with a different alias
+                    if(!in_array($recheckEntityName,$this->_fromEntity) && isset($fieldInfo['join_field_name']) ) {
+                        $joinFieldName = (  preg_match('/_id$/', $fieldInfo['join_field_name']) ) ? 'id' : $this->getEntityField($fieldName);    
+                        $from[] = "LEFT JOIN $entityName as $actualTable ON $actualTable." . $joinFieldName . " = " . $this->getEntityTable($fieldInfo['join_entity']) . "." . $fieldInfo['join_field_name'];
+                        
+                        if ( isset($fieldInfo['join_extra']) ) {
+                            $from[] = "AND " . $fieldInfo['join_extra'];
+                        }
+                        $entityName = $actualTable; // so that we don;t include twice, but still include others with a different alias
                     }
                   
                 }

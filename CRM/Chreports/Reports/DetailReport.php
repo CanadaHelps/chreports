@@ -18,17 +18,20 @@ class CRM_Chreports_Reports_DetailReport extends CRM_Chreports_Reports_BaseRepor
        
         $fieldInfo = $this->getFieldInfo($fieldName);
         $columnInfo = $this->getFieldMapping($this->getEntityTableFromField($fieldName), $fieldName);
-
-        if($fieldName == 'application_submitted'){
+        
+        if ($fieldName == 'application_submitted'){
           $select[] = "case when ".$this->getEntityClauseFromField($fieldName)." then 'Yes' else 'No' end AS $fieldName";
-        }else if(isset($fieldInfo['calculated_field']) && $fieldInfo['calculated_field'] === true){
+        
+        } else if(isset($fieldInfo['calculated_field']) && $fieldInfo['calculated_field'] === true){
           // Calculated fields
           // @todo move code below this to the function
+        
           $this->addCalculatedFieldstoSelect($select,$fieldName,$this->_columnHeaders);
-        }else{
+        } else{
           $selectStatement = $this->getCommonSelectClause($fieldName);
           $select[] = $selectStatement . " AS $fieldName";
         }
+        
         $this->_columnHeaders[$fieldName]['title'] = $this->_columnHeaders[$fieldName]['title'] ?? $columnInfo['title'];
         $this->_columnHeaders[$fieldName]['type'] = $columnInfo['type'];
 
